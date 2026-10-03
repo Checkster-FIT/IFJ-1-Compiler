@@ -87,12 +87,12 @@ checklist:
 GTEST_OBJ = ./tests/testing.o
 GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
-build-tests: $(TEST_DIR)/*.cpp
+$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
 	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
 	@g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
 	@rm -f $(GTEST_OBJ)
 
-test: build-tests
+test: $(TEST_EXEC)
 	@./ifj26tests
 
 # -----------------------------------------------
