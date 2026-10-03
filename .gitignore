@@ -1,0 +1,22 @@
+# Project files
+.idea
+
+# Temporary files
+*.zip
+*.pdf
+*.aux
+*.log
+
+# Compilation database
+compile_commands.json
+
+# Build files
+ifj26compiler
+ifj26tests
+
+# Other files
+ic26int-linux-x86_64
+ic25int
+
+# System files
+__MACOSX/

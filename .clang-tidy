@@ -1,0 +1,9 @@
+Checks: readability-identifier-naming
+
+CheckOptions:
+  readability-identifier-naming.DefaultCase: lower_case
+  readability-identifier-naming.StructCase: lower_case
+  readability-identifier-naming.TypedefCase: CamelCase
+
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.EnumConstantCase: UPPER_CASE
