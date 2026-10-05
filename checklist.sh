@@ -1,4 +1,4 @@
-#!/usr/bin bash
+#!/bin/sh
 
 find_files() {
     find src tests -type f \
@@ -13,7 +13,7 @@ find_files() {
 find_files |
 while IFS= read -r file; do
     if ! grep -Eq '@project[[:space:]]+[^[:space:]]' "$file"; then
-        echo "[!] Missing project tag in $file"
+        echo "[p] Missing project tag in $file"
     fi
 done
 
@@ -23,7 +23,7 @@ while IFS= read -r file; do
     name=$(basename "$file")
 
     if ! grep -Eq "@file[[:space:]]+$name([[:space:]]|$)" "$file"; then
-        echo "[!] Incorrect filename header in $file"
+        echo "[f] Incorrect filename header in $file"
     fi
 done
 
@@ -31,7 +31,7 @@ done
 find_files |
 while IFS= read -r file; do
     if ! grep -Eq '@author[[:space:]]+[^[:space:]]' "$file"; then
-        echo "[!] Invalid author tag in $file"
+        echo "[a] Invalid author tag in $file"
     fi
 done
 
@@ -39,6 +39,6 @@ done
 find_files |
 while IFS= read -r file; do
     if ! grep -Eq '@brief[[:space:]]+[^[:space:]]' "$file"; then
-        echo "[!] Missing brief description in $file"
+        echo "[b] Missing brief description in $file"
     fi
 done

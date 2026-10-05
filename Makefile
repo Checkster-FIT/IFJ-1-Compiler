@@ -65,17 +65,20 @@ database:
 MAKEFLAGS += --no-print-directory
 
 check:
+	@echo && $(MAKE) checklist
 	@echo && $(MAKE) format
 	@echo && $(MAKE) tidy
-	@echo && $(MAKE) checklist
+	@echo
 
 format:
-	@clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose
-	@clang-format $(TEST_DIR)/*.cpp -i --verbose
+	@command -v clang-format >/dev/null || { echo "[c] clang-format not installed!"; exit 0; }; \
+	clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose && \
+	clang-format $(TEST_DIR)/*.cpp -i --verbose
 
 tidy:
-	@clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
-	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
+	@command -v clang-tidy >/dev/null ||  { echo "[c] clang-tidy not installed!"; exit 0; }; \
+	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD) && \
+	clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
 	@sh checklist.sh
