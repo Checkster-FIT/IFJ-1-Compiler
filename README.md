@@ -41,17 +41,22 @@ make run
 ```
 
 ```
-1.5 b - FUNEXP          (?)
-1.0 b - BOOLTHEN        (?)
-1.5 b - CONTROL         (?)
-0.5 b - VALMEM          (?)
-2.0 b - ALGEBDT         (?)
-0.5 b - INTERPOLATEDS   (?)
-2.5 b - LAMBDAS         (?)
-2.0 b - LISTS           (?)
-0.5 b - EXTKW           (?)
-0.5 b - PARAMLISTS      (?)
+ 1. FUNEXP         1.5 b
+ 2. BOOLTHEN       1.0 b
+ 3. CONTROL        1.5 b
+ 4. VALMEM         0.5 b
+ 6. INTERPOLATEDS  0.5 b
+ 9. EXTKW          0.5 b
+10. PARAMLISTS     0.5 b
+------------------------
+    Součet         6.0 b 
 ```
+
+[//]: # (```)
+[//]: # ( 5. ALGEBDT        2.0 b  )
+[//]: # ( 7. LAMBDAS        2.5 b)
+[//]: # ( 8. LISTS          2.0 b           )
+[//]: # (```)
 
 ---
 
