@@ -21,7 +21,7 @@ TEST_FILES = test.cpp
 
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
-DB_TARGETS = build build-tests
+DB_TARGETS = build $(TEST_EXEC)
 
 ARCHIVE_NAME = archive
 ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
@@ -92,7 +92,7 @@ GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
 $(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
 	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	@g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
+	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
 	@rm -f $(GTEST_OBJ)
 
 test: $(TEST_EXEC)
