@@ -10,6 +10,6 @@
 
 int run_parser()
 {
-    const int token = get_token();
-    return token;
+    const Token token = get_token();
+    return 0;
 }

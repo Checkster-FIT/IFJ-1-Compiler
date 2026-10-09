@@ -7,7 +7,12 @@
 
 #include "scanner.h"
 
-int get_token()
+#include <stdio.h>
+
+Token get_token()
 {
-    return 0;
+    while (1) {
+        int c = getchar();
+
+    }
 }
