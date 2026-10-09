@@ -1,20 +1,46 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    scanner.h
- * @brief
- * @author
+ * @brief   Declaration of the Token type, get_token() and enumeration of the FSM states used to implement the scanner.
+ * @author  Drahovska Andrea, Wyslych Vojtech
  */
 
 #ifndef IFJ_1_COMPILER_SCANNER_H
 #define IFJ_1_COMPILER_SCANNER_H
 
-typedef struct
-{
+typedef struct {
     enum {
+
         NONE,
         ERROR,
         INTEGER,
-        DOUBLE
+        DOUBLE,
+        OPERATOR,
+        IDENTIFIER,
+        KEYWORD,
+        BOOLEAN,
+        CHAR_S,
+        EMPTY_STRING,
+        STRING_INTERPOLATION,
+        STRING_INTERPOLATION_END,
+        STRING,
+        MULTILINE_STRING,
+        DOT,
+        ZERO,
+        DOUBLE_DECIMAL_NUMBER,
+        DECLARATION_SIGN,
+        COMMA,
+        INDENT,
+        LINE_FEED,
+        WHITESPACE,
+        GREATER_LESSER_THAN,
+        ASSIGNMENT,
+        COMPARE,
+        LEFT_BRACKET,
+        RIGHT_BRACKET,
+        UNIT,
+        RIGHT_CURLY_BRACKET
+
     } type;
 
     union {
@@ -27,17 +53,19 @@ typedef struct
 Token get_token();
 
 enum {
+    STATE_START,
+
     // operators
     STATE_AMPERSAND_1, // &
     STATE_OR_1, // |
-    STATE_OPERATOR, // +, -, *, &&, |
+    STATE_OPERATOR, // +, -, *, &&, ||
 
     // strings
     STATE_STRING_WHICH, // " read
     STATE_STRING_BEGIN,
     STATE_STRING_ESCAPE, // \ read
     STATE_STRING_END,
-    STATE_STRING_MULTILINE, // "", can be empty string
+    STATE_EMPTY_STRING, // "", can be empty string
 
     // multiline string """
     STATE_STRING_MULTILINE_START, // """ start of multiline string
@@ -68,10 +96,10 @@ enum {
 
     // comparison
     STATE_GREATER_THAN,
-    STATE_LESS_THAN,
+    STATE_LESSER_THAN,
     STATE_GREATER_THAN_EQUALS,
-    STATE_LESS_THAN_EQUALS,
-    STATE_ASSIGNMENT_1,
+    STATE_LESSER_THAN_EQUALS,
+    STATE_ASSIGNMENT,
     STATE_COMPARE_EQUAL,
     STATE_COMPARE_NOT_EQUAL,
 
@@ -79,7 +107,6 @@ enum {
     STATE_LEFT_BRACKET,
     STATE_RIGHT_BRACKET,
     STATE_UNIT,
-    STATE_LEFT_CURLY_BRACKET,
     STATE_RIGHT_CURLY_BRACKET,
 
     // block comment
@@ -103,8 +130,9 @@ enum {
     STATE_CHARACTER_S,
     STATE_STRING_INTERPOLATION,
     STATE_STRING_INTERPOLATION_DOLLAR,
+    STATE_STRING_INTERPOLATION_EXPRESSION,
     STATE_STRING_INTERPOLATION_ESCAPE,
-    STATE_STRING_INTERPOLATION_END,
+    STATE_STRING_INTERPOLATION_END
 
 } state;
 
