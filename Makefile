@@ -21,7 +21,7 @@ TEST_FILES = test.cpp
 
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
-DB_TARGETS = build build-tests
+DB_TARGETS = build $(TEST_EXEC)
 
 ARCHIVE_NAME = archive
 ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
@@ -65,17 +65,20 @@ database:
 MAKEFLAGS += --no-print-directory
 
 check:
+	@echo && $(MAKE) checklist
 	@echo && $(MAKE) format
 	@echo && $(MAKE) tidy
-	@echo && $(MAKE) checklist
+	@echo
 
 format:
-	@clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose
-	@clang-format $(TEST_DIR)/*.cpp -i --verbose
+	@command -v clang-format >/dev/null || { echo "[c] clang-format not installed!"; exit 0; }; \
+	clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose && \
+	clang-format $(TEST_DIR)/*.cpp -i --verbose
 
 tidy:
-	@clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
-	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
+	@command -v clang-tidy >/dev/null ||  { echo "[c] clang-tidy not installed!"; exit 0; }; \
+	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD) && \
+	clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
 	@sh checklist.sh
@@ -89,7 +92,7 @@ GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
 $(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
 	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	@g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
+	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
 	@rm -f $(GTEST_OBJ)
 
 test: $(TEST_EXEC)
