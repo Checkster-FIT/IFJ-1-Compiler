@@ -27,7 +27,85 @@ typedef struct
 Token get_token();
 
 enum {
-    H
-} type;
+    // operators
+    STATE_AMPERSAND_1, // &
+    STATE_OR_1, // |
+    STATE_OPERATOR, // +, -, *, &&, |
+
+    // strings
+    STATE_STRING_WHICH, // " read
+    STATE_STRING_BEGIN,
+    STATE_STRING_ESCAPE, // \ read
+    STATE_STRING_END,
+    STATE_STRING_MULTILINE, // "", can be empty string
+
+    // multiline string """
+    STATE_STRING_MULTILINE_START, // """ start of multiline string
+    STATE_STRING_MULTILINE_END_1,
+    STATE_STRING_MULTILINE_END_2,
+    STATE_STRING_MULTILINE_END_3,
+
+    // declaration
+    STATE_AT_SYMBOL, // @
+    STATE_COLON, // :
+    STATE_COMMA, // ,
+    STATE_DOT, // .
+
+    // numbers
+    STATE_INTEGER,
+    STATE_INTEGER_UNDERSCORE, // 1_2_3
+    STATE_ZERO,
+    STATE_DECIMAL_POINT, // . double
+    STATE_DOUBLE_WHOLE_NUMBER, // double without decimal point
+    STATE_DOUBLE_WHOLE_NUMBER_UNDERSCORE,
+    STATE_DOUBLE_DECIMAL_NUMBER, // numbers with decimal point
+    STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE,
+    STATE_DOUBLE_EXPONENT, // E,e
+    STATE_DOUBLE_EXPONENT_SIGN, // +/- exponent number
+    STATE_DOUBLE_EXPONENT_NUMBER, // value of exponent
+    STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE,
+    STATE_DOUBLE_END_D, // D or d
+
+    // comparison
+    STATE_GREATER_THAN,
+    STATE_LESS_THAN,
+    STATE_GREATER_THAN_EQUALS,
+    STATE_LESS_THAN_EQUALS,
+    STATE_ASSIGNMENT_1,
+    STATE_COMPARE_EQUAL,
+    STATE_COMPARE_NOT_EQUAL,
+
+    // brackets
+    STATE_LEFT_BRACKET,
+    STATE_RIGHT_BRACKET,
+    STATE_UNIT,
+    STATE_LEFT_CURLY_BRACKET,
+    STATE_RIGHT_CURLY_BRACKET,
+
+    // block comment
+    STATE_LINE_FEED,
+    STATE_INDENT,
+    STATE_SLASH, // / is operator, or start of the comment followed by /
+    STATE_COMMENT_START,
+    STATE_BLOCK_COMMENT_START, // /*
+    STATE_ANOTHER_BLOCK_COMMENT_START,
+    STATE_ANOTHER_BLOCK_COMMENT_END,
+    STATE_BLOCK_COMMENT_END_WITH_LF,
+    STATE_BLOCK_COMMENT_END_WITHOUT_LF,
+
+    // alphabet
+    STATE_IDENTIFIER,
+    STATE_UNDERSCORE_IDENTIFIER,
+    STATE_KEYWORD,
+    STATE_BOOLEAN,
+
+    // interpolates
+    STATE_CHARACTER_S,
+    STATE_STRING_INTERPOLATION,
+    STATE_STRING_INTERPOLATION_DOLLAR,
+    STATE_STRING_INTERPOLATION_ESCAPE,
+    STATE_STRING_INTERPOLATION_END,
+
+} state;
 
 #endif // IFJ_1_COMPILER_SCANNER_H
