@@ -47,6 +47,7 @@ typedef struct {
         int attribute_int;
         double attribute_double;
         char* attribute_str_ptr;
+        void* attribute_none;
     };
 } Token;
 
@@ -95,13 +96,9 @@ enum {
     STATE_DOUBLE_END_D, // D or d
 
     // comparison
-    STATE_GREATER_THAN,
-    STATE_LESSER_THAN,
-    STATE_GREATER_THAN_EQUALS,
-    STATE_LESSER_THAN_EQUALS,
+    STATE_LESSER_GREATER,
     STATE_ASSIGNMENT,
-    STATE_COMPARE_EQUAL,
-    STATE_COMPARE_NOT_EQUAL,
+    STATE_COMPARE,
 
     // brackets
     STATE_LEFT_BRACKET,
