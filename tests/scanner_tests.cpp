@@ -17,6 +17,7 @@ class scanner : public ::testing::Test {
 protected:
     // Temporary input file for stdin emulation
     FILE* input = nullptr;
+    ScannerContext scanner_context = { };
 
     /** @brief Setups an input stream for each scanner test */
     void SetUp() override
@@ -24,7 +25,6 @@ protected:
         input = tmpfile();
         ASSERT_NE(input, nullptr);
 
-        ScannerContext scanner_context;
         init_scanner(&scanner_context);
     }
 
@@ -38,19 +38,18 @@ protected:
 
     /**
      * @brief Writes a given string to the scanner input stream
-     * @param string the input string to be written at the start of the stream
+     * @param s the input string to be written at the start of the stream
      */
-    void set_scanner_input(const char* string) const
+    void scanner_input(const char* s) const
     {
         ASSERT_NE(input, nullptr);
-        ASSERT_GE(fputs(string, input), 0);
+        ASSERT_GE(fputs(s, input), 0);
         rewind(input);
     }
 
-    Token scan(const char* s) const
+    Token scanner_get_token() const
     {
-        set_scanner_input(s);
-        return get_token(input);
+        return get_token(scanner_context, input);
     }
 };
 
@@ -58,7 +57,10 @@ protected:
 
 TEST_F(scanner, err_invalid_char)
 {
-    ASSERT_EQ(Token::ERROR, scan("\0").type);
+    scanner_input("\0");
+    const Token t = scanner_get_token();
+
+    ASSERT_EQ(t.type, Token::ERROR);
 }
 
 // =====================================================
@@ -66,21 +68,27 @@ TEST_F(scanner, err_invalid_char)
 
 TEST_F(scanner, int_simple)
 {
-    const Token t = scan("123");
+    scanner_input("123");
+    const Token t = scanner_get_token();
+
     ASSERT_EQ(t.type, Token::INTEGER);
     EXPECT_EQ(t.attribute_int, 123);
 }
 
 TEST_F(scanner, int_underscores)
 {
-    const Token t = scan("1_23_455");
+    scanner_input("1_23_455");
+    const Token t = scanner_get_token();
+
     ASSERT_EQ(t.type, Token::INTEGER);
     EXPECT_EQ(t.attribute_int, 123455);
 }
 
 TEST_F(scanner, int_zero)
 {
-    const Token t = scan("0");
+    scanner_input("0");
+    const Token t = scanner_get_token();
+
     ASSERT_EQ(t.type, Token::INTEGER);
     EXPECT_EQ(t.attribute_int, 0);
 }
@@ -89,8 +97,10 @@ TEST_F(scanner, int_zero)
 
 TEST_F(scanner, int_err_leading_zero)
 {
-    const Token token = scan("0123");
-    ASSERT_EQ(Token::ERROR, token.type);
+    scanner_input("0123");
+    const Token t = scanner_get_token();
+
+    ASSERT_EQ(t.type, Token::ERROR);
 }
 
 // =====================================================
