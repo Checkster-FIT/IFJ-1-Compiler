@@ -11,11 +11,15 @@
 
 int run_parser()
 {
+    // Create the scanner context for variables persisting token reading
+    ScannerContext scanner;
+    init_scanner(&scanner);
+
     Token token;
     token.type = NONE;
 
     while (token.type != ERROR && token.type != END_OF_FILE) {
-        token = get_token(stdin);
+        token = get_token(scanner, stdin);
     }
 
     return 0;

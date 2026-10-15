@@ -16,7 +16,7 @@ int init_scanner(ScannerContext* scanner_context)
     return 0;
 }
 
-Token get_token(FILE* stream)
+Token get_token(ScannerContext context, FILE* stream)
 {
     State state = STATE_START;
     Token token;
@@ -28,7 +28,6 @@ Token get_token(FILE* stream)
         const int c = fgetc(stream);
 
         switch (state) {
-
 
             /*TODO:
              * r_curly_bracket:interpolo=true
@@ -79,7 +78,7 @@ Token get_token(FILE* stream)
                     state = STATE_RIGHT_BRACKET;
                 else if (c == '}')
                     state = STATE_RIGHT_CURLY_BRACKET;
-                else {                      // invalid input
+                else { // invalid input
                     token.type = ERROR;
                     return token;
                 }

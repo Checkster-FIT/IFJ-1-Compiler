@@ -10,11 +10,6 @@
 
 int main()
 {
-    // Create the scanner context for variables persisting token reading
-    ScannerContext scanner_context;
-    init_scanner(&scanner_context);
-
     const int status = run_parser();
-
     return status;
 }

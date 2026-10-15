@@ -139,7 +139,7 @@ typedef enum {
 } State;
 
 // TODO: Add descriptions
-Token get_token(FILE* stream);
+Token get_token(ScannerContext context, FILE* stream);
 int init_scanner(ScannerContext* scanner_context);
 
 #endif // IFJ_1_COMPILER_SCANNER_H
