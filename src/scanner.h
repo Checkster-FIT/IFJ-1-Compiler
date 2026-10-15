@@ -7,6 +7,13 @@
 
 #ifndef IFJ_1_COMPILER_SCANNER_H
 #define IFJ_1_COMPILER_SCANNER_H
+#include <stdbool.h>
+#include <stdio.h>
+
+typedef struct {
+    bool beginning_of_file;
+    bool inside_interpolated_string;
+} ScannerContext;
 
 typedef struct {
     enum {
@@ -39,8 +46,8 @@ typedef struct {
         LEFT_BRACKET,
         RIGHT_BRACKET,
         UNIT,
-        RIGHT_CURLY_BRACKET
-
+        RIGHT_CURLY_BRACKET,
+        END_OF_FILE
     } type;
 
     union {
@@ -51,9 +58,7 @@ typedef struct {
     };
 } Token;
 
-Token get_token();
-
-enum {
+typedef enum {
     STATE_START,
 
     // operators
@@ -131,6 +136,10 @@ enum {
     STATE_STRING_INTERPOLATION_ESCAPE,
     STATE_STRING_INTERPOLATION_END
 
-} state;
+} State;
+
+// TODO: Add descriptions
+Token get_token(FILE* stream);
+int init_scanner(ScannerContext* scanner_context);
 
 #endif // IFJ_1_COMPILER_SCANNER_H

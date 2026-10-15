@@ -9,16 +9,23 @@
 
 #include <stdio.h>
 
-Token get_token()
+int init_scanner(ScannerContext* scanner_context)
 {
-    int state = STATE_START;
+    scanner_context->beginning_of_file = true;
+    scanner_context->inside_interpolated_string = false;
+    return 0;
+}
+
+Token get_token(FILE* stream)
+{
+    State state = STATE_START;
     Token token;
 
     token.type = NONE;
     token.attribute_none = NULL;
 
     while (1) {
-        int c = getchar();
+        const int c = fgetc(stream);
 
         switch (state) {
 
@@ -27,7 +34,9 @@ Token get_token()
              * r_curly_bracket:interpolo=true
              * SOF && space -> STATE_INDENT
              * if interpolo == true -> STATE_STRING_INTERPOLATION
-            */
+             * END_OF_FILE Token? (xhajduf00)
+             * Default state? (xhajduf00)
+             */
             case (STATE_START):
 
                 if (c == '&')

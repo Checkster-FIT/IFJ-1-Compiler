@@ -6,11 +6,13 @@
  */
 
 #include "parser.h"
+#include "scanner.h"
 
-int main(const int argc, char* argv[])
+int main()
 {
-    (void)argc;
-    (void)argv;
+    // Create the scanner context for variables persisting token reading
+    ScannerContext scanner_context;
+    init_scanner(&scanner_context);
 
     const int status = run_parser();
 
