@@ -47,7 +47,7 @@ valgrind: $(SRC_DIR)/*.c
 
 clean:
 	@rm -fv $(MAIN_EXEC)
-	@rm -fv $(TEST_EXEC)
+	@rm -fv $(TEST_DIR)/$(TEST_EXEC)
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
@@ -90,13 +90,13 @@ checklist:
 GTEST_OBJ = ./tests/testing.o
 GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
-$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
+$(TEST_DIR)/$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
 	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
+	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_DIR)/$(TEST_EXEC)
 	@rm -f $(GTEST_OBJ)
 
-test: $(TEST_EXEC)
-	@./ifj26tests
+test: $(TEST_DIR)/$(TEST_EXEC)
+	@./$(TEST_DIR)/$(TEST_EXEC)
 
 # -----------------------------------------------
 .PHONY: doc archive
