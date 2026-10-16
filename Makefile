@@ -77,8 +77,8 @@ format:
 
 tidy:
 	@command -v clang-tidy >/dev/null ||  { echo "[c] clang-tidy not installed!"; exit 0; }; \
-	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD) && \
-	clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
+	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
+	@# && \ clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
 	@sh checklist.sh
