@@ -10,14 +10,15 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-typedef struct {
+typedef struct
+{
     bool beginning_of_file;
     bool inside_interpolated_string;
 } ScannerContext;
 
-typedef struct {
-    enum {
-
+typedef struct
+{
+    enum type_enum {
         NONE,
         ERROR,
         INTEGER,
@@ -53,8 +54,10 @@ typedef struct {
     union {
         int attribute_int;
         double attribute_double;
-        char* attribute_str_ptr;
+        const char* attribute_str_ptr;
+        bool attribute_bool;
         void* attribute_none;
+        // TODO: Keyword enum?, operator enum?,...
     };
 } Token;
 
