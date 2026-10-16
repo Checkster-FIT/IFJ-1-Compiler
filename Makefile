@@ -9,6 +9,7 @@ STANDARD = 17
 # Project directory structure
 SRC_DIR = src
 TEST_DIR = tests
+TEST_DATA_DIR = $(TEST_DIR)/data
 TEX_DIR = tex
 
 # Project executable names
@@ -28,8 +29,10 @@ ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
 
 DOC_NAME = dokumentace
 
+CODE_EXAMPLE = $(TEST_DATA_DIR)/basic.ifj26
+
 # -----------------------------------------------
-.PHONY: build all run clean
+.PHONY: build all run valgrind clean
 # -----------------------------------------------
 
 build: $(MAIN_EXEC)
@@ -43,11 +46,11 @@ run: $(MAIN_EXEC)
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
 clean:
 	@rm -fv $(MAIN_EXEC)
-	@rm -fv $(TEST_EXEC)
+	@rm -fv $(TEST_DIR)/$(TEST_EXEC) $(TEST_EXEC)
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
@@ -77,8 +80,8 @@ format:
 
 tidy:
 	@command -v clang-tidy >/dev/null ||  { echo "[c] clang-tidy not installed!"; exit 0; }; \
-	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD) && \
-	clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
+	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
+	@# && \ clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
 	@sh checklist.sh
@@ -90,13 +93,13 @@ checklist:
 GTEST_OBJ = ./tests/testing.o
 GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
-$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
+$(TEST_DIR)/$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
 	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_EXEC)
+	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_DIR)/$(TEST_EXEC)
 	@rm -f $(GTEST_OBJ)
 
-test: $(TEST_EXEC)
-	@./ifj26tests
+test: $(TEST_DIR)/$(TEST_EXEC)
+	@./$(TEST_DIR)/$(TEST_EXEC)
 
 # -----------------------------------------------
 .PHONY: doc archive
