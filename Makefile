@@ -9,6 +9,7 @@ STANDARD = 17
 # Project directory structure
 SRC_DIR = src
 TEST_DIR = tests
+TEST_DATA_DIR = $(TEST_DIR)/data
 TEX_DIR = tex
 
 # Project executable names
@@ -28,8 +29,10 @@ ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
 
 DOC_NAME = dokumentace
 
+CODE_EXAMPLE = $(TEST_DATA_DIR)/basic.ifj26
+
 # -----------------------------------------------
-.PHONY: build all run clean
+.PHONY: build all run valgrind clean
 # -----------------------------------------------
 
 build: $(MAIN_EXEC)
@@ -43,11 +46,11 @@ run: $(MAIN_EXEC)
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
 clean:
 	@rm -fv $(MAIN_EXEC)
-	@rm -fv $(TEST_DIR)/$(TEST_EXEC)
+	@rm -fv $(TEST_DIR)/$(TEST_EXEC) $(TEST_EXEC)
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
