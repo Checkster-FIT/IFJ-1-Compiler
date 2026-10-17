@@ -2,18 +2,99 @@
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    scanner.c
  * @brief   Implementation of get_token().
- * @author  Drahovska Andrea, Wyslych Vojtech
+ * @author  Drahovska Andrea (xdrahoa00), Wyslych Vojtech (xwyslyv00)
  */
 
 #include "scanner.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int init_scanner(ScannerContext* scanner_context)
 {
+    ScannedString* scanned_string = init_scanned_string();
+    if (!scanned_string)
+        return 1;
+
     scanner_context->beginning_of_file = true;
     scanner_context->inside_interpolated_string = false;
+    scanner_context->scanned_string = scanned_string;
+
     return 0;
+}
+
+ScannedString* init_scanned_string()
+{
+    const size_t scanned_string_len = 64;
+
+    ScannedString* string_struct = malloc(sizeof(ScannedString));
+    char* string_chars = malloc(sizeof(char) * scanned_string_len);
+
+    if (!string_struct || !string_chars) {
+        free(string_struct);
+        free(string_chars);
+        return NULL;
+    }
+
+    string_struct->chars = string_chars;
+    string_struct->chars[0] = '\0';
+    string_struct->len = 0;
+    string_struct->capacity = scanned_string_len;
+
+    return string_struct;
+}
+
+int resize_scanned_string(ScannedString* string)
+{
+    const size_t new_capacity = string->capacity * 2;
+    char* new_string = realloc(string->chars, sizeof(char) * new_capacity);
+    if (!new_string) {
+        // realloc error
+        return 1;
+    }
+
+    string->capacity = new_capacity;
+    string->chars = new_string;
+
+    return 0;
+}
+
+void clear_scanned_string(ScannedString* string)
+{
+    string->len = 0;
+    string->chars[0] = '\0';
+}
+
+int scanned_string_append(ScannedString* string, char scanned_char)
+{
+    if (string->len + 1 >= string->capacity) {
+        int result = resize_scanned_string(string);
+        if (result == 1)
+            return 1;
+    }
+
+    string->chars[string->len] = scanned_char;
+    string->len += 1;
+    string->chars[string->len] = '\0';
+
+    return 0;
+}
+
+void scanned_string_remove_last(ScannedString* string)
+{
+    if (string->len == 0)
+        return; // nothing to be removed
+
+    string->len -= 1;
+    string->chars[string->len] = '\0';
+}
+
+void dispose_scanned_string(ScannedString* string)
+{
+    if (!string)
+        return;
+    free(string->chars);
+    free(string);
 }
 
 Token get_token(ScannerContext* context, FILE* stream)
@@ -21,24 +102,32 @@ Token get_token(ScannerContext* context, FILE* stream)
     State state = STATE_START;
     Token token;
 
-    token.type = NONE;
+    token.type = ERROR; // default setting to ERROR
     token.attribute_none = NULL;
 
+    dispose_scanned_string(context->scanned_string);
+
     while (1) {
+        // TODO: ferror(stream)?
         const int c = fgetc(stream);
+
+        int result = scanned_string_append(context->scanned_string, (char)c);
+        if (result == 1) {
+            // memory allocation fail
+            token.type = INTERNAL_ERROR;
+            return token;
+        }
 
         switch (state) {
 
             /*TODO:
              * r_curly_bracket:interpolo=true
-             * SOF && space -> STATE_INDENT
-             * if interpolo == true -> STATE_STRING_INTERPOLATION
-             * END_OF_FILE Token? (xhajduf00)
-             * Default state? (xhajduf00)
              */
-            case (STATE_START):
+            case STATE_START:
 
-                if (c == '&')
+                if (context->inside_interpolated_string == true && c != EOF && c != '\n')
+                    state = STATE_STRING_INTERPOLATION;
+                else if (c == '&')
                     state = STATE_AMPERSAND_1;
                 else if (c == '|')
                     state = STATE_OR_1;
@@ -64,7 +153,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_AT_SYMBOL;
                 else if (c == ',')
                     state = STATE_COMMA;
-                else if (c == 10)
+                else if (c == '\n')
                     state = STATE_LINE_FEED;
                 else if (c == '/')
                     state = STATE_COMMENT_START;
@@ -78,10 +167,41 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_RIGHT_BRACKET;
                 else if (c == '}')
                     state = STATE_RIGHT_CURLY_BRACKET;
-                else { // invalid input
-                    token.type = ERROR;
+                else if (c == ' ' && context->beginning_of_file == true)
+                    state = STATE_INDENT;
+                else if (c == EOF)
+                    state = STATE_END_OF_FILE;
+
+                else {
                     return token;
                 }
+
+                break;
+
+            case STATE_AMPERSAND_1:
+
+                if (c == '&')
+                    state = STATE_OPERATOR;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_OR_1:
+
+                if (c == '|')
+                    state = STATE_OPERATOR;
+                else {
+                    return token;
+                }
+
+                break;
+
+            default:
+                return token;
         }
+
+        context->beginning_of_file = false;
     }
 }

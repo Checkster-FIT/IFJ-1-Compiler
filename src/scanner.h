@@ -2,25 +2,20 @@
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    scanner.h
  * @brief   Declaration of the Token type, get_token() and enumeration of the FSM states used to implement the scanner.
- * @author  Drahovska Andrea, Wyslych Vojtech
+ * @author  Drahovska Andrea (xdrahoa00), Wyslych Vojtech (xwyslyv00)
  */
 
 #ifndef IFJ_1_COMPILER_SCANNER_H
 #define IFJ_1_COMPILER_SCANNER_H
+
 #include <stdbool.h>
 #include <stdio.h>
 
-typedef struct
-{
-    bool beginning_of_file;
-    bool inside_interpolated_string;
-} ScannerContext;
-
-typedef struct
-{
+typedef struct {
     enum type_enum {
         NONE,
         ERROR,
+        INTERNAL_ERROR,
         INTEGER,
         DOUBLE,
         OPERATOR,
@@ -137,12 +132,60 @@ typedef enum {
     STATE_STRING_INTERPOLATION_DOLLAR,
     STATE_STRING_INTERPOLATION_EXPRESSION,
     STATE_STRING_INTERPOLATION_ESCAPE,
-    STATE_STRING_INTERPOLATION_END
+    STATE_STRING_INTERPOLATION_END,
+
+    STATE_END_OF_FILE,
 
 } State;
 
+typedef struct {
+    char* chars;
+    size_t len;
+    size_t capacity;
+} ScannedString;
+
+typedef struct {
+    bool beginning_of_file;
+    bool inside_interpolated_string;
+    ScannedString* scanned_string;
+} ScannerContext;
+
 // TODO: Add descriptions
 Token get_token(ScannerContext* context, FILE* stream);
+
+/** Initializes whole scanner_context.
+ * First time init only. If called over existing data, possible memory loss may occur.
+ *
+ * @param scanner_context
+ * @return 0 on success, 1 on memory allocation fail
+ */
 int init_scanner(ScannerContext* scanner_context);
+
+/**
+ *
+ * @return 0 on success, 1 on malloc fail
+ */
+ScannedString* init_scanned_string();
+
+/**
+ *
+ * @param string
+ * @return 0 on success, 1 on realloc fail
+ */
+int resize_scanned_string(ScannedString* string);
+
+void clear_scanned_string(ScannedString* string);
+
+/**
+ *
+ * @param string
+ * @param scanned_char
+ * @return 0 on success, 1 on memory allocation fail
+ */
+int scanned_string_append(ScannedString* string, char scanned_char);
+
+void scanned_string_remove_last(ScannedString* string);
+
+void dispose_scanned_string(ScannedString* string);
 
 #endif // IFJ_1_COMPILER_SCANNER_H
