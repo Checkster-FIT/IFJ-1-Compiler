@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// initializes the scanner context and its string buffer
 int init_scanner(ScannerContext* scanner_context)
 {
     ScannedString* scanned_string = init_scanned_string();
@@ -25,6 +26,7 @@ int init_scanner(ScannerContext* scanner_context)
     return 0;
 }
 
+// allocates and initializes a dynamic string structure
 ScannedString* init_scanned_string()
 {
     const size_t scanned_string_len = 64;
@@ -46,6 +48,7 @@ ScannedString* init_scanned_string()
     return string_struct;
 }
 
+// doubles the capacity of the string buffer
 int resize_scanned_string(ScannedString* string)
 {
     const size_t new_capacity = string->capacity * 2;
@@ -61,12 +64,14 @@ int resize_scanned_string(ScannedString* string)
     return 0;
 }
 
+// empties the dynamic string (without free)
 void clear_scanned_string(ScannedString* string)
 {
     string->len = 0;
     string->chars[0] = '\0';
 }
 
+// appends character to the string, resizing if necessary
 int scanned_string_append(ScannedString* string, char scanned_char)
 {
     if (string->len + 1 >= string->capacity) {
@@ -82,6 +87,7 @@ int scanned_string_append(ScannedString* string, char scanned_char)
     return 0;
 }
 
+// removes the last character from the string
 void scanned_string_remove_last(ScannedString* string)
 {
     if (string->len == 0)
@@ -91,6 +97,16 @@ void scanned_string_remove_last(ScannedString* string)
     string->chars[string->len] = '\0';
 }
 
+// returns the last character in the string
+char scanned_string_top(ScannedString* string)
+{
+    if (string->len == 0)
+        return '\0'; // empty string
+
+    return string->chars[string->len - 1];
+}
+
+// free the string and the buffer
 void dispose_scanned_string(ScannedString* string)
 {
     if (!string)
@@ -99,14 +115,14 @@ void dispose_scanned_string(ScannedString* string)
     free(string);
 }
 
+// FSM reads characters and identifies tokens
 Token get_token(ScannerContext* context, FILE* stream)
 {
     State state = STATE_START;
     Token token;
 
     token.type = ERROR; // default setting to ERROR
-    token.type = LEXICAL_ERROR;
-    token.attribute_none = NULL;
+    token.attribute_error_type = LEXICAL_ERROR;
 
     clear_scanned_string(context->scanned_string);
 
@@ -130,10 +146,12 @@ Token get_token(ScannerContext* context, FILE* stream)
 
         context->read_buffer = false; // default setting
 
+        // FSM transitions
         switch (state) {
 
             /*TODO:
              * r_curly_bracket:interpolo=true
+             * STATE_AT_SYMBOL - STATE_END_OF_FILE
              */
             case STATE_START:
 
@@ -187,7 +205,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_END_OF_FILE;
 
                 else {
-                    return token;
+                    return token; // invalid character
                 }
 
                 break;
@@ -212,10 +230,146 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 break;
 
+            case STATE_OPERATOR:
+
+                context->read_buffer = true;
+                token.type = OPERATOR;
+
+                char a = scanned_string_top(context->scanned_string);
+                if (a == '+')
+                    token.attribute_operation_type = PLUS;
+                else if (a == '-')
+                    token.attribute_operation_type = MINUS;
+                else if (a == '*')
+                    token.attribute_operation_type = MULTIPLY;
+                else if (a == '/')
+                    token.attribute_operation_type = DIVIDE;
+                else if (a == '&')
+                    token.attribute_operation_type = AND;
+                else if (a == '|')
+                    token.attribute_operation_type = OR;
+                else if (a == '!')
+                    token.attribute_operation_type = NOT;
+
+                else {
+                    token.type = ERROR;
+                    token.attribute_error_type = INTERNAL_ERROR;
+                }
+
+                return token;
+
+            case STATE_STRING_WHICH:
+
+                scanned_string_remove_last(context->scanned_string);
+
+                if (c == '"')
+                    state = STATE_EMPTY_STRING;
+                else if (c == '\\')
+                    state = STATE_STRING_ESCAPE;
+                else if (c != '\n' && c != EOF)
+                    state = STATE_STRING_BEGIN;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_BEGIN:
+
+                if (c == '"')
+                    state = STATE_STRING_END;
+                else if (c == '\\')
+                    state = STATE_STRING_ESCAPE;
+                else if (c != '\n' && c != EOF)
+                    state = STATE_STRING_BEGIN;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_ESCAPE:
+
+                if (c != '\n' && c != EOF)
+                    state = STATE_STRING_BEGIN;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_END:
+
+                scanned_string_remove_last(context->scanned_string);
+                context->read_buffer = true;
+                token.type = STRING;
+                token.attribute_str_ptr = context->scanned_string->chars; // ???
+                return token;
+
+            case STATE_EMPTY_STRING:
+
+                if (c == '"') {
+                    clear_scanned_string(context->scanned_string);
+                    state = STATE_STRING_MULTILINE_START;
+                    continue;
+                }
+                scanned_string_remove_last(context->scanned_string);
+                context->read_buffer = true;
+                token.type = EMPTY_STRING;
+                token.attribute_str_ptr = context->scanned_string->chars;
+                return token;
+
+            case STATE_STRING_MULTILINE_START:
+
+                if (c == '"')
+                    state = STATE_STRING_MULTILINE_END_1;
+                else if (c != EOF)
+                    state = STATE_STRING_MULTILINE_START;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_MULTILINE_END_1:
+
+                if (c == '"')
+                    state = STATE_STRING_MULTILINE_END_2;
+                else if (c != EOF)
+                    state = STATE_STRING_MULTILINE_START;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_MULTILINE_END_2:
+
+                if (c == '"')
+                    state = STATE_STRING_MULTILINE_END_3;
+                else if (c != EOF)
+                    state = STATE_STRING_MULTILINE_START;
+                else {
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_MULTILINE_END_3:
+
+                scanned_string_remove_last(context->scanned_string);
+                scanned_string_remove_last(context->scanned_string);
+                scanned_string_remove_last(context->scanned_string);
+                context->read_buffer = true;
+                token.type = MULTILINE_STRING;
+                token.attribute_str_ptr = context->scanned_string->chars;
+                return token;
+
             default:
                 return token;
         }
 
+        // put character into the buffer
         int result = scanned_string_append(context->scanned_string, c);
 
         if (result == 1) {

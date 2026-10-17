@@ -57,13 +57,14 @@ typedef struct {
             LEXICAL_ERROR,
         } attribute_error_type;
 
-
         enum {
-            PLUS,
-            MINUS,
-            MULTIPLY,
-            AND,
-            OR,
+            PLUS, // +
+            MINUS, // -
+            MULTIPLY, // *
+            AND, // &&
+            OR, // ||
+            NOT, // !
+            DIVIDE, // /
         } attribute_operation_type;
 
         enum {
@@ -86,25 +87,26 @@ typedef struct {
 } Token;
 
 typedef enum {
-    STATE_START,
+
+    STATE_START, // initial state dispatcher
 
     // operators
-    STATE_AMPERSAND_1, // &
-    STATE_OR_1, // |
-    STATE_OPERATOR, // +, -, *, &&, ||
+    STATE_AMPERSAND_1, // expecting second '&' for AND operator
+    STATE_OR_1, // expecting second '|' for OR operator
+    STATE_OPERATOR, // operator complete, resolve type:  +, -, *, &&, ||
 
     // strings
-    STATE_STRING_WHICH, // " read
-    STATE_STRING_BEGIN,
-    STATE_STRING_ESCAPE, // \ read
-    STATE_STRING_END,
-    STATE_EMPTY_STRING, // "", can be empty string
+    STATE_STRING_WHICH, // select if standard string, empty string, or multiline string
+    STATE_STRING_BEGIN, // standard string
+    STATE_STRING_ESCAPE, // escape sequences "\"
+    STATE_STRING_END, // end of the string
+    STATE_EMPTY_STRING, // "", an empty string, or start of the multiline string
 
     // multiline string """
-    STATE_STRING_MULTILINE_START, // """ start of multiline string
-    STATE_STRING_MULTILINE_END_1,
-    STATE_STRING_MULTILINE_END_2,
-    STATE_STRING_MULTILINE_END_3,
+    STATE_STRING_MULTILINE_START, // """ start of the multiline string
+    STATE_STRING_MULTILINE_END_1, // found first closing quote of multiline block
+    STATE_STRING_MULTILINE_END_2, // found second closing quote of multiline block
+    STATE_STRING_MULTILINE_END_3, // multiline string closed
 
     // declaration
     STATE_AT_SYMBOL, // @
@@ -216,6 +218,8 @@ void clear_scanned_string(ScannedString* string);
 int scanned_string_append(ScannedString* string, char scanned_char);
 
 void scanned_string_remove_last(ScannedString* string);
+
+char scanned_string_top(ScannedString* string);
 
 void dispose_scanned_string(ScannedString* string);
 
