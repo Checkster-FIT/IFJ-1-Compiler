@@ -105,6 +105,7 @@ Token get_token(ScannerContext* context, FILE* stream)
     Token token;
 
     token.type = ERROR; // default setting to ERROR
+    token.type = LEXICAL_ERROR;
     token.attribute_none = NULL;
 
     clear_scanned_string(context->scanned_string);
@@ -136,8 +137,10 @@ Token get_token(ScannerContext* context, FILE* stream)
              */
             case STATE_START:
 
-                if (context->inside_interpolated_string == true && c != EOF && c != '\n')
+                if (context->inside_interpolated_string == true && c != EOF && c != '\n' && c != '"')
                     state = STATE_STRING_INTERPOLATION;
+                else if (context->inside_interpolated_string == true && c == '"')
+                    state = STATE_STRING_INTERPOLATION_END;
                 else if (c == '&')
                     state = STATE_AMPERSAND_1;
                 else if (c == '|')

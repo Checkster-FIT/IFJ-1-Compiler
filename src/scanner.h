@@ -154,7 +154,7 @@ typedef struct {
     bool inside_interpolated_string;
     ScannedString* scanned_string;
     char scanned_char_buffer;
-    bool read_buffer;
+    bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
 } ScannerContext;
 
 // TODO: Add descriptions
