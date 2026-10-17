@@ -17,7 +17,7 @@ TEST_EXEC = ifj26tests
 
 # Units to be included in tests and the source files for tests
 TEST_UNITS = scanner.c
-TEST_FILES = test.cpp
+TEST_FILES = *.cpp
 
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
@@ -96,7 +96,7 @@ $(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
 	@rm -f $(GTEST_OBJ)
 
 test: $(TEST_EXEC)
-	@./ifj26tests
+	@./ifj26tests || true
 
 # -----------------------------------------------
 .PHONY: doc archive

@@ -6,13 +6,10 @@
  */
 
 #include "parser.h"
+#include "scanner.h"
 
-int main(const int argc, char* argv[])
+int main()
 {
-    (void)argc;
-    (void)argv;
-
     const int status = run_parser();
-
     return status;
 }
