@@ -54,12 +54,12 @@ protected:
      */
     void verify_token_sequence(
         const char* string,
-        const std::initializer_list<Token> expected_tokens) const
+        const std::initializer_list<Token> expected_tokens)
     {
         scanner_input(string);
         for (const auto desired_token : expected_tokens) {
 
-            const Token token = get_token(scanner_context, tmp_input);
+            const Token token = get_token(&scanner_context, tmp_input);
             // printf("Token type: %d\n", token.type);
 
             EXPECT_EQ(token.type, desired_token.type);

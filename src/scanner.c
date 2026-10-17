@@ -16,7 +16,7 @@ int init_scanner(ScannerContext* scanner_context)
     return 0;
 }
 
-Token get_token(ScannerContext context, FILE* stream)
+Token get_token(ScannerContext* context, FILE* stream)
 {
     State state = STATE_START;
     Token token;
