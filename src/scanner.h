@@ -57,7 +57,31 @@ typedef struct {
             LEXICAL_ERROR,
         } attribute_error_type;
 
-        // TODO: Keyword enum?, operator enum?,...
+
+        enum {
+            PLUS,
+            MINUS,
+            MULTIPLY,
+            AND,
+            OR,
+        } attribute_operation_type;
+
+        enum {
+            DEF_KW,
+            DO_KW,
+            DOUBLE_KW,
+            ELSE_KW,
+            IF_KW,
+            IMPORT_KW,
+            INT_KW,
+            RETURN_KW,
+            STRING_KW,
+            THEN_KW,
+            UNIT_KW,
+            VAL_KW,
+            VAR_KW,
+            WHILE_KW,
+        } attribute_keyword;
     };
 } Token;
 
