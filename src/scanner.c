@@ -19,6 +19,8 @@ int init_scanner(ScannerContext* scanner_context)
     scanner_context->beginning_of_file = true;
     scanner_context->inside_interpolated_string = false;
     scanner_context->scanned_string = scanned_string;
+    scanner_context->scanned_char_buffer = '\0';
+    scanner_context->read_buffer = false;
 
     return 0;
 }
@@ -105,18 +107,27 @@ Token get_token(ScannerContext* context, FILE* stream)
     token.type = ERROR; // default setting to ERROR
     token.attribute_none = NULL;
 
-    dispose_scanned_string(context->scanned_string);
+    clear_scanned_string(context->scanned_string);
 
     while (1) {
-        // TODO: ferror(stream)?
-        const int c = fgetc(stream);
 
-        int result = scanned_string_append(context->scanned_string, (char)c);
-        if (result == 1) {
-            // memory allocation fail
-            token.type = INTERNAL_ERROR;
-            return token;
+        char c;
+
+        if (context->read_buffer) {
+            c = context->scanned_char_buffer;
+        } else {
+            c = (char)fgetc(stream);
+
+            if (ferror(stream)) {
+                token.type = ERROR;
+                token.attribute_error_type = INTERNAL_ERROR;
+                return token;
+            }
+
+            context->scanned_char_buffer = c;
         }
+
+        context->read_buffer = false; // default setting
 
         switch (state) {
 
@@ -200,6 +211,15 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             default:
                 return token;
+        }
+
+        int result = scanned_string_append(context->scanned_string, c);
+
+        if (result == 1) {
+            // memory allocation fail
+            token.type = ERROR;
+            token.attribute_error_type = INTERNAL_ERROR;
+            return token;
         }
 
         context->beginning_of_file = false;

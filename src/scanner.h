@@ -15,7 +15,6 @@ typedef struct {
     enum type_enum {
         NONE,
         ERROR,
-        INTERNAL_ERROR,
         INTEGER,
         DOUBLE,
         OPERATOR,
@@ -52,6 +51,12 @@ typedef struct {
         const char* attribute_str_ptr;
         bool attribute_bool;
         void* attribute_none;
+
+        enum {
+            INTERNAL_ERROR,
+            LEXICAL_ERROR,
+        } attribute_error_type;
+
         // TODO: Keyword enum?, operator enum?,...
     };
 } Token;
@@ -148,6 +153,8 @@ typedef struct {
     bool beginning_of_file;
     bool inside_interpolated_string;
     ScannedString* scanned_string;
+    char scanned_char_buffer;
+    bool read_buffer;
 } ScannerContext;
 
 // TODO: Add descriptions
