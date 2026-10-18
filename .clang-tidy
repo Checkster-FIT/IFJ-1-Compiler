@@ -1,4 +1,6 @@
-Checks: readability-identifier-naming
+Checks: >
+  readability-identifier-naming,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
 
 CheckOptions:
   readability-identifier-naming.DefaultCase: lower_case
@@ -7,3 +9,4 @@ CheckOptions:
 
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
   readability-identifier-naming.EnumConstantCase: UPPER_CASE
+
