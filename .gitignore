@@ -6,6 +6,7 @@
 *.pdf
 *.aux
 *.log
+*.o
 
 # Compilation database
 compile_commands.json

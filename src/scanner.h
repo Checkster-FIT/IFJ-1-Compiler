@@ -11,10 +11,38 @@
     context->read_buffer = true;         \
     return token;
 
+#include "shared.h"
 #include <stdbool.h>
 #include <stdio.h>
 
-typedef struct {
+enum attribute_operation_type {
+    PLUS, // +
+    MINUS, // -
+    MULTIPLY, // *
+    AND, // &&
+    OR, // ||
+    NOT, // !
+    DIVIDE, // /
+};
+
+enum attribute_keyword {
+    DEF_KW,
+    DO_KW,
+    DOUBLE_KW,
+    ELSE_KW,
+    IF_KW,
+    IMPORT_KW,
+    INT_KW,
+    RETURN_KW,
+    STRING_KW,
+    THEN_KW,
+    UNIT_KW,
+    VAL_KW,
+    VAR_KW,
+    WHILE_KW,
+};
+
+typedef struct token {
     enum type_enum {
         NONE,
         ERROR,
@@ -55,37 +83,9 @@ typedef struct {
         bool attribute_bool;
         void* attribute_none;
 
-        enum {
-            INTERNAL_ERROR,
-            LEXICAL_ERROR,
-        } attribute_error_type;
-
-        enum {
-            PLUS, // +
-            MINUS, // -
-            MULTIPLY, // *
-            AND, // &&
-            OR, // ||
-            NOT, // !
-            DIVIDE, // /
-        } attribute_operation_type;
-
-        enum {
-            DEF_KW,
-            DO_KW,
-            DOUBLE_KW,
-            ELSE_KW,
-            IF_KW,
-            IMPORT_KW,
-            INT_KW,
-            RETURN_KW,
-            STRING_KW,
-            THEN_KW,
-            UNIT_KW,
-            VAL_KW,
-            VAR_KW,
-            WHILE_KW,
-        } attribute_keyword;
+        enum error_enum attribute_error;
+        enum attribute_keyword attribute_keyword;
+        enum attribute_operation_type attribute_operation_type;
     };
 } Token;
 
@@ -204,6 +204,11 @@ Token get_token(ScannerContext* context, FILE* stream);
  * @return 0 on success, 1 on memory allocation fail.
  */
 int init_scanner(ScannerContext* scanner_context);
+
+/** Destroys and frees the whole scanner_context.
+ * @param scanner_context
+ */
+void destroy_scanner(const ScannerContext* scanner_context);
 
 /**
  * @brief Allocates and initializes a dynamic string structure.

@@ -6,6 +6,7 @@
  */
 
 #include "scanner.h"
+#include "shared.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +24,11 @@ int init_scanner(ScannerContext* scanner_context)
     scanner_context->read_buffer = false;
 
     return 0;
+}
+
+void destroy_scanner(const ScannerContext* scanner_context)
+{
+    dispose_scanned_string(scanner_context->scanned_string);
 }
 
 ScannedString* init_scanned_string()
@@ -114,7 +120,7 @@ Token get_token(ScannerContext* context, FILE* stream)
     Token token;
 
     token.type = ERROR; // default setting to ERROR
-    token.attribute_error_type = LEXICAL_ERROR;
+    token.attribute_error = 1; // lexical error exit code
 
     clear_scanned_string(context->scanned_string);
 
@@ -129,7 +135,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             if (ferror(stream)) {
                 token.type = ERROR;
-                token.attribute_error_type = INTERNAL_ERROR;
+                token.attribute_error = print_error(STREAM_READ_ERROR);
                 return token;
             }
 
@@ -244,7 +250,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 else {
                     token.type = ERROR;
-                    token.attribute_error_type = INTERNAL_ERROR;
+                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string);
                 }
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
@@ -366,6 +372,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
             default:
+                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state);
                 return token;
         }
 
@@ -375,7 +382,7 @@ Token get_token(ScannerContext* context, FILE* stream)
         if (result == 1) {
             // memory allocation fail
             token.type = ERROR;
-            token.attribute_error_type = INTERNAL_ERROR;
+            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned_string");
             return token;
         }
 
