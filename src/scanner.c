@@ -114,7 +114,7 @@ void dispose_scanned_string(ScannedString* string)
     free(string);
 }
 
-Token get_token(ScannerContext* context, FILE* stream)
+Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 {
     State state = STATE_START;
     Token token;
