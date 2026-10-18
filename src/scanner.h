@@ -90,7 +90,7 @@ typedef struct token {
     } type;
 
     union {
-        int attribute_int;
+        long attribute_int;
         double attribute_double;
         const char* attribute_str_ptr;
         bool attribute_bool;

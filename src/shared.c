@@ -33,6 +33,16 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "Integer literal can be replaced with a valid '%i' equivalent";
             error.code = 1;
             break;
+        case SCANNER_NUM_INVALID_UNDERSCORE:
+            error.message = "Underscore(s) inside an integer can only be used between two numbers: '%s' is incorrect";
+            error.fix = "Remove underscore(s) or put numbers around them";
+            error.code = 1;
+            break;
+        case SCANNER_DOUBLE_INVALID_DECIMAL_POINT:
+            error.message = "Decimal point must be followed by a number: '%s'";
+            error.fix = "Add a number right after the decimal point";
+            error.code = 1;
+            break;
         case SCANNER_UNKNOWN_OPERATOR:
             error.message = "An unknown operator '%s' was found";
             error.fix = "Did you mean to use '%s'?";
@@ -44,7 +54,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 1;
             break;
         case SCANNER_INVALID_IDENTIFIER:
-            error.message = "'%s' is not a valid identifier.";
+            error.message = "'%s' is not a valid identifier";
             error.fix = "An identifier can only contain letters, digits, and underscore. It begins with a letter or an underscore. The underscore itself is not a valid identifier";
             error.code = 1;
             break;
