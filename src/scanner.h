@@ -186,44 +186,77 @@ typedef struct {
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
 } ScannerContext;
 
-// TODO: Add descriptions
+// TODO: check this description
+/**
+ * @brief FSM reads characters and identifies tokens.
+ *
+ * @param context Pointer to the scanner context.
+ * @param stream Input file stream to read from.
+ * @return Token.
+ */
 Token get_token(ScannerContext* context, FILE* stream);
 
-/** Initializes whole scanner_context.
+/**
+ * @brief Initializes whole scanner_context.
+ *
  * First time init only. If called over existing data, possible memory loss may occur.
  *
- * @param scanner_context
- * @return 0 on success, 1 on memory allocation fail
+ * @param scanner_context Pointer to the scanner context.
+ * @return 0 on success, 1 on memory allocation fail.
  */
 int init_scanner(ScannerContext* scanner_context);
 
 /**
+ * @brief Allocates and initializes a dynamic string structure.
  *
  * @return 0 on success, 1 on malloc fail
+ * TODO: return pointer?
  */
 ScannedString* init_scanned_string();
 
 /**
+ * @brief Doubles the capacity of the string buffer.
  *
- * @param string
- * @return 0 on success, 1 on realloc fail
+ * @param string Pointer to the scanned string.
+ * @return 0 on success, 1 on realloc fail.
  */
 int resize_scanned_string(ScannedString* string);
 
+/**
+ * @brief Empties the dynamic string (without freeing memory).
+ *
+ * @param string Pointer to the scanned string.
+ */
 void clear_scanned_string(ScannedString* string);
 
 /**
- *
- * @param string
- * @param scanned_char
- * @return 0 on success, 1 on memory allocation fail
+ * @brief Appends character to the string, resizing if necessary.
+ * @param string Pointer to the scanned string.
+ * @param scanned_char Character to append.
+ * @return 0 on success, 1 on memory allocation fail.
  */
 int scanned_string_append(ScannedString* string, char scanned_char);
 
+/**
+ * @brief Removes the last character from the string.
+ *
+ * @param string Pointer to the scanned string.
+ */
 void scanned_string_remove_last(ScannedString* string);
 
+/**
+ * @brief Returns the last character in the string.
+ *
+ * @param string Pointer to the scanned string.
+ * @return The last character, or '\0' if the string is empty.
+ */
 char scanned_string_top(const ScannedString* string);
 
+/**
+ * @brief Frees the string structure and its buffer.
+ *
+ * @param string Pointer to the scanned string.
+ */
 void dispose_scanned_string(ScannedString* string);
 
 #endif // IFJ_1_COMPILER_SCANNER_H

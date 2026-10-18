@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// initializes the scanner context and its string buffer
 int init_scanner(ScannerContext* scanner_context)
 {
     ScannedString* scanned_string = init_scanned_string();
@@ -26,7 +25,6 @@ int init_scanner(ScannerContext* scanner_context)
     return 0;
 }
 
-// allocates and initializes a dynamic string structure
 ScannedString* init_scanned_string()
 {
     const size_t scanned_string_len = 64;
@@ -48,7 +46,6 @@ ScannedString* init_scanned_string()
     return string_struct;
 }
 
-// doubles the capacity of the string buffer
 int resize_scanned_string(ScannedString* string)
 {
     const size_t new_capacity = string->capacity * 2;
@@ -64,14 +61,12 @@ int resize_scanned_string(ScannedString* string)
     return 0;
 }
 
-// empties the dynamic string (without free)
 void clear_scanned_string(ScannedString* string)
 {
     string->len = 0;
     string->chars[0] = '\0';
 }
 
-// appends character to the string, resizing if necessary
 int scanned_string_append(ScannedString* string, char scanned_char)
 {
     if (string->len + 1 >= string->capacity) {
@@ -87,7 +82,6 @@ int scanned_string_append(ScannedString* string, char scanned_char)
     return 0;
 }
 
-// removes the last character from the string
 void scanned_string_remove_last(ScannedString* string)
 {
     if (string->len == 0)
@@ -97,7 +91,6 @@ void scanned_string_remove_last(ScannedString* string)
     string->chars[string->len] = '\0';
 }
 
-// returns the last character in the string
 char scanned_string_top(const ScannedString* string)
 {
     // empty string
@@ -107,7 +100,6 @@ char scanned_string_top(const ScannedString* string)
     return string->chars[(string->len) - 1];
 }
 
-// free the string and the buffer
 void dispose_scanned_string(ScannedString* string)
 {
     if (!string)
@@ -116,7 +108,6 @@ void dispose_scanned_string(ScannedString* string)
     free(string);
 }
 
-// FSM reads characters and identifies tokens
 Token get_token(ScannerContext* context, FILE* stream)
 {
     State state = STATE_START;
