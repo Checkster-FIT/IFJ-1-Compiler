@@ -187,13 +187,12 @@ typedef struct {
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
 } ScannerContext;
 
-// TODO: check this description
 /**
  * @brief FSM reads characters and identifies tokens.
  *
- * @param context Pointer to the scanner context.
+ * @param context Pointer to the scanner context (variables and pointers that the scanner needs to remember between individual tokens).
  * @param stream Input file stream to read from.
- * @return Token.
+ * @return Token representing current lexeme.
  */
 Token get_token(ScannerContext* context, FILE* stream);
 
@@ -215,8 +214,7 @@ void destroy_scanner(const ScannerContext* scanner_context);
 /**
  * @brief Allocates and initializes a dynamic string structure.
  *
- * @return 0 on success, 1 on malloc fail
- * TODO: return pointer?
+ * @return Pointer to the allocated ScannedString, or NULL on malloc fail.
  */
 ScannedString* init_scanned_string();
 
