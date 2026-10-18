@@ -98,12 +98,13 @@ void scanned_string_remove_last(ScannedString* string)
 }
 
 // returns the last character in the string
-char scanned_string_top(ScannedString* string)
+char scanned_string_top(const ScannedString* string)
 {
+    // empty string
     if (string->len == 0)
-        return '\0'; // empty string
+        return '\0';
 
-    return string->chars[string->len - 1];
+    return string->chars[(string->len) - 1];
 }
 
 // free the string and the buffer
@@ -232,7 +233,6 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_OPERATOR:
 
-                context->read_buffer = true;
                 token.type = OPERATOR;
 
                 char a = scanned_string_top(context->scanned_string);
@@ -256,19 +256,21 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.attribute_error_type = INTERNAL_ERROR;
                 }
 
-                return token;
+                RETURN_TOKEN_AND_SET_READ_BUFFER
 
             case STATE_STRING_WHICH:
 
+                // remove `"` from beginning of the scanned string since parser only needs the inside of the string
                 scanned_string_remove_last(context->scanned_string);
 
                 if (c == '"')
                     state = STATE_EMPTY_STRING;
                 else if (c == '\\')
                     state = STATE_STRING_ESCAPE;
-                else if (c != '\n' && c != EOF)
+                else if (c != '\n' && c != EOF && c != '\\')
                     state = STATE_STRING_BEGIN;
                 else {
+                    // TODO: error - invalid string; a simple string cannot contain multiple lines OR EOF
                     return token;
                 }
 
@@ -280,9 +282,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_STRING_END;
                 else if (c == '\\')
                     state = STATE_STRING_ESCAPE;
-                else if (c != '\n' && c != EOF)
+                else if (c != '\n' && c != EOF && c != '\\')
                     state = STATE_STRING_BEGIN;
                 else {
+                    // TODO: error - invalid string; a simple string cannot contain multiple lines OR EOF
                     return token;
                 }
 
@@ -293,6 +296,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_BEGIN;
                 else {
+                    // TODO: error - invalid string; a simple string cannot contain multiple lines OR EOF
                     return token;
                 }
 
@@ -301,29 +305,31 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_STRING_END:
 
                 scanned_string_remove_last(context->scanned_string);
-                context->read_buffer = true;
                 token.type = STRING;
-                token.attribute_str_ptr = context->scanned_string->chars; // ???
-                return token;
+                // TODO: how to pass s string to parser?
+                token.attribute_str_ptr = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
 
             case STATE_EMPTY_STRING:
 
                 if (c == '"') {
                     clear_scanned_string(context->scanned_string);
                     state = STATE_STRING_MULTILINE_START;
+                    // we dont want `"` to be saved into scanned string to we continue to the next char from the stream
                     continue;
                 }
-                scanned_string_remove_last(context->scanned_string);
-                context->read_buffer = true;
+
                 token.type = EMPTY_STRING;
-                token.attribute_str_ptr = context->scanned_string->chars;
-                return token;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
 
             case STATE_STRING_MULTILINE_START:
 
                 if (c == '"')
                     state = STATE_STRING_MULTILINE_END_1;
-                else if (c != EOF)
+                else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     return token;
@@ -335,7 +341,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c == '"')
                     state = STATE_STRING_MULTILINE_END_2;
-                else if (c != EOF)
+                else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     return token;
@@ -347,7 +353,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c == '"')
                     state = STATE_STRING_MULTILINE_END_3;
-                else if (c != EOF)
+                else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     return token;
@@ -357,13 +363,16 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_STRING_MULTILINE_END_3:
 
+                // remove the ending `"""` from the string
                 scanned_string_remove_last(context->scanned_string);
                 scanned_string_remove_last(context->scanned_string);
                 scanned_string_remove_last(context->scanned_string);
-                context->read_buffer = true;
+
                 token.type = MULTILINE_STRING;
-                token.attribute_str_ptr = context->scanned_string->chars;
-                return token;
+                // TODO: how to pass s string to parser?
+                token.attribute_str_ptr = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
 
             default:
                 return token;

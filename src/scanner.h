@@ -7,6 +7,9 @@
 
 #ifndef IFJ_1_COMPILER_SCANNER_H
 #define IFJ_1_COMPILER_SCANNER_H
+#define RETURN_TOKEN_AND_SET_READ_BUFFER \
+    context->read_buffer = true;         \
+    return token;
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -219,7 +222,7 @@ int scanned_string_append(ScannedString* string, char scanned_char);
 
 void scanned_string_remove_last(ScannedString* string);
 
-char scanned_string_top(ScannedString* string);
+char scanned_string_top(const ScannedString* string);
 
 void dispose_scanned_string(ScannedString* string);
 
