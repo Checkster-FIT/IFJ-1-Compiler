@@ -23,9 +23,11 @@ int run_parser()
         token = get_token(&scanner, stdin);
 
         if (token.type == ERROR) {
+            destroy_scanner(&scanner);
             return token.attribute_error;
         }
     }
 
+    destroy_scanner(&scanner);
     return 0;
 }

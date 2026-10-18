@@ -27,6 +27,11 @@ int init_scanner(ScannerContext* scanner_context)
     return 0;
 }
 
+void destroy_scanner(const ScannerContext* scanner_context)
+{
+    dispose_scanned_string(scanner_context->scanned_string);
+}
+
 // allocates and initializes a dynamic string structure
 ScannedString* init_scanned_string()
 {
@@ -136,7 +141,7 @@ Token get_token(ScannerContext* context, FILE* stream)
         } else {
             c = (char)fgetc(stream);
 
-            if (!ferror(stream)) {
+            if (ferror(stream)) {
                 token.type = ERROR;
                 token.attribute_error = print_error(STREAM_READ_ERROR);
                 return token;
@@ -367,6 +372,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 return token;
 
             default:
+                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state);
                 return token;
         }
 

@@ -8,17 +8,21 @@
 #ifndef IFJ_1_COMPILER_SHARED_H
 #define IFJ_1_COMPILER_SHARED_H
 
-typedef struct {
-    enum error_enum {
-        // Scanner error
-        SCANNER_INT_LEADING_ZERO,
-        SCANNER_UNKNOWN_OPERATOR,
-        // Parser error
-        // Internal error
-        MEMORY_ALLOCATION_ERROR,
-        STREAM_READ_ERROR
-    } id;
+typedef enum error_enum {
+    // Scanner error
+    SCANNER_NO_TRANSITION,
+    SCANNER_INT_LEADING_ZERO,
+    SCANNER_UNKNOWN_OPERATOR,
 
+    // Parser error
+
+    // Internal error
+    MEMORY_ALLOCATION_ERROR,
+    STREAM_READ_ERROR
+} ErrorEnum;
+
+typedef struct {
+    ErrorEnum id;
     char* message;
     char* fix;
     int code;
