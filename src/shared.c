@@ -43,6 +43,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "Add a number right after the decimal point";
             error.code = 1;
             break;
+        case SCANNER_DOUBLE_MISSING_EXPONENT:
+            error.message = "Missing exponent of Double: '%s'; e/E (may be followed by a sign) must be followed by a number";
+            error.fix = "Remove the e/E or add an exponent";
+            error.code = 1;
+            break;
         case SCANNER_UNKNOWN_OPERATOR:
             error.message = "An unknown operator '%s' was found";
             error.fix = "Did you mean to use '%s'?";

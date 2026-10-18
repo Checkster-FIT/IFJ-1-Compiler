@@ -643,6 +643,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_INTEGER_UNDERSCORE:
+
+                scanned_string_remove_last(context->scanned_string); // remove _
+
                 if (c >= 0 && c <= 9)
                     state = STATE_INTEGER;
                 else if (c == '_')
@@ -686,6 +689,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_DOUBLE_WHOLE_NUMBER_UNDERSCORE:
+
+                scanned_string_remove_last(context->scanned_string); // remove _
+
                 if (c == '_')
                     state = STATE_DOUBLE_WHOLE_NUMBER_UNDERSCORE;
                 else if (c >= '0' && c <= '9')
@@ -727,6 +733,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE:
+
+                scanned_string_remove_last(context->scanned_string); // remove _
+
                 if (c == '_')
                     state = STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE;
                 else if (c >= '0' && c <= '9')
@@ -739,7 +748,89 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 break;
 
-                // TODO: double exponent, double end
+            case STATE_DOUBLE_END_D:
+                scanned_string_remove_last(context->scanned_string); // remove d/D
+
+                char* endptr;
+
+                double value = strtod(context->scanned_string->chars, &endptr);
+
+                if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
+                    return token;
+                }
+
+                token.type = DOUBLE;
+                token.attribute_double = value;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+
+                break;
+
+            case STATE_DOUBLE_EXPONENT:
+                if (c == '+' || c == '-')
+                    state = STATE_DOUBLE_EXPONENT_SIGN;
+                else if (c >= '0' && c <= '9')
+                    state = STATE_DOUBLE_EXPONENT_NUMBER;
+                else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, context->scanned_string->chars);
+                    return token;
+                }
+
+                break;
+
+            case STATE_DOUBLE_EXPONENT_SIGN:
+                if (c >= '0' && c <= '9')
+                    state = STATE_DOUBLE_EXPONENT_NUMBER;
+                else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, context->scanned_string->chars);
+                    return token;
+                }
+
+                break;
+
+            case STATE_DOUBLE_EXPONENT_NUMBER:
+                if (c >= '0' && c <= '9')
+                    state = STATE_DOUBLE_EXPONENT_NUMBER;
+                else if (c == '_')
+                    state = STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE;
+                else {
+                    char* endptr;
+
+                    double value = strtod(context->scanned_string->chars, &endptr);
+
+                    if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
+                        return token;
+                    }
+
+                    token.type = DOUBLE;
+                    token.attribute_double = value;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
+                break;
+
+            case STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE:
+
+                scanned_string_remove_last(context->scanned_string); // remove _
+
+                if (c == '_')
+                    state = STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE;
+                else if (c >= '0' && c <= '9')
+                    state = STATE_DOUBLE_EXPONENT_NUMBER;
+                else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, context->scanned_string->chars);
+                    return token;
+                }
+
+                break;
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
