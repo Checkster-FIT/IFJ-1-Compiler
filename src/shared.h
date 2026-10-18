@@ -14,6 +14,7 @@ typedef enum error_enum {
     SCANNER_INT_LEADING_ZERO,
     SCANNER_UNKNOWN_OPERATOR,
     SCANNER_INVALID_STRING,
+    SCANNER_INVALID_IDENTIFIER,
 
     // Parser error
 

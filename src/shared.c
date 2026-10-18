@@ -43,6 +43,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "End the string properly first";
             error.code = 1;
             break;
+        case SCANNER_INVALID_IDENTIFIER:
+            error.message = "'%s' is not a valid identifier.";
+            error.fix = "An identifier can only contain letters, digits, and underscore. It begins with a letter or an underscore. The underscore itself is not a valid identifier";
+            error.code = 1;
+            break;
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
             error.code = 99;
@@ -52,7 +57,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 99;
             break;
         case CORRUPTED_MEMORY:
-            error.message = "An error has occurred when trying to read from memory";
+            error.message = "An error has occurred when trying to read from memory in state: '%i'";
             error.code = 99;
             break;
         default:

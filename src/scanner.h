@@ -12,6 +12,10 @@
     context->read_buffer = true;         \
     return token;
 
+#define IS_IDENTIFIER (-1)
+#define IS_BOOLEAN_VALUE_TRUE 12
+#define IS_BOOLEAN_VALUE_FALSE 13
+
 #include "shared.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -41,6 +45,14 @@ enum attribute_keyword {
     VAL_KW,
     VAR_KW,
     WHILE_KW,
+    BOOLEAN_KW,
+    CASE_KW,
+    CLASS_KW,
+    EXTENSION_KW,
+    FOR_KW,
+    LIST_KW,
+    MATCH_KW,
+    TYPE_KW,
 };
 
 typedef struct token {
@@ -262,5 +274,13 @@ char scanned_string_top(const ScannedString* string);
  * @param string Pointer to the scanned string.
  */
 void dispose_scanned_string(ScannedString* string);
+
+/**
+ * @brief Compares scanned string with the list of keywords for match.
+ *
+ * @param string Pointer to the scanned string.
+ * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
+ */
+int check_identifier_for_kw(ScannedString* string);
 
 #endif // IFJ_1_COMPILER_SCANNER_H

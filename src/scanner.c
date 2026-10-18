@@ -10,6 +10,34 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+static const char* keywords[] = {
+    "def",
+    "do",
+    "Double",
+    "else",
+    "if",
+    "import",
+    "int",
+    "return",
+    "String",
+    "then",
+    "Unit",
+    "val",
+    "var",
+    "while",
+    "Boolean",
+    "case",
+    "class",
+    "extension",
+    "for",
+    "List",
+    "match",
+    "type",
+    "true",
+    "false"
+};
 
 int init_scanner(ScannerContext* scanner_context)
 {
@@ -114,6 +142,22 @@ void dispose_scanned_string(ScannedString* string)
     free(string);
 }
 
+int check_identifier_for_kw(ScannedString* string)
+{
+    if (!string)
+        return -2;
+
+    int number_of_keywords = 14;
+
+    for (int i = 0; i < number_of_keywords; i++) {
+        if (strcmp(string->chars, keywords[i]) == 0)
+            return i;
+    }
+
+    return IS_IDENTIFIER;
+}
+
+
 Token get_token(ScannerContext* context, FILE* stream)
 {
     State state = STATE_START;
@@ -149,6 +193,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             /*TODO:
              * r_curly_bracket:interpolo=true
+             * multiline interpolated string
              */
             case STATE_START:
 
@@ -209,6 +254,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 break;
 
+            // OPERATOR
             case STATE_AMPERSAND_1:
 
                 if (c == '&')
@@ -255,12 +301,13 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(CORRUPTED_MEMORY);
+                    token.attribute_error = print_error(CORRUPTED_MEMORY, state);
                     return token;
                 }
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
+            // STRING
             case STATE_STRING_WHICH:
 
                 // remove `"` from beginning of the scanned string since parser only needs the inside of the string
@@ -397,6 +444,146 @@ Token get_token(ScannerContext* context, FILE* stream)
                 token.attribute_str_ptr = NULL;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
+
+            // INTERPOLATED STRING
+            case STATE_CHARACTER_S:
+
+                if (c == '"') {
+                    state = STATE_STRING_INTERPOLATION;
+                    scanned_string_remove_last(context->scanned_string); // removes char s
+                }
+                if (c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+                    state = STATE_IDENTIFIER;
+                else {
+                    token.type = IDENTIFIER;
+                    token.attribute_str_ptr = NULL;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
+                break;
+
+            case STATE_STRING_INTERPOLATION:
+
+                context->inside_interpolated_string = true;
+                scanned_string_remove_last(context->scanned_string); // removes "
+
+                if (c == '$')
+                    state = STATE_STRING_INTERPOLATION_DOLLAR;
+                else if (c == '"')
+                    state = STATE_STRING_INTERPOLATION_END;
+                else if (c == '\\')
+                    state = STATE_STRING_INTERPOLATION_ESCAPE;
+                else if (c != '\n' && c != EOF && c != '\\' && c != '"' && c != '$')
+                    state = STATE_STRING_INTERPOLATION;
+                else if (c == '\n') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    return token;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                }
+
+                break;
+
+            case STATE_STRING_INTERPOLATION_DOLLAR:
+
+                scanned_string_remove_last(context->scanned_string); // removes $
+
+                if (c == '$')
+                    state = STATE_STRING_INTERPOLATION;
+                if (c == '{')
+                    state = STATE_STRING_INTERPOLATION_EXPRESSION;
+                else {
+                    token.type = STRING_INTERPOLATION;
+                    token.attribute_str_ptr = NULL; // pointer to the whole string before $
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
+                break;
+
+            case STATE_STRING_INTERPOLATION_EXPRESSION:
+
+                context->inside_interpolated_string = false;
+
+                scanned_string_remove_last(context->scanned_string); // removes {
+
+                token.type = STRING_INTERPOLATION;
+                token.attribute_str_ptr = NULL; // pointer to the whole string before {
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER;
+
+            case STATE_STRING_INTERPOLATION_END:
+
+                context->inside_interpolated_string = false;
+
+                scanned_string_remove_last(context->scanned_string); // removes "
+
+                token.type = STRING_INTERPOLATION_END;
+                token.attribute_str_ptr = NULL; // pointer to the whole string before "
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER;
+
+            case STATE_STRING_INTERPOLATION_ESCAPE:
+
+                scanned_string_remove_last(context->scanned_string); // removes '\'
+
+                if (c != '\n' && c != EOF)
+                    state = STATE_STRING_INTERPOLATION;
+                else if (c == '\n') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    return token;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                }
+
+                break;
+
+            // IDENTIFIER / KEYWORD / BOOLEAN
+            case STATE_UNDERSCORE_IDENTIFIER:
+
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')
+                    state = STATE_IDENTIFIER;
+                else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_IDENTIFIER, '_');
+                    return token;
+                }
+
+                break;
+
+            case STATE_IDENTIFIER:
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')
+                    state = STATE_IDENTIFIER;
+                else {
+
+                    int result = check_identifier_for_kw(context->scanned_string);
+                    if (result == IS_IDENTIFIER) {
+                        token.type = IDENTIFIER;
+                        token.attribute_str_ptr = context->scanned_string->chars;
+                    } else if (result == IS_BOOLEAN_VALUE_TRUE) {
+                        token.type = BOOLEAN;
+                        token.attribute_bool = true;
+                    } else if (result == IS_BOOLEAN_VALUE_FALSE) {
+                        token.type = BOOLEAN;
+                        token.attribute_bool = false;
+                    } else if (result == -2) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(CORRUPTED_MEMORY, state);
+                        return token;
+                    } else {
+                        token.type = KEYWORD;
+                        token.attribute_keyword = result;
+                    }
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
