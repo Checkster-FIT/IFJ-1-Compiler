@@ -24,7 +24,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
     //   return print_error(SCANNER_INT_LEADING_ZERO, "0195", 195);
     switch (error.id) {
         case SCANNER_NO_TRANSITION:
-            error.message = "No scanner transition was found for state '%i'";
+            error.message = "No scanner transition was found for state '%i' and lexeme %s";
             error.fix = "Try adding this case in scanner.c";
             error.code = 100;
             break;
@@ -34,16 +34,25 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 1;
             break;
         case SCANNER_UNKNOWN_OPERATOR:
-            error.message = "On unknown operator '%s' was found";
-            error.fix = "Did you mean to use +, -, /, *, !, &&, or ||?";
+            error.message = "An unknown operator '%s' was found";
+            error.fix = "Did you mean to use '%s'?";
+            error.code = 1;
+            break;
+        case SCANNER_INVALID_STRING:
+            error.message = "A string cannot contain '%s': '%s'";
+            error.fix = "End the string properly first";
             error.code = 1;
             break;
         case MEMORY_ALLOCATION_ERROR:
-            error.message = "An error has occured when trying to allocate memory for '%s'";
+            error.message = "An error has occurred when trying to allocate memory for '%s'";
             error.code = 99;
             break;
         case STREAM_READ_ERROR:
-            error.message = "An error has occured when trying to read from the input stream";
+            error.message = "An error has occurred when trying to read from the input stream";
+            error.code = 99;
+            break;
+        case CORRUPTED_MEMORY:
+            error.message = "An error has occurred when trying to read from memory";
             error.code = 99;
             break;
         default:

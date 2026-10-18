@@ -7,6 +7,7 @@
 
 #ifndef IFJ_1_COMPILER_SCANNER_H
 #define IFJ_1_COMPILER_SCANNER_H
+
 #define RETURN_TOKEN_AND_SET_READ_BUFFER \
     context->read_buffer = true;         \
     return token;

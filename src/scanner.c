@@ -149,7 +149,6 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             /*TODO:
              * r_curly_bracket:interpolo=true
-             * STATE_AT_SYMBOL - STATE_END_OF_FILE
              */
             case STATE_START:
 
@@ -203,7 +202,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_END_OF_FILE;
 
                 else {
-                    return token; // invalid character
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
+                    return token;
                 }
 
                 break;
@@ -213,6 +214,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c == '&')
                     state = STATE_OPERATOR;
                 else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string->chars, "&&");
                     return token;
                 }
 
@@ -223,6 +226,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c == '|')
                     state = STATE_OPERATOR;
                 else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string->chars, "||");
                     return token;
                 }
 
@@ -250,7 +255,8 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string);
+                    token.attribute_error = print_error(CORRUPTED_MEMORY);
+                    return token;
                 }
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
@@ -264,10 +270,15 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_EMPTY_STRING;
                 else if (c == '\\')
                     state = STATE_STRING_ESCAPE;
-                else if (c != '\n' && c != EOF && c != '\\')
+                else if (c != '\n' && c != EOF && c != '\\' && c != '"')
                     state = STATE_STRING_BEGIN;
-                else {
-                    // TODO: error - invalid string; a simple string cannot contain multiple lines OR EOF
+                else if (c == '\n') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    return token;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -279,10 +290,15 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_STRING_END;
                 else if (c == '\\')
                     state = STATE_STRING_ESCAPE;
-                else if (c != '\n' && c != EOF && c != '\\')
+                else if (c != '\n' && c != EOF && c != '\\' && c != '"')
                     state = STATE_STRING_BEGIN;
-                else {
-                    // TODO: error - invalid string; a simple string cannot contain multiple lines OR EOF
+                else if (c == '\n') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    return token;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -292,8 +308,13 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_BEGIN;
-                else {
-                    // TODO: error - invalid string; a simple string cannot contain multiple lines OR EOF
+                else if (c == '\n') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    return token;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -329,6 +350,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                 else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -341,6 +364,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                 else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -353,6 +378,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                 else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -366,13 +393,13 @@ Token get_token(ScannerContext* context, FILE* stream)
                 scanned_string_remove_last(context->scanned_string);
 
                 token.type = MULTILINE_STRING;
-                // TODO: how to pass s string to parser?
+                // TODO: how to pass a string to parser?
                 token.attribute_str_ptr = NULL;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
             default:
-                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state);
+                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
                 return token;
         }
 

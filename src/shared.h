@@ -13,12 +13,14 @@ typedef enum error_enum {
     SCANNER_NO_TRANSITION,
     SCANNER_INT_LEADING_ZERO,
     SCANNER_UNKNOWN_OPERATOR,
+    SCANNER_INVALID_STRING,
 
     // Parser error
 
     // Internal error
     MEMORY_ALLOCATION_ERROR,
-    STREAM_READ_ERROR
+    STREAM_READ_ERROR,
+    CORRUPTED_MEMORY,
 } ErrorEnum;
 
 typedef struct {
@@ -40,7 +42,7 @@ ErrorMessage get_error_by_id(enum error_enum error_id);
  * @brief Prints and error message to @c stderr
  * @param error_id the error index from the @c error_enum
  * @param ... parameters for the formatted messages in the @c ErrorMessage struct,
- * each message requires different parameters (some errror messages do not require any)
+ * each message requires different parameters (some error messages do not require any)
  * @return the exit code for the given error message
  */
 int print_error(int error_id, ...);
