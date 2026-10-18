@@ -8,11 +8,13 @@
 #include "shared.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 ErrorMessage get_error_by_id(const enum error_enum error_id)
 {
     ErrorMessage error;
     error.id = error_id;
+    error.fix = "";
 
     // [!] Add more error messages here
     // - Error messages should include a brief explanation of the error (.message)
@@ -25,6 +27,19 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Non-zero integers cannot contain leading zeros: '%s'";
             error.fix = "Integer literal can be replaced with a valid '%i' equivalent";
             error.code = 1;
+            break;
+        case SCANNER_UNKNOWN_OPERATOR:
+            error.message = "On unknown operator '%s' was found";
+            error.fix = "Did you mean to use +, -, /, *, !, &&, or ||?";
+            error.code = 1;
+            break;
+        case MEMORY_ALLOCATION_ERROR:
+            error.message = "An error has occured when trying to allocate memory for '%s'";
+            error.code = 99;
+            break;
+        case STREAM_READ_ERROR:
+            error.message = "An error has occured when trying to read from the input stream";
+            error.code = 99;
             break;
         default:
             error.message = "An unknown error has occurred...?";
@@ -56,17 +71,23 @@ int print_error(const int error_id, ...)
     const ErrorMessage error = get_error_by_id(error_id);
 
     // Build the error message string format from its components
-    char format[1024];
+    char error_message[1024];
+
+    // Create the format with or without the fix
+    const char* format = "\033[1;31m[%s]: %s\n\033[0m -> %s\n";
+    if (strlen(error.fix) <= 0)
+        format = "\033[1;31m[%s]: %s\n";
+
     snprintf(
+        error_message,
+        sizeof(error_message),
         format,
-        sizeof(format),
-        "\033[1;31m[%s]: %s\n\033[0m -> %s\n",
         get_error_type_str(error.code), error.message, error.fix);
 
     // Print the constructed format with the user specified arguments
     va_list args;
     va_start(args, error_id);
-    vfprintf(stderr, format, args);
+    vfprintf(stderr, error_message, args);
     va_end(args);
 
     return error.code;

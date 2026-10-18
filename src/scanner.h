@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include "shared.h"
 
 typedef struct {
     enum type_enum {
@@ -52,10 +53,7 @@ typedef struct {
         bool attribute_bool;
         void* attribute_none;
 
-        enum {
-            INTERNAL_ERROR,
-            LEXICAL_ERROR,
-        } attribute_error_type;
+        enum error_enum attribute_error;
 
         enum {
             PLUS, // +

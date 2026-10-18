@@ -18,8 +18,13 @@ int run_parser()
     Token token;
     token.type = NONE;
 
-    while (token.type != ERROR && token.type != END_OF_FILE) {
+    while (token.type != END_OF_FILE) {
+
         token = get_token(&scanner, stdin);
+
+        if (token.type == ERROR) {
+            return token.attribute_error;
+        }
     }
 
     return 0;

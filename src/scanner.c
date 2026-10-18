@@ -6,6 +6,7 @@
  */
 
 #include "scanner.h"
+#include "shared.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,7 +123,7 @@ Token get_token(ScannerContext* context, FILE* stream)
     Token token;
 
     token.type = ERROR; // default setting to ERROR
-    token.attribute_error_type = LEXICAL_ERROR;
+    token.attribute_error = 1; // lexical error exit code
 
     clear_scanned_string(context->scanned_string);
 
@@ -135,9 +136,9 @@ Token get_token(ScannerContext* context, FILE* stream)
         } else {
             c = (char)fgetc(stream);
 
-            if (ferror(stream)) {
+            if (!ferror(stream)) {
                 token.type = ERROR;
-                token.attribute_error_type = INTERNAL_ERROR;
+                token.attribute_error = print_error(STREAM_READ_ERROR);
                 return token;
             }
 
@@ -253,7 +254,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 else {
                     token.type = ERROR;
-                    token.attribute_error_type = INTERNAL_ERROR;
+                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string);
                 }
 
                 return token;
@@ -375,7 +376,7 @@ Token get_token(ScannerContext* context, FILE* stream)
         if (result == 1) {
             // memory allocation fail
             token.type = ERROR;
-            token.attribute_error_type = INTERNAL_ERROR;
+            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned_string");
             return token;
         }
 

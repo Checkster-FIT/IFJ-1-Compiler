@@ -12,9 +12,11 @@ typedef struct {
     enum error_enum {
         // Scanner error
         SCANNER_INT_LEADING_ZERO,
+        SCANNER_UNKNOWN_OPERATOR,
         // Parser error
-        // Memory error
-        // Other
+        // Internal error
+        MEMORY_ALLOCATION_ERROR,
+        STREAM_READ_ERROR
     } id;
 
     char* message;
