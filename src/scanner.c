@@ -585,6 +585,30 @@ Token get_token(ScannerContext* context, FILE* stream)
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
 
+            case STATE_INTEGER:
+                if (c == '_')
+                    state = STATE_INTEGER_UNDERSCORE;
+                else if (c >= 0 && c <= 9)
+                    state = STATE_INTEGER;
+                else if (c == 'e' || c == 'E')
+                    state = STATE_DOUBLE_EXPONENT;
+                else if (c == '.')
+                    state = STATE_DECIMAL_POINT;
+                else {
+                    char* endptr;
+
+                    int value = strtol(context->scanned_string->chars, &endptr, 10);
+
+                    if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(CORRUPTED_MEMORY, state);
+                        return token;
+                    }
+
+                    token.type = INTEGER;
+                    token.attribute_int = value;
+                }
+
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
                 return token;
