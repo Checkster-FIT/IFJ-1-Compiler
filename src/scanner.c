@@ -858,7 +858,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_ASSIGNMENT:
 
-                if (c >= '=')
+                if (c == '=')
                     state = COMPARE;
                 else {
                     token.type = ASSIGNMENT;
@@ -869,6 +869,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_COMPARE:
 
+                token.type = COMPARE;
                 if (strcmp(context->scanned_string->chars, "==") == 0) {
                     token.attribute_compare_type = EQUAL;
                 } else if (strcmp(context->scanned_string->chars, "!=") == 0) {
@@ -885,6 +886,36 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
                 break;
+
+            // BRACKETS
+            case STATE_LEFT_BRACKET:
+                if (c == ')') {
+                    state = STATE_UNIT;
+                }else{
+                    token.type = LEFT_BRACKET;
+                    token.attribute_none = NULL;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+                break;
+
+
+            case STATE_RIGHT_BRACKET:
+
+                token.type = RIGHT_BRACKET;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+                break;
+
+            case STATE_UNIT:
+
+                token.type = UNIT;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+                break;
+
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
