@@ -191,7 +191,6 @@ Token get_token(ScannerContext* context, FILE* stream)
         switch (state) {
 
             /*TODO:
-             * r_curly_bracket:interpolo=true
              * multiline interpolated string
              */
             case STATE_START:
@@ -204,8 +203,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_AMPERSAND_1;
                 else if (c == '|')
                     state = STATE_OR_1;
-                else if (c == '+' || c == '-' || c == '*' || c == '!')
+                else if (c == '+' || c == '-' || c == '*')
                     state = STATE_OPERATOR;
+                else if (c == '!')
+                    state = STATE_EXCLAMATION_SYMBOL;
                 else if (c == 's')
                     state = STATE_CHARACTER_S;
                 else if ((c >= 'a' && c <= 'r') || (c >= 't' && c <= 'z') || (c >= 'A' && c <= 'Z'))
@@ -229,7 +230,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 else if (c == '\n')
                     state = STATE_LINE_FEED;
                 else if (c == '/')
-                    state = STATE_COMMENT_START;
+                    state = STATE_SLASH;
                 else if (c == '<' || c == '>')
                     state = STATE_LESSER_GREATER;
                 else if (c == '=')
@@ -278,25 +279,33 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 break;
 
+            case STATE_SLASH:
+                if (c == '/')
+                    state = STATE_COMMENT_START;
+                else if (c == '*')
+                    state = STATE_BLOCK_COMMENT_START;
+                else {
+                    token.type = OPERATOR;
+                    token.attribute_operation_type = DIVIDE;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
+                break;
+
+            case STATE_EXCLAMATION_SYMBOL:
+                if (c == '=')
+                    state = STATE_COMPARE;
+                else {
+                    token.type = OPERATOR;
+                    token.attribute_operation_type = NOT;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
             case STATE_OPERATOR:
 
                 char a = scanned_string_top(context->scanned_string);
-
-                // TODO
-                // if (a == '!' && c == '=') {
-                //     state = STATE_COMPARE;
-                //     break;
-                // }
-                //
-                // else if (a == '/' && c == '/') {
-                //     state = STATE_COMMENT_START;
-                //     break;
-                // }
-                //
-                // else if (a == '/' && c == '*') {
-                //     state = STATE_BLOCK_COMMENT_START;
-                //     break;
-                // }
 
                 token.type = OPERATOR;
 
@@ -306,15 +315,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.attribute_operation_type = MINUS;
                 else if (a == '*')
                     token.attribute_operation_type = MULTIPLY;
-                else if (a == '/')
-                    token.attribute_operation_type = DIVIDE;
-                // TODO:
                 else if (a == '&')
                     token.attribute_operation_type = AND;
                 else if (a == '|')
                     token.attribute_operation_type = OR;
-                else if (a == '!')
-                    token.attribute_operation_type = NOT;
 
                 else {
                     token.type = ERROR;
@@ -881,8 +885,6 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_COMPARE:
 
-                // TODO: what to do with != IN STATE_OPERATOR
-
                 token.type = COMPARE;
                 if (strcmp(context->scanned_string->chars, "==") == 0) {
                     token.attribute_compare_type = EQUAL;
@@ -903,9 +905,9 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             // BRACKETS
             case STATE_LEFT_BRACKET:
-                if (c == ')') {
+                if (c == ')')
                     state = STATE_UNIT;
-                } else {
+                else {
                     token.type = LEFT_BRACKET;
                     token.attribute_none = NULL;
 
@@ -929,7 +931,12 @@ Token get_token(ScannerContext* context, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;
 
-            // DECLARATION - COLON, COMMA
+            case STATE_RIGHT_CURLY_BRACKET:
+                context->inside_interpolated_string = true;
+                state = STATE_START;
+                continue; // } is no use for other parts of the compiler, we can ignore it
+
+            // DECLARATION - COLON, COMMA, AT
             case STATE_COLON:
 
                 token.type = DECLARATION_SIGN;
@@ -945,6 +952,15 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;
+
+            case STATE_AT_SYMBOL:
+                scanned_string_remove_last(context->scanned_string);
+
+                if (c == 'm' || c == 'a' || c == 'i' || c == 'n')
+                    state = STATE_AT_SYMBOL;
+                else {
+                    //TODO: return token
+                }
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);

@@ -120,6 +120,7 @@ typedef enum {
     STATE_AMPERSAND_1, // expecting second '&' for AND operator
     STATE_OR_1, // expecting second '|' for OR operator
     STATE_OPERATOR, // operator complete, resolve type:  +, -, *, &&, ||
+    STATE_EXCLAMATION_SYMBOL, // ! can be logical NOT or beginning of !=
 
     // strings
     STATE_STRING_WHICH, // select if standard string, empty string, or multiline string
