@@ -55,6 +55,15 @@ enum attribute_keyword {
     TYPE_KW,
 };
 
+enum attribute_compare_type {
+    EQUAL, // ==
+    NOT_EQUAL, // !=
+    LESS, // <
+    GREATER, // >
+    LESS_EQUAL, // <=
+    GREATER_EQUAL, // >=
+};
+
 typedef struct token {
     enum type_enum {
         NONE,
@@ -99,6 +108,7 @@ typedef struct token {
         enum error_enum attribute_error;
         enum attribute_keyword attribute_keyword;
         enum attribute_operation_type attribute_operation_type;
+        enum attribute_compare_type attribute_compare_type;
     };
 } Token;
 

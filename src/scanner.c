@@ -280,9 +280,15 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_OPERATOR:
 
+                char a = scanned_string_top(context->scanned_string);
+
+                if (a == '!' && c == '=') {
+                    state = STATE_COMPARE;
+                    break;
+                }
+
                 token.type = OPERATOR;
 
-                char a = scanned_string_top(context->scanned_string);
                 if (a == '+')
                     token.attribute_operation_type = PLUS;
                 else if (a == '-')
@@ -830,6 +836,54 @@ Token get_token(ScannerContext* context, FILE* stream)
                     return token;
                 }
 
+                break;
+
+            // COMPARISON
+            case STATE_LESSER_GREATER:
+
+                if (c == '=')
+                    state = COMPARE;
+                else {
+                    token.type = GREATER_LESSER_THAN;
+                    char op = scanned_string_top(context->scanned_string);
+                    if (op == '<')
+                        token.attribute_compare_type = LESS;
+                    else if (op == '>')
+                        token.attribute_compare_type = GREATER;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
+                break;
+
+            case STATE_ASSIGNMENT:
+
+                if (c >= '=')
+                    state = COMPARE;
+                else {
+                    token.type = ASSIGNMENT;
+                    RETURN_TOKEN_AND_SET_READ_BUFFER;
+                }
+
+                break;
+
+            case STATE_COMPARE:
+
+                if (strcmp(context->scanned_string->chars, "==") == 0) {
+                    token.attribute_compare_type = EQUAL;
+                } else if (strcmp(context->scanned_string->chars, "!=") == 0) {
+                    token.attribute_compare_type = NOT_EQUAL;
+                } else if (strcmp(context->scanned_string->chars, ">=") == 0) {
+                    token.attribute_compare_type = GREATER_EQUAL;
+                } else if (strcmp(context->scanned_string->chars, "<=") == 0) {
+                    token.attribute_compare_type = LESS_EQUAL;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(CORRUPTED_MEMORY, state);
+                    return token;
+                }
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER;
                 break;
 
             default:
