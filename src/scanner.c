@@ -282,10 +282,21 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 char a = scanned_string_top(context->scanned_string);
 
-                if (a == '!' && c == '=') {
-                    state = STATE_COMPARE;
-                    break;
-                }
+                // TODO
+                // if (a == '!' && c == '=') {
+                //     state = STATE_COMPARE;
+                //     break;
+                // }
+                //
+                // else if (a == '/' && c == '/') {
+                //     state = STATE_COMMENT_START;
+                //     break;
+                // }
+                //
+                // else if (a == '/' && c == '*') {
+                //     state = STATE_BLOCK_COMMENT_START;
+                //     break;
+                // }
 
                 token.type = OPERATOR;
 
@@ -297,6 +308,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.attribute_operation_type = MULTIPLY;
                 else if (a == '/')
                     token.attribute_operation_type = DIVIDE;
+                // TODO:
                 else if (a == '&')
                     token.attribute_operation_type = AND;
                 else if (a == '|')
@@ -842,7 +854,7 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_LESSER_GREATER:
 
                 if (c == '=')
-                    state = COMPARE;
+                    state = STATE_COMPARE;
                 else {
                     token.type = GREATER_LESSER_THAN;
                     char op = scanned_string_top(context->scanned_string);
@@ -859,7 +871,7 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_ASSIGNMENT:
 
                 if (c == '=')
-                    state = COMPARE;
+                    state = STATE_COMPARE;
                 else {
                     token.type = ASSIGNMENT;
                     RETURN_TOKEN_AND_SET_READ_BUFFER;
@@ -868,6 +880,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_COMPARE:
+
+                // TODO: what to do with != IN STATE_OPERATOR
 
                 token.type = COMPARE;
                 if (strcmp(context->scanned_string->chars, "==") == 0) {
@@ -891,14 +905,13 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_LEFT_BRACKET:
                 if (c == ')') {
                     state = STATE_UNIT;
-                }else{
+                } else {
                     token.type = LEFT_BRACKET;
                     token.attribute_none = NULL;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
                 break;
-
 
             case STATE_RIGHT_BRACKET:
 
@@ -916,6 +929,22 @@ Token get_token(ScannerContext* context, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;
 
+            // DECLARATION - COLON, COMMA
+            case STATE_COLON:
+
+                token.type = DECLARATION_SIGN;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+                break;
+
+            case STATE_COMMA:
+
+                token.type = COMMA;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+                break;
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
