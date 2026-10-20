@@ -181,8 +181,6 @@ typedef enum {
     // alphabet
     STATE_IDENTIFIER,
     STATE_UNDERSCORE_IDENTIFIER,
-    STATE_KEYWORD,
-    STATE_BOOLEAN,
 
     // interpolates
     STATE_CHARACTER_S,

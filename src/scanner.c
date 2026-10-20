@@ -959,8 +959,37 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c == 'm' || c == 'a' || c == 'i' || c == 'n')
                     state = STATE_AT_SYMBOL;
                 else {
-                    //TODO: return token
+                    // TODO: return token
                 }
+
+            case STATE_LINE_FEED:
+
+                if (c == '\n') {
+                    state = STATE_LINE_FEED;
+                } else if (c == ' ') {
+                    clear_scanned_string(context->scanned_string);
+                    state = STATE_INDENT;
+                } else {
+                    token.type = LINE_FEED;
+                    token.attribute_none = NULL;
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
+                break;
+
+            case STATE_INDENT:
+
+                if (c == ' ') {
+                    state = STATE_INDENT;
+                } else if (c == '\n' || c == EOF) {
+                    state = STATE_LINE_FEED;
+                } else {
+                    token.type = INDENT;
+                    token.attribute_int = context->scanned_string->len;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+                break;
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
