@@ -58,6 +58,9 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "End the string properly first";
             error.code = 1;
             break;
+        case SCANNER_INVALID_BLOCK_COMMENT:
+            error.message = "A block comment needs to be ended before end of the file";
+            error.code = 1;
         case SCANNER_INVALID_IDENTIFIER:
             error.message = "'%s' is not a valid identifier";
             error.fix = "An identifier can only contain letters, digits, and underscore. It begins with a letter or an underscore. The underscore itself is not a valid identifier";

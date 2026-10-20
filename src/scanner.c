@@ -302,6 +302,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
+                break;
 
             case STATE_OPERATOR:
 
@@ -969,6 +970,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                 } else if (c == ' ') {
                     clear_scanned_string(context->scanned_string);
                     state = STATE_INDENT;
+                } else if (c == EOF) {
+                    token.type = END_OF_FILE;
+                    token.attribute_none = NULL;
+                    return token;
                 } else {
                     token.type = LINE_FEED;
                     token.attribute_none = NULL;
@@ -989,6 +994,80 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
+                break;
+
+            // BLOCK COMMENT
+            case STATE_COMMENT_START:
+
+                if (c == '\n' || c == EOF) {
+                    state = STATE_LINE_FEED;
+                } else {
+                    state = STATE_COMMENT_START;
+                }
+                break;
+
+            case STATE_BLOCK_COMMENT_START:
+
+                if (c == 'EOF') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
+                    return token;
+                }
+                if (c == '/') {
+                    state = STATE_ANOTHER_BLOCK_COMMENT_START;
+                } else if (c == '\n') {
+                    context->lf_inside_block_comment = true;
+                    state = STATE_BLOCK_COMMENT_START;
+                } else if (c == '*') {
+                    state = STATE_ANOTHER_BLOCK_COMMENT_END;
+                } else {
+                    state = STATE_BLOCK_COMMENT_START;
+                }
+                break;
+
+            case STATE_ANOTHER_BLOCK_COMMENT_START:
+
+                if (c == 'EOF') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
+                    return token;
+                }
+                if (c == '*') {
+                    context->block_comment_counter++;
+                    state = STATE_BLOCK_COMMENT_START;
+                } else {
+                    state = STATE_BLOCK_COMMENT_START;
+                }
+                break;
+
+            case STATE_ANOTHER_BLOCK_COMMENT_END:
+
+                if (c == 'EOF') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
+                    return token;
+                }
+                if (c == '/' && context->block_comment_counter != 0) {
+                    context->block_comment_counter--;
+                    state = STATE_BLOCK_COMMENT_START;
+                }
+
+                else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == false) {
+                    state = STATE_BLOCK_COMMENT_END_WITHOUT_LF;
+                } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == true) {
+                    state = STATE_BLOCK_COMMENT_END_WITH_LF;
+                } else {
+                    state = STATE_BLOCK_COMMENT_START;
+                }
+                break;
+
+            // not done
+            case STATE_BLOCK_COMMENT_END_WITHOUT_LF:
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+                break;
+
+            case STATE_BLOCK_COMMENT_END_WITH_LF:
+                RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;
 
             default:

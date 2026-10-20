@@ -190,8 +190,6 @@ typedef enum {
     STATE_STRING_INTERPOLATION_ESCAPE,
     STATE_STRING_INTERPOLATION_END,
 
-    STATE_END_OF_FILE,
-
 } State;
 
 typedef struct {
@@ -206,6 +204,8 @@ typedef struct {
     ScannedString* scanned_string;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
+    bool lf_inside_block_comment;
+    int block_comment_counter;
 } ScannerContext;
 
 /**
