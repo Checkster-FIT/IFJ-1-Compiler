@@ -1,11 +1,11 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
- * @file    shared.c
- * @brief   Contains shared logic used across modules (error handling, ...)
+ * @file    error.c
+ * @brief   Contains error handling logic used across modules
  * @author  Filip Hajdusek (xhajduf00)
  */
 
-#include "shared.h"
+#include "error.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -61,6 +61,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         case SCANNER_INVALID_BLOCK_COMMENT:
             error.message = "A block comment needs to be ended before end of the file";
             error.code = 1;
+            break;
         case SCANNER_INVALID_IDENTIFIER:
             error.message = "'%s' is not a valid identifier";
             error.fix = "An identifier can only contain letters, digits, and underscore. It begins with a letter or an underscore. The underscore itself is not a valid identifier";

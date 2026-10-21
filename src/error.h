@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
- * @file    shared.h
- * @brief   Contains shared logic used across modules (error handling, ...)
+ * @file    error.h
+ * @brief   Contains error handling logic used across modules
  * @author  Filip Hajdusek (xhajduf00)
  */
 

@@ -6,10 +6,15 @@
  */
 
 #include "parser.h"
-#include "scanner.h"
+#include "shared_data.h"
 
 int main()
 {
-    const int status = run_parser();
-    return status;
+    SharedData data;
+    init_shared_data(&data);
+
+    const int exit_code = run_parser(&data);
+
+    destroy_shared_data(&data);
+    return exit_code;
 }

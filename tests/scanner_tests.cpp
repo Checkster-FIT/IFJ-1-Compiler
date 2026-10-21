@@ -16,7 +16,8 @@ extern "C" {
 class scanner : public ::testing::Test {
 protected:
     FILE* tmp_input = nullptr; // Temporary input file for stdin emulation
-    ScannerContext scanner_context = {};
+    ScannerContext scanner_context = { };
+    SharedData data = { };
 
     /** @brief Prepares an input stream for each scanner test */
     void SetUp() override
@@ -25,6 +26,7 @@ protected:
         ASSERT_NE(tmp_input, nullptr);
 
         init_scanner(&scanner_context);
+        init_shared_data(&data);
     }
 
     /** @brief Closes the input stream after each scanner test */
@@ -33,6 +35,9 @@ protected:
         if (tmp_input != nullptr) {
             fclose(tmp_input);
         }
+
+        destroy_scanner(&scanner_context);
+        destroy_shared_data(&data);
     }
 
     /**
@@ -59,7 +64,7 @@ protected:
         scanner_input(string);
         for (const auto desired_token : expected_tokens) {
 
-            const Token token = get_token(&scanner_context, tmp_input);
+            const Token token = get_token(&scanner_context, &data, tmp_input);
             // printf("Token type: %d\n", token.type);
 
             EXPECT_EQ(token.type, desired_token.type);

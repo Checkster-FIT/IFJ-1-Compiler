@@ -16,7 +16,8 @@
 #define IS_BOOLEAN_VALUE_TRUE 12
 #define IS_BOOLEAN_VALUE_FALSE 13
 
-#include "shared.h"
+#include "error.h"
+#include "shared_data.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -213,10 +214,11 @@ typedef struct {
  * @brief FSM reads characters and identifies tokens.
  *
  * @param context Pointer to the scanner context (variables and pointers that the scanner needs to remember between individual tokens).
+ * @param data Shared compiler data (variables and pointers used across multiple modules)
  * @param stream Input file stream to read from.
  * @return Token representing current lexeme.
  */
-Token get_token(ScannerContext* context, FILE* stream);
+Token get_token(ScannerContext* context, SharedData* data, FILE* stream);
 
 /**
  * @brief Initializes whole scanner_context.

@@ -6,7 +6,7 @@
  */
 
 #include "scanner.h"
-#include "shared.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +85,7 @@ int resize_scanned_string(ScannedString* string)
     const size_t new_capacity = string->capacity * 2;
     char* new_string = realloc(string->chars, sizeof(char) * new_capacity);
     if (!new_string) {
-        // realloc error0
+        // realloc error
         return 1;
     }
 
@@ -157,7 +157,7 @@ int check_identifier_for_kw(ScannedString* string)
     return IS_IDENTIFIER;
 }
 
-Token get_token(ScannerContext* context, FILE* stream)
+Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 {
     State state = STATE_START;
     Token token;

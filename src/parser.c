@@ -6,10 +6,11 @@
  */
 
 #include "parser.h"
+#include "shared_data.h"
 #include "scanner.h"
 #include <stdio.h>
 
-int run_parser()
+int run_parser(SharedData* data)
 {
     // Create the scanner context for variables persisting token reading
     ScannerContext scanner;
@@ -20,7 +21,7 @@ int run_parser()
 
     while (token.type != END_OF_FILE) {
 
-        token = get_token(&scanner, stdin);
+        token = get_token(&scanner, data, stdin);
 
         if (token.type == ERROR) {
             destroy_scanner(&scanner);
