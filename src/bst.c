@@ -7,10 +7,15 @@
 
 #include "bst.h"
 
-TNode* TreeInit()
+RBTree* TreeInit(int(*cmp)(void* a, void* b))
 {
-    TNode* node = NULL;
-    return node;
+    RBTree* tree = (RBTree*)malloc(sizeof(RBTree));
+    if (tree == NULL) {
+        return NULL;
+    }
+    tree->root = NULL;
+    tree->cmp = cmp;
+    return tree;
 }
 
 TNode* NodeCreate(void* key, void* value)
@@ -73,4 +78,42 @@ void* FlipColor(TNode* node)
         node->left->color = BLACK;
         node->right->color = BLACK;
     }
+}
+
+void* TreeInsert(RBTree* tree, void* key, void* value)
+{
+    if (tree == NULL) {
+        return NULL;
+    }
+    tree->root = RecursiveInsert(tree->root, key, value, tree->cmp);
+}
+
+TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*))
+{
+    if (node == NULL) {
+        node = NodeCreate(key, value);
+        return node;
+    }
+    int cmp_outcome = cmp(key, node->key);
+
+    if (cmp_outcome < 0) {
+        node->left = RecursiveInsert(node->left, key, value, cmp);
+
+    } else if (cmp_outcome > 0) {
+        node->right = RecursiveInsert(node->right, key, value, cmp);
+    } else {
+        node->value = value;
+        return node; // DUPLICATE KEY WHAT TO DO???
+    }
+
+    if (ColorCheck(node->right) == RED && ColorCheck(node->left) == BLACK) {
+        node = RotateLeft(node);
+    }
+    if (ColorCheck(node->left) == RED && ColorCheck(node->left->left) == RED) {
+        node = RotateRight(node);
+    }
+    if (ColorCheck(node->left) == RED && ColorCheck(node->right) == RED) {
+        FlipColor(node);
+    }
+    return node;
 }

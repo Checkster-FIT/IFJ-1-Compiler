@@ -19,13 +19,13 @@ typedef enum {
     RED = 1
 } NodeColor;
 
+
 /**
  * @brief Structure representing a node in a RB tree
  *
  * Each node holds pointer to the key and the value stored in the node, color of the
  * node and pointers to its left and right children.
  */
-
 typedef struct tnode_s {
     void* key; // pointer to the key of this node
     void* value; // pointer to the value of this node
@@ -36,13 +36,21 @@ typedef struct tnode_s {
 } TNode;
 
 /**
+ * @brief Structure representing the tree.
+ */
+typedef struct rbtree_s {
+    TNode* root;
+    int (*cmp)(void* a, void* b);
+} RBTree;
+
+/**
  * @brief Tree initialization
  *
  * @return Null pointer
  *
  * Used to start the tree
  */
-TNode* TreeInit();
+RBTree* TreeInit(int (*cmp)(void*, void*));
 
 /**
  * @brief Node creation
@@ -85,5 +93,24 @@ TNode* RotateRight(TNode* node);
  * @param node The node whose color is being changed.
  */
 void* FlipColor(TNode* node);
+
+/**
+ * @brief Inserts new node into tree.
+ *
+ * @param tree The tree being inserted into.
+ * @param key Key of the data being inserted.
+ * @param value Value of the data being inserted.
+ */
+
+void* TreeInsert(RBTree* tree, void* key, void* value);
+
+/**
+ * @brief Recursively travel the tree and insert the node in its correct place.
+ *
+ * @param node The node being inserted.
+ * @param key Key of the data being inserted.
+ * @param value Value of the data being inserted.
+ */
+TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*));
 
 #endif // IFJ_1_COMPILER_BST_H
