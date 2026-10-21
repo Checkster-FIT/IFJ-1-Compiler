@@ -71,7 +71,7 @@ protected:
 
             switch (token.type) {
                 case Token::IDENTIFIER:
-                    EXPECT_STREQ(token.attribute_str_ptr, desired_token.attribute_str_ptr);
+                    EXPECT_STREQ(get_identifier(&data, token.attribute_str_idx), desired_token.attribute_str_ptr);
                     break;
                 case Token::INTEGER:
                     EXPECT_EQ(token.attribute_int, desired_token.attribute_int);

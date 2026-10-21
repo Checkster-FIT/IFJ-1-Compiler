@@ -170,6 +170,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
     while (1) {
 
         char c;
+        int result;
 
         if (context->read_buffer) {
             c = context->scanned_char_buffer;
@@ -306,9 +307,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_OPERATOR:
 
-                char a = scanned_string_top(context->scanned_string);
-
                 token.type = OPERATOR;
+
+                char a = scanned_string_top(context->scanned_string);
 
                 if (a == '+')
                     token.attribute_operation_type = PLUS;
@@ -393,8 +394,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 scanned_string_remove_last(context->scanned_string);
                 token.type = STRING;
-                // TODO: how to pass s string to parser?
-                token.attribute_str_ptr = NULL;
+
+                result = add_string(data, context->scanned_string->chars);
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned string");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
@@ -463,8 +472,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 scanned_string_remove_last(context->scanned_string);
 
                 token.type = MULTILINE_STRING;
-                // TODO: how to pass a string to parser?
-                token.attribute_str_ptr = NULL;
+
+                result = add_string(data, context->scanned_string->chars);
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned multiline string");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
@@ -479,7 +496,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_IDENTIFIER;
                 else {
                     token.type = IDENTIFIER;
-                    token.attribute_str_ptr = NULL;
+
+                    result = add_identifier(data, context->scanned_string->chars);
+                    if (result == -1) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+
+                        return token;
+                    }
+
+                    token.attribute_str_idx = result;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -520,8 +546,18 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 if (c == '{')
                     state = STATE_STRING_INTERPOLATION_EXPRESSION;
                 else {
+                    // pointer to the whole string before $
                     token.type = STRING_INTERPOLATION;
-                    token.attribute_str_ptr = NULL; // pointer to the whole string before $
+
+                    result = add_string(data, context->scanned_string->chars);
+                    if (result == -1) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+
+                        return token;
+                    }
+
+                    token.attribute_str_idx = result;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -535,7 +571,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 scanned_string_remove_last(context->scanned_string); // removes {
 
                 token.type = STRING_INTERPOLATION;
-                token.attribute_str_ptr = NULL; // pointer to the whole string before {
+                // pointer to the whole string before {
+                result = add_string(data, context->scanned_string->chars);
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
@@ -546,7 +591,17 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 scanned_string_remove_last(context->scanned_string); // removes "
 
                 token.type = STRING_INTERPOLATION_END;
-                token.attribute_str_ptr = NULL; // pointer to the whole string before "
+
+                // pointer to the whole string before "
+                result = add_string(data, context->scanned_string->chars);
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
@@ -586,10 +641,20 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_IDENTIFIER;
                 else {
 
-                    int result = check_identifier_for_kw(context->scanned_string);
+                    result = check_identifier_for_kw(context->scanned_string);
                     if (result == IS_IDENTIFIER) {
                         token.type = IDENTIFIER;
-                        token.attribute_str_ptr = context->scanned_string->chars;
+                        // pointer to the whole string before {
+                        result = add_identifier(data, context->scanned_string->chars);
+                        if (result == -1) {
+                            token.type = ERROR;
+                            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+
+                            return token;
+                        }
+
+                        token.attribute_str_idx = result;
+
                     } else if (result == IS_BOOLEAN_VALUE_TRUE) {
                         token.type = BOOLEAN;
                         token.attribute_bool = true;
@@ -961,8 +1026,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_AT_SYMBOL;
                 else {
                     token.type = IDENTIFIER;
-                    // TODO: how to pass s string to parser?
-                    token.attribute_str_ptr = NULL;
+
+                    result = add_identifier(data, context->scanned_string->chars);
+                    if (result == -1) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+
+                        return token;
+                    }
+
+                    token.attribute_str_idx = result;
                 }
 
             case STATE_LINE_FEED:
@@ -1090,7 +1163,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
         }
 
         // put character into the buffer
-        int result = scanned_string_append(context->scanned_string, c);
+        result = scanned_string_append(context->scanned_string, c);
 
         if (result == 1) {
             // memory allocation fail

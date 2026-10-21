@@ -91,9 +91,10 @@ GTEST_OBJ = ./tests/testing.o
 GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
 $(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
-	@gcc -Isrc -c src/shared.c -o ./tests/shared.o
+	@gcc -Isrc -c src/error.c -o ./tests/error.o
+	@gcc -Isrc -c src/shared_data.c -o ./tests/shared_data.o
 	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) ./tests/shared.o $(GTEST_FLAGS) -o $(TEST_EXEC)
+	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) ./tests/error.o ./tests/shared_data.o $(GTEST_FLAGS) -o $(TEST_EXEC)
 	@rm -f $(GTEST_OBJ)
 
 test: $(TEST_EXEC)

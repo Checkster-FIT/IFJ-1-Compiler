@@ -102,6 +102,7 @@ typedef struct token {
     union {
         long attribute_int;
         double attribute_double;
+        int attribute_str_idx;
         const char* attribute_str_ptr;
         bool attribute_bool;
         void* attribute_none;
