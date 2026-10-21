@@ -79,4 +79,11 @@ TNode* RotateLeft(TNode* node);
  */
 TNode* RotateRight(TNode* node);
 
+/**
+ * @brief Performs a color flip on the node.
+ *
+ * @param node The node whose color is being changed.
+ */
+void* FlipColor(TNode* node);
+
 #endif // IFJ_1_COMPILER_BST_H

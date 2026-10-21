@@ -65,3 +65,12 @@ TNode* RotateRight(TNode* node)
     parent->color = RED;
     return node;
 }
+
+void* FlipColor(TNode* node)
+{
+    if (node->left->color == RED && node->right->color == RED) {
+        node->color = RED;
+        node->left->color = BLACK;
+        node->right->color = BLACK;
+    }
+}
