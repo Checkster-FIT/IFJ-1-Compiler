@@ -67,6 +67,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "An identifier can only contain letters, digits, and underscore. It begins with a letter or an underscore. The underscore itself is not a valid identifier";
             error.code = 1;
             break;
+        case SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS:
+            error.message = "A block comment cannot be followed by non-whitespace characters on the same line: '%s'";
+            error.fix = "Remove the characters between the block comment and end of line";
+            error.code = 1;
+            break;
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
             error.code = 99;

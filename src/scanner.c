@@ -246,9 +246,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     token.type = END_OF_FILE;
                     token.attribute_none = NULL;
                     return token;
-                }
-
-                else {
+                } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
                     return token;
@@ -959,10 +957,12 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_AT_SYMBOL:
                 scanned_string_remove_last(context->scanned_string);
 
-                if (c == 'm' || c == 'a' || c == 'i' || c == 'n')
+                if (c >= 'a' && c <= 'z')
                     state = STATE_AT_SYMBOL;
                 else {
-                    // TODO: return token
+                    token.type = IDENTIFIER;
+                    // TODO: how to pass s string to parser?
+                    token.attribute_str_ptr = NULL;
                 }
 
             case STATE_LINE_FEED:
@@ -1052,9 +1052,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 if (c == '/' && context->block_comment_counter != 0) {
                     context->block_comment_counter--;
                     state = STATE_BLOCK_COMMENT_START;
-                }
-
-                else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == false) {
+                } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == false) {
                     state = STATE_BLOCK_COMMENT_END_WITHOUT_LF;
                 } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == true) {
                     state = STATE_BLOCK_COMMENT_END_WITH_LF;
@@ -1063,14 +1061,28 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 }
                 break;
 
-            // TODO:
             case STATE_BLOCK_COMMENT_END_WITHOUT_LF:
-                RETURN_TOKEN_AND_SET_READ_BUFFER
+                clear_scanned_string(context->scanned_string);
+                state = STATE_START;
+                continue;
+
+            // TODO: is \r ok as allowed whitespace?
+            case STATE_BLOCK_COMMENT_END_WITH_LF:
+                // between block comment and new line character can be whitespace characters
+                if (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r')
+                    state = STATE_AFTER_BLOCK_COMMENT_END;
+                else if (c == '\n') {
+                    state = STATE_LINE_FEED;
+                } else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS, context->scanned_string->chars);
+                    return token;
+                }
+
                 break;
 
-            case STATE_BLOCK_COMMENT_END_WITH_LF:
-                RETURN_TOKEN_AND_SET_READ_BUFFER
-                break;
+            // TODO: continue here:
+            case STATE_AFTER_BLOCK_COMMENT_END:
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
