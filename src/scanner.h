@@ -12,6 +12,10 @@
     context->read_buffer = true;         \
     return token;
 
+#define IS_IDENTIFIER (-1)
+#define IS_BOOLEAN_VALUE_TRUE 12
+#define IS_BOOLEAN_VALUE_FALSE 13
+
 #include "shared_data.h"
 #include "shared.h"
 #include <stdbool.h>
@@ -42,6 +46,23 @@ enum attribute_keyword {
     VAL_KW,
     VAR_KW,
     WHILE_KW,
+    BOOLEAN_KW,
+    CASE_KW,
+    CLASS_KW,
+    EXTENSION_KW,
+    FOR_KW,
+    LIST_KW,
+    MATCH_KW,
+    TYPE_KW,
+};
+
+enum attribute_compare_type {
+    EQUAL, // ==
+    NOT_EQUAL, // !=
+    LESS, // <
+    GREATER, // >
+    LESS_EQUAL, // <=
+    GREATER_EQUAL, // >=
 };
 
 typedef struct token {
@@ -79,7 +100,7 @@ typedef struct token {
     } type;
 
     union {
-        int attribute_int;
+        long attribute_int;
         double attribute_double;
         const char* attribute_str_ptr;
         bool attribute_bool;
@@ -88,6 +109,7 @@ typedef struct token {
         enum error_enum attribute_error;
         enum attribute_keyword attribute_keyword;
         enum attribute_operation_type attribute_operation_type;
+        enum attribute_compare_type attribute_compare_type;
     };
 } Token;
 
@@ -99,6 +121,7 @@ typedef enum {
     STATE_AMPERSAND_1, // expecting second '&' for AND operator
     STATE_OR_1, // expecting second '|' for OR operator
     STATE_OPERATOR, // operator complete, resolve type:  +, -, *, &&, ||
+    STATE_EXCLAMATION_SYMBOL, // ! can be logical NOT or beginning of !=
 
     // strings
     STATE_STRING_WHICH, // select if standard string, empty string, or multiline string
@@ -159,8 +182,6 @@ typedef enum {
     // alphabet
     STATE_IDENTIFIER,
     STATE_UNDERSCORE_IDENTIFIER,
-    STATE_KEYWORD,
-    STATE_BOOLEAN,
 
     // interpolates
     STATE_CHARACTER_S,
@@ -169,8 +190,6 @@ typedef enum {
     STATE_STRING_INTERPOLATION_EXPRESSION,
     STATE_STRING_INTERPOLATION_ESCAPE,
     STATE_STRING_INTERPOLATION_END,
-
-    STATE_END_OF_FILE,
 
 } State;
 
@@ -186,6 +205,8 @@ typedef struct {
     ScannedString* scanned_string;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
+    bool lf_inside_block_comment;
+    int block_comment_counter;
 } ScannerContext;
 
 /**
@@ -264,5 +285,13 @@ char scanned_string_top(const ScannedString* string);
  * @param string Pointer to the scanned string.
  */
 void dispose_scanned_string(ScannedString* string);
+
+/**
+ * @brief Compares scanned string with the list of keywords for match.
+ *
+ * @param string Pointer to the scanned string.
+ * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
+ */
+int check_identifier_for_kw(ScannedString* string);
 
 #endif // IFJ_1_COMPILER_SCANNER_H
