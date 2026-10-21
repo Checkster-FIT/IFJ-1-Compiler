@@ -6,7 +6,7 @@
  */
 
 #include "scanner.h"
-#include "shared.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1063,7 +1063,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 }
                 break;
 
-            //TODO:
+            // TODO:
             case STATE_BLOCK_COMMENT_END_WITHOUT_LF:
                 RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;

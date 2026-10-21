@@ -16,8 +16,8 @@
 #define IS_BOOLEAN_VALUE_TRUE 12
 #define IS_BOOLEAN_VALUE_FALSE 13
 
+#include "error.h"
 #include "shared_data.h"
-#include "shared.h"
 #include <stdbool.h>
 #include <stdio.h>
 

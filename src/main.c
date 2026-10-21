@@ -14,5 +14,7 @@ int main()
     init_shared_data(&data);
 
     const int exit_code = run_parser(&data);
+
+    destroy_shared_data(&data);
     return exit_code;
 }
