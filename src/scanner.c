@@ -85,7 +85,7 @@ int resize_scanned_string(ScannedString* string)
     const size_t new_capacity = string->capacity * 2;
     char* new_string = realloc(string->chars, sizeof(char) * new_capacity);
     if (!new_string) {
-        // realloc error
+        // realloc error0
         return 1;
     }
 
@@ -189,7 +189,6 @@ Token get_token(ScannerContext* context, FILE* stream)
 
         // FSM transitions
         switch (state) {
-
             /*TODO:
              * multiline interpolated string
              */
@@ -243,8 +242,11 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_RIGHT_CURLY_BRACKET;
                 else if (c == ' ' && context->beginning_of_file == true)
                     state = STATE_INDENT;
-                else if (c == EOF)
-                    state = STATE_END_OF_FILE;
+                else if (c == EOF) {
+                    token.type = END_OF_FILE;
+                    token.attribute_none = NULL;
+                    return token;
+                }
 
                 else {
                     token.type = ERROR;
@@ -1008,7 +1010,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_BLOCK_COMMENT_START:
 
-                if (c == 'EOF') {
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
                     return token;
@@ -1027,7 +1029,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_ANOTHER_BLOCK_COMMENT_START:
 
-                if (c == 'EOF') {
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
                     return token;
@@ -1042,7 +1044,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             case STATE_ANOTHER_BLOCK_COMMENT_END:
 
-                if (c == 'EOF') {
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
                     return token;
@@ -1061,7 +1063,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 }
                 break;
 
-            // not done
+            //TODO:
             case STATE_BLOCK_COMMENT_END_WITHOUT_LF:
                 RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;
