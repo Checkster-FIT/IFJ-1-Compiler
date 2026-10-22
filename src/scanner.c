@@ -190,9 +190,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
         // FSM transitions
         switch (state) {
-            /*TODO:
-             * multiline interpolated string
-             */
             case STATE_START:
 
                 if (context->inside_interpolated_string == true && c != EOF && c != '\n' && c != '"')
@@ -376,6 +373,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_STRING_ESCAPE:
 
+                scanned_string_remove_last(context->scanned_string); // remove '\'
+
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_BEGIN;
                 else if (c == '\n') {
@@ -558,6 +557,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE:
+
+                scanned_string_remove_last(context->scanned_string); // remove '\'
+
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
@@ -618,7 +620,51 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
-                // TODO: continue with m s i end 1-3
+            case STATE_MULTILINE_STRING_INTERPOLATION_END_1:
+                if (c == EOF) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                } else if (c == '"') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_END_2;
+                } else
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+
+                break;
+
+            case STATE_MULTILINE_STRING_INTERPOLATION_END_2:
+                if (c == EOF) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                } else if (c == '"') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_END_3;
+                } else
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+
+                break;
+
+            case STATE_MULTILINE_STRING_INTERPOLATION_END_3:
+                context->inside_interpolated_string = false;
+                // remove tailing """
+                for (int i = 0; i < 3; i++) {
+                    scanned_string_remove_last(context->scanned_string);
+                }
+
+                token.type = MULTILINE_STRING_INTERPOLATION_END;
+
+                result = add_string(data, context->scanned_string->chars);
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "multiline string interpolation");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER;
+
 
             case STATE_STRING_INTERPOLATION:
 
@@ -715,7 +761,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_STRING_INTERPOLATION_ESCAPE:
 
-                scanned_string_remove_last(context->scanned_string); // removes '\'
+                scanned_string_remove_last(context->scanned_string); // remove '\'
 
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_INTERPOLATION;
@@ -829,6 +875,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DECIMAL_POINT;
                 else if (c >= '1' && c <= '9')
                     state = STATE_DOUBLE_WHOLE_NUMBER;
+                else if (c == '_')
+                    state = STATE_DOUBLE_WHOLE_NUMBER_UNDERSCORE;
                 else {
                     token.type = INTEGER;
                     token.attribute_int = 0;
@@ -1216,7 +1264,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     return token;
                 }
                 if (c == '*') {
-                    context->block_comment_counter++;
+                    context->block_comment_counter += 1;
                     state = STATE_BLOCK_COMMENT_START;
                 } else {
                     state = STATE_BLOCK_COMMENT_START;
@@ -1231,7 +1279,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     return token;
                 }
                 if (c == '/' && context->block_comment_counter != 0) {
-                    context->block_comment_counter--;
+                    context->block_comment_counter -= 1;
                     state = STATE_BLOCK_COMMENT_START;
                 } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == false) {
                     state = STATE_BLOCK_COMMENT_END_WITHOUT_LF;
@@ -1247,11 +1295,10 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 state = STATE_START;
                 continue;
 
-            // TODO: is \r ok as allowed whitespace?
             case STATE_BLOCK_COMMENT_END_WITH_LF:
-                // between block comment and new line character can be whitespace characters
+                // between block comment and new line character can only be whitespace characters
                 if (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r')
-                    state = STATE_AFTER_BLOCK_COMMENT_END;
+                    state = STATE_BLOCK_COMMENT_END_WITH_LF;
                 else if (c == '\n') {
                     state = STATE_LINE_FEED;
                 } else {
@@ -1261,9 +1308,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 }
 
                 break;
-
-            // TODO: continue here:
-            case STATE_AFTER_BLOCK_COMMENT_END:
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
