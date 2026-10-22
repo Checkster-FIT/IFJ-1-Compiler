@@ -171,6 +171,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
         char c;
         int result;
+        char* end_ptr;
 
         if (context->read_buffer) {
             c = context->scanned_char_buffer;
@@ -240,6 +241,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_RIGHT_CURLY_BRACKET;
                 else if (c == ' ' && context->beginning_of_file == true)
                     state = STATE_INDENT;
+                else if (c == ' ' && context->beginning_of_file == false)
+                    continue;
                 else if (c == EOF) {
                     token.type = END_OF_FILE;
                     token.attribute_none = NULL;
@@ -665,7 +668,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
-
             case STATE_STRING_INTERPOLATION:
 
                 context->inside_interpolated_string = true;
@@ -784,7 +786,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_IDENTIFIER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_IDENTIFIER, '_');
+                    token.attribute_error = print_error(SCANNER_INVALID_IDENTIFIER, "_");
                     return token;
                 }
 
@@ -833,18 +835,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_INTEGER:
                 if (c == '_')
                     state = STATE_INTEGER_UNDERSCORE;
-                else if (c >= 0 && c <= 9)
+                else if (c >= '0' && c <= '9')
                     state = STATE_INTEGER;
                 else if (c == 'e' || c == 'E')
                     state = STATE_DOUBLE_EXPONENT;
                 else if (c == '.')
                     state = STATE_DECIMAL_POINT;
                 else {
-                    char* endptr;
+                    long value = strtol(context->scanned_string->chars, &end_ptr, 10);
 
-                    long value = strtol(context->scanned_string->chars, &endptr, 10);
-
-                    if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                    if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                         token.type = ERROR;
                         token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
                         return token;
@@ -852,6 +852,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                     token.type = INTEGER;
                     token.attribute_int = value;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
 
                 break;
@@ -890,7 +892,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 scanned_string_remove_last(context->scanned_string); // remove _
 
-                if (c >= 0 && c <= 9)
+                if (c >= '0' && c <= '9')
                     state = STATE_INTEGER;
                 else if (c == '_')
                     state = STATE_INTEGER_UNDERSCORE;
@@ -924,8 +926,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_EXPONENT;
                 else {
                     token.type = ERROR;
-                    char* endptr;
-                    long valid_alternative = strtol(context->scanned_string->chars, &endptr, 10);
+                    long valid_alternative = strtol(context->scanned_string->chars, &end_ptr, 10);
                     token.attribute_error = print_error(SCANNER_INT_LEADING_ZERO, context->scanned_string->chars, valid_alternative);
                     return token;
                 }
@@ -958,11 +959,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 else if (c == '_')
                     state = STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE;
                 else {
-                    char* endptr;
+                    double value = strtod(context->scanned_string->chars, &end_ptr);
 
-                    double value = strtod(context->scanned_string->chars, &endptr);
-
-                    if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                    if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                         token.type = ERROR;
                         token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
                         return token;
@@ -995,11 +994,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_DOUBLE_END_D:
                 scanned_string_remove_last(context->scanned_string); // remove d/D
 
-                char* endptr;
+                double value = strtod(context->scanned_string->chars, &end_ptr);
 
-                double value = strtod(context->scanned_string->chars, &endptr);
-
-                if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                     token.type = ERROR;
                     token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
                     return token;
@@ -1042,18 +1039,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 else if (c == '_')
                     state = STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE;
                 else {
-                    char* endptr;
+                    double double_value = strtod(context->scanned_string->chars, &end_ptr);
 
-                    double value = strtod(context->scanned_string->chars, &endptr);
-
-                    if (context->scanned_string->chars == endptr || *endptr != '\0') {
+                    if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                         token.type = ERROR;
                         token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
                         return token;
                     }
 
                     token.type = DOUBLE;
-                    token.attribute_double = value;
+                    token.attribute_double = double_value;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -1193,6 +1188,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                     token.attribute_str_idx = result;
                 }
+
+                break;
 
             case STATE_LINE_FEED:
 
