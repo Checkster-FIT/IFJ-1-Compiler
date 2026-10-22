@@ -568,12 +568,57 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-                //TODO: create another bool variable in the scanner context to track
-                //whether we are inside simple or multiline interpolated string
+                // TODO:
+                //   nested interpolation - simple string x multiline string
+
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
+
+                scanned_string_remove_last(context->scanned_string); // removes $
+
                 if (c == '$')
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
+                if (c == '{')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_EXPRESSION;
+                else {
+                    // pointer to the whole string before $
+                    token.type = MULTILINE_STRING_INTERPOLATION;
+
+                    result = add_string(data, context->scanned_string->chars);
+                    if (result == -1) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "multiline string interpolation");
+
+                        return token;
+                    }
+
+                    token.attribute_str_idx = result;
+
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+
                 break;
+
+            case STATE_MULTILINE_STRING_INTERPOLATION_EXPRESSION:
+
+                context->inside_interpolated_string = false;
+
+                scanned_string_remove_last(context->scanned_string); // removes { (dollar is already removed in the previous state)
+
+                token.type = MULTILINE_STRING_INTERPOLATION;
+                // pointer to the whole string before {
+                result = add_string(data, context->scanned_string->chars);
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "multiline string interpolation");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER;
+
+                // TODO: continue with m s i end 1-3
 
             case STATE_STRING_INTERPOLATION:
 
