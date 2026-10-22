@@ -488,11 +488,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             // INTERPOLATED STRING
             case STATE_CHARACTER_S:
 
-                if (c == '"') {
-                    state = STATE_STRING_INTERPOLATION;
-                    scanned_string_remove_last(context->scanned_string); // removes char s
-                }
-                if (c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+                if (c == '"')
+                    state = STATE_STRING_INTERPOLATION_WHICH_1;
+                else if (c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
                     state = STATE_IDENTIFIER;
                 else {
                     token.type = IDENTIFIER;
@@ -510,6 +508,71 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
 
+                break;
+
+            case STATE_STRING_INTERPOLATION_WHICH_1:
+                clear_scanned_string(context->scanned_string); // remove s"
+                if (c == '"')
+                    state = STATE_STRING_INTERPOLATION_WHICH_2;
+                else if (c == '\n') {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    return token;
+                } else if (c == EOF) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                } else
+                    state = STATE_STRING_INTERPOLATION;
+
+                break;
+
+            case STATE_STRING_INTERPOLATION_WHICH_2:
+                scanned_string_remove_last(context->scanned_string); // removes "
+
+                if (c == '"') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    break;
+                }
+
+                context->inside_interpolated_string = false;
+                token.type = EMPTY_STRING;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER;
+
+            case STATE_MULTILINE_STRING_INTERPOLATION:
+                if (c == '\\')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE;
+                else if (c == '$')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR;
+                else if (c == '"')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_END_1;
+                else if (c == EOF) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                } else
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+
+                break;
+
+            case STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE:
+                if (c == EOF) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    return token;
+                }
+
+                state = STATE_MULTILINE_STRING_INTERPOLATION;
+
+                break;
+
+                //TODO: create another bool variable in the scanner context to track
+                //whether we are inside simple or multiline interpolated string
+            case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
+                if (c == '$')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 break;
 
             case STATE_STRING_INTERPOLATION:
