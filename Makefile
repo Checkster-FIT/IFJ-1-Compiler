@@ -100,20 +100,33 @@ $(BUILD):
 $(OBJ):
 	@mkdir -p $@
 
-# Create object file for a module
+
+# Compile each module
 .SECONDARY:
 $(OBJ)/%.o: $(SRC_DIR)/%.c | $(BUILD) $(OBJ)
 	@gcc -I$(SRC_DIR) -c $< -o $@ -g -O0
 
-# Create an executable for a test module
-SHARED_OBJECTS = $(addprefix $(OBJ)/,$(TEST_SHARED_O))
-$(BUILD)/%_tests: $(TEST_DIR)/%_tests.cpp $(OBJ)/%.o $(SHARED_OBJECTS) $(GTEST_MAIN)
-	g++ -I$(SRC_DIR) $^ $(GTEST_FLAGS) -o $@
+# Compile each test source file
+.SECONDARY:
+$(OBJ)/%_tests.o: $(TEST_DIR)/%_tests.cpp | $(BUILD) $(OBJ)
+	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
 
+# Compile the shared test main
+$(OBJ)/test_main.o: $(GTEST_MAIN) | $(BUILD) $(OBJ)
+	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+
+# Create an executable for each test module
+SHARED_OBJECTS = $(addprefix $(OBJ)/,$(TEST_SHARED_O))
+TEST_MAIN_OBJECT = $(OBJ)/test_main.o
+
+# Link the object files together
+$(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJECT)
+	$(CXX) $^ $(GTEST_FLAGS) -o $@
+
+# [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
 
 TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
-
 build-test: $(TEST_EXECUTABLES)
 test: $(TEST_EXECUTABLES)
 	$^ 2> /dev/null || true
