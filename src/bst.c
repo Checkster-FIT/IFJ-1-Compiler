@@ -1,8 +1,8 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    bst.c
- * @brief
- * @author
+ * @brief   RBTree implementation
+ * @author  Tobiáš Mikan <xmikant00>
  */
 
 #include "bst.h"
@@ -37,10 +37,10 @@ TNode* NodeCreate(void* key, void* value)
 
 NodeColor ColorCheck(TNode* node)
 {
-    if (node->color == RED) {
-        return RED;
+    if (node == NULL || node->color == BLACK) {
+        return BLACK;
     }
-    return BLACK;
+    return RED;
 }
 
 TNode* RotateLeft(TNode* node)
@@ -73,6 +73,9 @@ TNode* RotateRight(TNode* node)
 
 void* FlipColor(TNode* node)
 {
+    if (node->left == NULL || node->right == NULL) {
+        return NULL;
+    }
     if (node->left->color == RED && node->right->color == RED) {
         node->color = RED;
         node->left->color = BLACK;
