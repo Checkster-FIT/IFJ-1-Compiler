@@ -14,6 +14,8 @@ compile_commands.json
 # Build files
 ifj26compiler
 ifj26tests
+*-tests
+tests/build
 
 # Other files
 ic26int-linux-x86_64

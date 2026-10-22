@@ -19,36 +19,19 @@ protected:
     ScannerContext scanner_context = { };
     SharedData data = { };
 
-    /** @brief Prepares an input stream for each scanner test */
-    void SetUp() override
-    {
-        tmp_input = tmpfile();
-        ASSERT_NE(tmp_input, nullptr);
-
-        init_scanner(&scanner_context);
-        init_shared_data(&data);
-    }
-
-    /** @brief Closes the input stream after each scanner test */
-    void TearDown() override
-    {
-        if (tmp_input != nullptr) {
-            fclose(tmp_input);
-        }
-
-        destroy_scanner(&scanner_context);
-        destroy_shared_data(&data);
-    }
-
     /**
      * @brief Writes a given string to the scanner input stream
      * @param string the input string to be written at the start of the stream
      */
-    void scanner_input(const char* string) const
+    void scanner_input(const char* string)
     {
+        tmp_input = tmpfile();
         ASSERT_NE(tmp_input, nullptr);
         ASSERT_GE(fputs(string, tmp_input), 0);
         rewind(tmp_input);
+
+        init_scanner(&scanner_context);
+        init_shared_data(&data);
     }
 
     /**
@@ -81,10 +64,18 @@ protected:
                     break;
                 case Token::BOOLEAN:
                     EXPECT_EQ(token.attribute_bool, desired_token.attribute_bool);
+                    break;
                 default:
                     break;
             }
         }
+
+        if (tmp_input != nullptr) {
+            fclose(tmp_input);
+        }
+
+        destroy_scanner(&scanner_context);
+        destroy_shared_data(&data);
     }
 
     // Token constructors for readability
