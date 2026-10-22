@@ -106,7 +106,7 @@ TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, voi
         node->right = RecursiveInsert(node->right, key, value, cmp);
     } else {
         node->value = value;
-        return node; // DUPLICATE KEY WHAT TO DO???
+        return node;
     }
 
     if (ColorCheck(node->right) == RED && ColorCheck(node->left) == BLACK) {
@@ -117,6 +117,24 @@ TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, voi
     }
     if (ColorCheck(node->left) == RED && ColorCheck(node->right) == RED) {
         FlipColor(node);
+    }
+    return node;
+}
+
+TNode* Search(RBTree* tree, void* key)
+{
+    if (tree == NULL || tree->root == NULL) {
+        return NULL;
+    }
+
+    TNode* node = tree->root;
+
+    while (node != NULL) {
+        int comp_value = tree->cmp(key, node->key);
+
+        if (comp_value < 0) node = node->left;
+        if (comp_value > 0) node = node->right;
+        else break;
     }
     return node;
 }

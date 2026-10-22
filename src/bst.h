@@ -113,4 +113,14 @@ void* TreeInsert(RBTree* tree, void* key, void* value);
  */
 TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*));
 
+/**
+ * @brief Recursively travel the tree and insert the node in its correct place.
+ *
+ * @param tree The tree which is being searched.
+ * @param key Key of the data being searched.
+ *
+ * @return Node with the key, or NULL when not found
+ */
+TNode* Search(RBTree* tree, void* key);
+
 #endif // IFJ_1_COMPILER_BST_H
