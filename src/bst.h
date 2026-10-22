@@ -100,9 +100,10 @@ void* FlipColor(TNode* node);
  * @param tree The tree being inserted into.
  * @param key Key of the data being inserted.
  * @param value Value of the data being inserted.
+ *
+ * @return Returns pointer to the root of the tree where the node was inserted.
  */
-
-void* TreeInsert(RBTree* tree, void* key, void* value);
+TNode* TreeInsert(RBTree* tree, void* key, void* value);
 
 /**
  * @brief Recursively travel the tree and insert the node in its correct place.
@@ -110,6 +111,8 @@ void* TreeInsert(RBTree* tree, void* key, void* value);
  * @param node The node being inserted.
  * @param key Key of the data being inserted.
  * @param value Value of the data being inserted.
+ *
+ * @return Pointer to the inserted node
  */
 TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*));
 
@@ -122,5 +125,15 @@ TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, voi
  * @return Node with the key, or NULL when not found
  */
 TNode* Search(RBTree* tree, void* key);
+
+/**
+ * @brief String compare for this RBTree implementation.
+ *
+ * @param a First string to compare
+ * @param b Second string to compare
+ *
+ * @return < 0 if first param is smaller (first alphabetically), > 0 if second param is smaller (first alphabetically) or 0 when they are equal.
+ */
+int RBTreeStrcmp(void* a, void* b);
 
 #endif // IFJ_1_COMPILER_BST_H

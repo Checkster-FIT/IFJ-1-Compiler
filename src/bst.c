@@ -7,6 +7,8 @@
 
 #include "bst.h"
 
+#include <string.h>
+
 RBTree* TreeInit(int(*cmp)(void* a, void* b))
 {
     RBTree* tree = (RBTree*)malloc(sizeof(RBTree));
@@ -83,12 +85,13 @@ void* FlipColor(TNode* node)
     }
 }
 
-void* TreeInsert(RBTree* tree, void* key, void* value)
+TNode* TreeInsert(RBTree* tree, void* key, void* value)
 {
     if (tree == NULL) {
         return NULL;
     }
     tree->root = RecursiveInsert(tree->root, key, value, tree->cmp);
+    return tree->root;
 }
 
 TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*))
@@ -137,4 +140,9 @@ TNode* Search(RBTree* tree, void* key)
         else break;
     }
     return node;
+}
+
+int RBTreeStrcmp(void* a, void* b)
+{
+    return strcmp((char*)a, (char*)b);
 }
