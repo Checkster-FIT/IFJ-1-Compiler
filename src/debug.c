@@ -9,207 +9,241 @@
 #include "scanner.h"
 #include "shared_data.h"
 
+#define ALIGNMENT 34
+
+static void escaped_print(const char* string)
+{
+    if (string == NULL) {
+        printf("");
+        return;
+    }
+
+    int idx = 0;
+    while (string[idx] != '\0') {
+        if (string[idx] == '\n')
+            printf("\\n");
+        else
+            printf("%c", string[idx]);
+        idx++;
+    }
+}
+
 void print_token(const Token* token, const SharedData* data)
 {
     switch (token->type) {
         case NONE:
-            printf("NONE\n");
+            printf("%-*s\n", ALIGNMENT, "NONE");
             break;
         case ERROR:
-            printf("ERROR [%i]\n", token->attribute_error);
+            printf("%-*s%i\n", ALIGNMENT, "ERROR", token->attribute_error);
             break;
         case INTEGER:
-            printf("INTEGER [%li]\n", token->attribute_int);
+            printf("%-*s%li\n", ALIGNMENT, "INTEGER", token->attribute_int);
             break;
         case DOUBLE:
-            printf("DOUBLE [%lf]\n", token->attribute_double);
+            printf("%-*s%lf\n", ALIGNMENT, "DOUBLE", token->attribute_double);
             break;
         case OPERATOR:
             switch (token->attribute_operation_type) {
                 case PLUS:
-                    printf("OPERATOR [+]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "+");
                     break;
                 case MINUS:
-                    printf("OPERATOR [-]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "-");
                     break;
                 case MULTIPLY:
-                    printf("OPERATOR [*]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "*");
                     break;
                 case AND:
-                    printf("OPERATOR [&&]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "&&");
                     break;
                 case OR:
-                    printf("OPERATOR [||]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "||");
                     break;
                 case NOT:
-                    printf("OPERATOR [!]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "!");
                     break;
                 case DIVIDE:
-                    printf("OPERATOR [/]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "OPERATOR", "/");
                     break;
                 default:
-                    printf("OPERATOR [%i]\n", token->attribute_operation_type);
+                    printf("%-*s%i\n", ALIGNMENT, "OPERATOR",
+                        token->attribute_operation_type);
                     break;
             }
             break;
         case IDENTIFIER:
-            printf("IDENTIFIER [%s]\n",
+            printf("%-*s%s\n", ALIGNMENT, "IDENTIFIER",
                 get_identifier(data, token->attribute_str_idx));
             break;
         case KEYWORD:
             switch (token->attribute_keyword) {
                 case DEF_KW:
-                    printf("KEYWORD [def]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "def");
                     break;
                 case DO_KW:
-                    printf("KEYWORD [do]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "do");
                     break;
                 case DOUBLE_KW:
-                    printf("KEYWORD [Double]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "Double");
                     break;
                 case ELSE_KW:
-                    printf("KEYWORD [else]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "else");
                     break;
                 case IF_KW:
-                    printf("KEYWORD [if]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "if");
                     break;
                 case IMPORT_KW:
-                    printf("KEYWORD [import]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "import");
                     break;
                 case INT_KW:
-                    printf("KEYWORD [Int]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "Int");
                     break;
                 case RETURN_KW:
-                    printf("KEYWORD [return]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "return");
                     break;
                 case STRING_KW:
-                    printf("KEYWORD [String]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "String");
                     break;
                 case THEN_KW:
-                    printf("KEYWORD [then]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "then");
                     break;
                 case UNIT_KW:
-                    printf("KEYWORD [Unit]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "Unit");
                     break;
                 case VAL_KW:
-                    printf("KEYWORD [val]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "val");
                     break;
                 case VAR_KW:
-                    printf("KEYWORD [var]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "var");
                     break;
                 case WHILE_KW:
-                    printf("KEYWORD [while]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "while");
                     break;
                 case BOOLEAN_KW:
-                    printf("KEYWORD [Boolean]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "Boolean");
                     break;
                 case CASE_KW:
-                    printf("KEYWORD [case]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "case");
                     break;
                 case CLASS_KW:
-                    printf("KEYWORD [class]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "class");
                     break;
                 case EXTENSION_KW:
-                    printf("KEYWORD [extension]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "extension");
                     break;
                 case FOR_KW:
-                    printf("KEYWORD [for]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "for");
                     break;
                 case LIST_KW:
-                    printf("KEYWORD [List]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "List");
                     break;
                 case MATCH_KW:
-                    printf("KEYWORD [match]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "match");
                     break;
                 case TYPE_KW:
-                    printf("KEYWORD [type]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "KEYWORD", "type");
                     break;
                 default:
-                    printf("KEYWORD [%i]\n", token->attribute_keyword);
+                    printf("%-*s%i\n", ALIGNMENT, "KEYWORD",
+                        token->attribute_keyword);
                     break;
             }
             break;
         case BOOLEAN:
-            if (token->attribute_bool)
-                printf("BOOLEAN [true]\n");
-            else
-                printf("BOOLEAN [false]\n");
+            printf("%-*s%s\n", ALIGNMENT, "BOOLEAN",
+                token->attribute_bool ? "true" : "false");
             break;
+
+        // STRINGS
         case STRING_INTERPOLATION:
-            printf("STRING_INTERPOLATION [%s]\n", get_string(data, token->attribute_str_idx));
+            printf("%-*s", ALIGNMENT, "STRING_INTERPOLATION");
+            escaped_print(get_string(data, token->attribute_str_idx));
+            printf("\n");
             break;
         case STRING_INTERPOLATION_END:
-            printf("STRING_INTERPOLATION_END [%s]\n", get_string(data, token->attribute_str_idx));
+            printf("%-*s", ALIGNMENT, "STRING_INTERPOLATION_END");
+            escaped_print(get_string(data, token->attribute_str_idx));
+            printf("\n");
             break;
         case MULTILINE_STRING_INTERPOLATION:
-            printf("MULTILINE_STRING_INTERPOLATION [%s]\n", get_string(data, token->attribute_str_idx));
+            printf("%-*s", ALIGNMENT, "MULTILINE_STRING_INTERPOLATION");
+            escaped_print(get_string(data, token->attribute_str_idx));
+            printf("\n");
             break;
         case MULTILINE_STRING_INTERPOLATION_END:
-            printf("MULTILINE_STRING_INTERPOLATION_END [%s]\n", get_string(data, token->attribute_str_idx));
+            printf("%-*s", ALIGNMENT, "MULTILINE_STRING_INTERPOLATION_END");
+            escaped_print(get_string(data, token->attribute_str_idx));
+            printf("\n");
             break;
         case STRING:
-            printf("STRING [%s]\n", get_string(data, token->attribute_str_idx));
+            printf("%-*s", ALIGNMENT, "STRING");
+            escaped_print(get_string(data, token->attribute_str_idx));
+            printf("\n");
             break;
         case MULTILINE_STRING:
-            printf("MULTILINE_STRING [%s]\n", get_string(data, token->attribute_str_idx));
+            printf("%-*s", ALIGNMENT, "MULTILINE_STRING");
+            printf("\n");
             break;
+
         case DOT:
-            printf("DOT [.]\n");
+            printf("%-*s.\n", ALIGNMENT, "DOT");
             break;
         case DECLARATION_SIGN:
-            printf("DECLARATION_SIGN [:]\n");
+            printf("%-*s:\n", ALIGNMENT, "DECLARATION_SIGN");
             break;
         case COMMA:
-            printf("COMMA [,]\n");
+            printf("%-*s,\n", ALIGNMENT, "COMMA");
             break;
         case INDENT:
-            printf("INDENT\n");
+            printf("%-*s\n", ALIGNMENT, "INDENT");
             break;
         case LINE_FEED:
-            printf("LINE_FEED\n");
+            printf("%-*s\n", ALIGNMENT, "LINE_FEED");
             break;
         case WHITESPACE:
-            printf("WHITESPACE\n");
+            printf("%-*s\n", ALIGNMENT, "WHITESPACE");
             break;
         case ASSIGNMENT:
-            printf("ASSIGNMENT [=]\n");
+            printf("%-*s=\n", ALIGNMENT, "ASSIGNMENT");
             break;
         case COMPARE:
             switch (token->attribute_compare_type) {
                 case EQUAL:
-                    printf("COMPARE [==]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "COMPARE", "==");
                     break;
                 case NOT_EQUAL:
-                    printf("COMPARE [!=]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "COMPARE", "!=");
                     break;
                 case LESS:
-                    printf("COMPARE [<]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "COMPARE", "<");
                     break;
                 case GREATER:
-                    printf("COMPARE [>]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "COMPARE", ">");
                     break;
                 case LESS_EQUAL:
-                    printf("COMPARE [<=]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "COMPARE", "<=");
                     break;
                 case GREATER_EQUAL:
-                    printf("COMPARE [>=]\n");
+                    printf("%-*s%s\n", ALIGNMENT, "COMPARE", ">=");
                     break;
                 default:
-                    printf("COMPARE [%i]\n", token->attribute_compare_type);
+                    printf("%-*s%i\n", ALIGNMENT, "COMPARE",
+                        token->attribute_compare_type);
                     break;
             }
             break;
         case LEFT_BRACKET:
-            printf("LEFT_BRACKET [(]\n");
+            printf("%-*s(\n", ALIGNMENT, "LEFT_BRACKET");
             break;
         case RIGHT_BRACKET:
-            printf("RIGHT_BRACKET [)]\n");
+            printf("%-*s)\n", ALIGNMENT, "RIGHT_BRACKET");
             break;
         case END_OF_FILE:
-            printf("END_OF_FILE\n");
+            printf("%-*s\n", ALIGNMENT, "END_OF_FILE");
             break;
         default:
-            printf("Token [%i]\n", token->type);
+            printf("%-*s%i\n", ALIGNMENT, "UNKNOWN_TOKEN", token->type);
             break;
     }
 }
