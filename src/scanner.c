@@ -378,12 +378,20 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 scanned_string_remove_last(context->scanned_string); // remove '\'
 
-                if (c != '\n' && c != EOF)
+                if (c == 'n') {
                     state = STATE_STRING_BEGIN;
-                else if (c == 'n') {
-                    state = STATE_STRING_BEGIN;
+                    result = scanned_string_append(context->scanned_string, '\n');
+                    if (result == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned_string");
+                        return token;
+                    }
                     continue; // ignore 'n'
-                } else if (c == '\n') {
+
+                } else if (c != '\n' && c != EOF)
+                    state = STATE_STRING_BEGIN;
+                else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
                     return token;
@@ -1211,6 +1219,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     }
 
                     token.attribute_str_idx = result;
+                    RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
 
                 break;

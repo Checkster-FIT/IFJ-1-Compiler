@@ -11,7 +11,6 @@ extern "C" {
 #include "parser.h"
 }
 
-
 TEST(parser, dummy_test)
 {
     return;

@@ -75,6 +75,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
             error.message = "The symbol @ can only be followed by identifier 'main'";
             error.code = 2;
+            break;
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
             error.code = 99;
