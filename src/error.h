@@ -23,6 +23,9 @@ typedef enum error_enum {
 
     // Parser error
 
+    // Syntax error
+    SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL,
+
     // Internal error
     MEMORY_ALLOCATION_ERROR,
     STREAM_READ_ERROR,

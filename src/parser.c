@@ -6,9 +6,9 @@
  */
 
 #include "parser.h"
+#include "debug.h"
 #include "scanner.h"
 #include "shared_data.h"
-#include "debug.h"
 #include <stdio.h>
 
 int run_parser(SharedData* data)

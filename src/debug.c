@@ -135,12 +135,6 @@ void print_token(const Token* token, const SharedData* data)
             else
                 printf("BOOLEAN [false]\n");
             break;
-        case CHAR_S:
-            printf("CHAR_S\n");
-            break;
-        case EMPTY_STRING:
-            printf("EMPTY_STRING\n");
-            break;
         case STRING_INTERPOLATION:
             printf("STRING_INTERPOLATION [%s]\n", get_string(data, token->attribute_str_idx));
             break;
@@ -157,16 +151,10 @@ void print_token(const Token* token, const SharedData* data)
             printf("STRING [%s]\n", get_string(data, token->attribute_str_idx));
             break;
         case MULTILINE_STRING:
-            printf("MULTILINE_STRING [%s]\n", get_string(data, token->attribute_str_idx));;
+            printf("MULTILINE_STRING [%s]\n", get_string(data, token->attribute_str_idx));
             break;
         case DOT:
             printf("DOT [.]\n");
-            break;
-        case ZERO:
-            printf("ZERO\n");
-            break;
-        case DOUBLE_DECIMAL_NUMBER:
-            printf("DOUBLE_DECIMAL_NUMBER\n");
             break;
         case DECLARATION_SIGN:
             printf("DECLARATION_SIGN [:]\n");
@@ -182,31 +170,6 @@ void print_token(const Token* token, const SharedData* data)
             break;
         case WHITESPACE:
             printf("WHITESPACE\n");
-            break;
-        case GREATER_LESSER_THAN:
-            switch (token->attribute_compare_type) {
-                case EQUAL:
-                    printf("GREATER_LESSER_THAN [==]\n");
-                    break;
-                case NOT_EQUAL:
-                    printf("GREATER_LESSER_THAN [!=]\n");
-                    break;
-                case LESS:
-                    printf("GREATER_LESSER_THAN [<]\n");
-                    break;
-                case GREATER:
-                    printf("GREATER_LESSER_THAN [>]\n");
-                    break;
-                case LESS_EQUAL:
-                    printf("GREATER_LESSER_THAN [<=]\n");
-                    break;
-                case GREATER_EQUAL:
-                    printf("GREATER_LESSER_THAN [>=]\n");
-                    break;
-                default:
-                    printf("GREATER_LESSER_THAN [%i]\n", token->attribute_compare_type);
-                    break;
-            }
             break;
         case ASSIGNMENT:
             printf("ASSIGNMENT [=]\n");
@@ -241,12 +204,6 @@ void print_token(const Token* token, const SharedData* data)
             break;
         case RIGHT_BRACKET:
             printf("RIGHT_BRACKET [)]\n");
-            break;
-        case UNIT:
-            printf("UNIT [()]\n");
-            break;
-        case RIGHT_CURLY_BRACKET:
-            printf("RIGHT_CURLY_BRACKET [}]\n");
             break;
         case END_OF_FILE:
             printf("END_OF_FILE\n");

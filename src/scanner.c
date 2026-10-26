@@ -19,7 +19,7 @@ static const char* keywords[] = {
     "else",
     "if",
     "import",
-    "int",
+    "Int",
     "return",
     "String",
     "then",
@@ -255,7 +255,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-            // OPERATOR
+                // OPERATOR
             case STATE_AMPERSAND_1:
 
                 if (c == '&')
@@ -380,7 +380,10 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_BEGIN;
-                else if (c == '\n') {
+                else if (c == 'n') {
+                    state = STATE_STRING_BEGIN;
+                    continue; // ignore 'n'
+                } else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
                     return token;
@@ -419,8 +422,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     continue;
                 }
 
-                token.type = EMPTY_STRING;
-                token.attribute_none = NULL;
+                result = add_string(data, "");
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned string");
+
+                    return token;
+                }
+
+                token.type = STRING;
+                token.attribute_str_idx = result;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
@@ -538,8 +549,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 }
 
                 context->inside_interpolated_string = false;
-                token.type = EMPTY_STRING;
-                token.attribute_none = NULL;
+                token.type = STRING;
+                result = add_string(data, "");
+                if (result == -1) {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+
+                    return token;
+                }
+
+                token.attribute_str_idx = result;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
@@ -567,6 +586,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
+                }
+
+                if (c == 'n') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    continue; // ignore 'n'
                 }
 
                 state = STATE_MULTILINE_STRING_INTERPOLATION;
@@ -767,7 +791,10 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_INTERPOLATION;
-                else if (c == '\n') {
+                else if (c == 'n') {
+                    state = STATE_STRING_INTERPOLATION;
+                    continue; // ignore 'n'
+                } else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
                     return token;
@@ -1077,7 +1104,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 if (c == '=')
                     state = STATE_COMPARE;
                 else {
-                    token.type = GREATER_LESSER_THAN;
+                    token.type = COMPARE;
                     char op = scanned_string_top(context->scanned_string);
                     if (op == '<')
                         token.attribute_compare_type = LESS;
@@ -1122,31 +1149,16 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             // BRACKETS
             case STATE_LEFT_BRACKET:
-                if (c == ')')
-                    state = STATE_UNIT;
-                else {
-                    token.type = LEFT_BRACKET;
-                    token.attribute_none = NULL;
+                token.type = LEFT_BRACKET;
+                token.attribute_none = NULL;
 
-                    RETURN_TOKEN_AND_SET_READ_BUFFER
-                }
-                break;
+                RETURN_TOKEN_AND_SET_READ_BUFFER
 
             case STATE_RIGHT_BRACKET:
-
                 token.type = RIGHT_BRACKET;
                 token.attribute_none = NULL;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
-                break;
-
-            case STATE_UNIT:
-
-                token.type = UNIT;
-                token.attribute_none = NULL;
-
-                RETURN_TOKEN_AND_SET_READ_BUFFER
-                break;
 
             case STATE_RIGHT_CURLY_BRACKET:
                 context->inside_interpolated_string = true;
@@ -1171,10 +1183,22 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_AT_SYMBOL:
-                scanned_string_remove_last(context->scanned_string);
+                clear_scanned_string(context->scanned_string);
 
                 if (c >= 'a' && c <= 'z')
-                    state = STATE_AT_SYMBOL;
+                    state = STATE_MAIN_IDENTIFIER;
+                else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL);
+
+                    return token;
+                }
+
+                break;
+
+            case STATE_MAIN_IDENTIFIER:
+                if (c >= 'a' && c <= 'z')
+                    state = STATE_MAIN_IDENTIFIER;
                 else {
                     token.type = IDENTIFIER;
 
@@ -1193,6 +1217,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_LINE_FEED:
 
+                // todo nahradit za lomeno n
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
                 } else if (c == ' ') {

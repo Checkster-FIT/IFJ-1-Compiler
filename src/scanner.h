@@ -13,8 +13,8 @@
     return token;
 
 #define IS_IDENTIFIER (-1)
-#define IS_BOOLEAN_VALUE_TRUE 12
-#define IS_BOOLEAN_VALUE_FALSE 13
+#define IS_BOOLEAN_VALUE_TRUE 23
+#define IS_BOOLEAN_VALUE_FALSE 24
 
 #include "error.h"
 #include "shared_data.h"
@@ -75,8 +75,6 @@ typedef struct token {
         IDENTIFIER,
         KEYWORD,
         BOOLEAN,
-        CHAR_S,
-        EMPTY_STRING,
         STRING_INTERPOLATION,
         STRING_INTERPOLATION_END,
         MULTILINE_STRING_INTERPOLATION,
@@ -84,20 +82,15 @@ typedef struct token {
         STRING,
         MULTILINE_STRING,
         DOT,
-        ZERO,
-        DOUBLE_DECIMAL_NUMBER,
         DECLARATION_SIGN,
         COMMA,
         INDENT,
         LINE_FEED,
         WHITESPACE,
-        GREATER_LESSER_THAN,
         ASSIGNMENT,
         COMPARE,
         LEFT_BRACKET,
         RIGHT_BRACKET,
-        UNIT,
-        RIGHT_CURLY_BRACKET,
         END_OF_FILE
     } type;
 
@@ -141,6 +134,7 @@ typedef enum {
 
     // declaration
     STATE_AT_SYMBOL, // @
+    STATE_MAIN_IDENTIFIER,
     STATE_COLON, // :
     STATE_COMMA, // ,
     STATE_DOT, // .
