@@ -9,6 +9,7 @@ STANDARD = 17
 # Project directory structure
 SRC_DIR = src
 TEST_DIR = tests
+TEST_DATA_DIR = $(TEST_DIR)/data
 TEX_DIR = tex
 
 # Project executable names
@@ -23,8 +24,10 @@ ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
 
 DOC_NAME = dokumentace
 
+CODE_EXAMPLE = $(TEST_DATA_DIR)/basic.ifj26
+
 # -----------------------------------------------
-.PHONY: build all run clean
+.PHONY: build all run valgrind clean
 # -----------------------------------------------
 
 build: $(MAIN_EXEC)
@@ -38,7 +41,7 @@ run: $(MAIN_EXEC)
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
 clean:
 	@rm -fv $(MAIN_EXEC)
@@ -49,7 +52,7 @@ clean:
 	@rm -fv *.pdf
 
 # -----------------------------------------------
-.PHONY: check format tidy checklist
+.PHONY: check format tidy tidy-cpp checklist
 # -----------------------------------------------
 MAKEFLAGS += --no-print-directory
 
@@ -60,14 +63,14 @@ check:
 	@echo
 
 format:
-	@command -v clang-format >/dev/null || { echo "[c] clang-format not installed!"; exit 0; }; \
-	clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose && \
-	clang-format $(TEST_DIR)/*.cpp -i --verbose
+	@clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose
+	@clang-format $(TEST_DIR)/*.cpp -i --verbose
 
 tidy:
-	@command -v clang-tidy >/dev/null ||  { echo "[c] clang-tidy not installed!"; exit 0; }; \
-	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD) && \
-	clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
+	@clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
+
+tidy-cpp:
+	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
 	@sh checklist.sh

@@ -9,6 +9,27 @@ find_files() {
     \)
 }
 
+username=$(git config user.name)
+
+case "$username" in
+    "Filip Hajdušek"|"Vojtěch Wyslych"|"adrahovska"|"tobiasmikan")
+        ;;
+    *)
+        echo "[!] Possible git config user.name mismatch: '$username'"; echo
+        ;;
+esac
+
+email=$(git config user.email)
+
+case "$email" in
+    "checkster.cz+fit@gmail.com"|"tobiasmikan@gmail.com"| \
+    "andrea.drahovska2@gmail.com"|"vojta.wyslych@gmail.com")
+        ;;
+    *)
+        echo "[!] Possible git config user.email mismatch: '$email'"; echo
+        ;;
+esac
+
 # Project tag
 find_files |
 while IFS= read -r file; do
