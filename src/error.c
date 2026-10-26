@@ -24,7 +24,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
     //   return print_error(SCANNER_INT_LEADING_ZERO, "0195", 195);
     switch (error.id) {
         case SCANNER_NO_TRANSITION:
-            error.message = "No scanner transition was found for state '%i' and lexeme %s";
+            error.message = "No scanner transition was found for state '%i' and character '%c'";
             error.fix = "Try adding this case in scanner.c";
             error.code = 100;
             break;

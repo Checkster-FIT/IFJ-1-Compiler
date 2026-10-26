@@ -255,7 +255,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     return token;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, c);
                     return token;
                 }
 
@@ -1347,7 +1347,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             default:
-                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, context->scanned_string->chars);
+                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, c);
                 return token;
         }
 
