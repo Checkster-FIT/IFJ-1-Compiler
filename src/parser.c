@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "scanner.h"
 #include "shared_data.h"
+#include "debug.h"
 #include <stdio.h>
 
 int run_parser(SharedData* data)
@@ -22,6 +23,7 @@ int run_parser(SharedData* data)
     while (token.type != END_OF_FILE) {
 
         token = get_token(&scanner, data, stdin);
+        print_token(&token, data);
 
         if (token.type == ERROR) {
             destroy_scanner(&scanner);

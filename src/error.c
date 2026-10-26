@@ -130,7 +130,7 @@ int print_error(const int error_id, ...)
         get_error_type_str(error.code), error.message, error.fix);
 
     // Print the constructed format with the user specified arguments
-    va_list args;
+    va_list args = { };
     va_start(args, error_id);
     vfprintf(stderr, error_message, args);
     va_end(args);

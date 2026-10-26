@@ -37,7 +37,7 @@ $(MAIN_EXEC): $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 run: $(MAIN_EXEC)
-	@./$(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)
