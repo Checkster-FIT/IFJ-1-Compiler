@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* keywords[] = {
+static const char* keywords[NUMBER_OF_KEYWORDS] = {
     "def",
     "do",
     "Double",
@@ -147,9 +147,7 @@ int check_identifier_for_kw(ScannedString* string)
     if (!string)
         return -2;
 
-    int number_of_keywords = 14;
-
-    for (int i = 0; i < number_of_keywords; i++) {
+    for (int i = 0; i < NUMBER_OF_KEYWORDS; i++) {
         if (strcmp(string->chars, keywords[i]) == 0)
             return i;
     }
@@ -157,6 +155,14 @@ int check_identifier_for_kw(ScannedString* string)
     return IS_IDENTIFIER;
 }
 
+/** TODO:
+ *
+ * inline comments after new line send multiple new line tokens
+ *
+ * set inside interpolated string to true after $var
+ *
+ * inside interpolated string returns unwanted token after $$
+ */
 Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 {
     State state = STATE_START;
@@ -532,7 +538,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_STRING_INTERPOLATION_WHICH_1:
-                clear_scanned_string(context->scanned_string); // remove s"
+                clear_scanned_string(context->scanned_string); // remove s
+                clear_scanned_string(context->scanned_string); // remove "
                 if (c == '"')
                     state = STATE_STRING_INTERPOLATION_WHICH_2;
                 else if (c == '\n') {
@@ -703,7 +710,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_STRING_INTERPOLATION:
 
                 context->inside_interpolated_string = true;
-                scanned_string_remove_last(context->scanned_string); // removes "
 
                 if (c == '$')
                     state = STATE_STRING_INTERPOLATION_DOLLAR;
@@ -1170,8 +1176,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_RIGHT_CURLY_BRACKET:
                 context->inside_interpolated_string = true;
+                scanned_string_remove_last(context->scanned_string); // remove {
                 state = STATE_START;
-                continue; // } is no use for other parts of the compiler, we can ignore it
+                break;
 
             // DECLARATION - COLON, COMMA, AT
             case STATE_COLON:
@@ -1226,7 +1233,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_LINE_FEED:
 
-                // todo nahradit za lomeno n
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
                 } else if (c == ' ') {
@@ -1258,7 +1264,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 }
                 break;
 
-            // BLOCK COMMENT
+            // COMMENT
             case STATE_COMMENT_START:
 
                 if (c == '\n' || c == EOF) {
