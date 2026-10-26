@@ -63,7 +63,7 @@ database:
 	bear -- make -B $(DB_TARGETS)
 
 # -----------------------------------------------
-.PHONY: check format tidy checklist
+.PHONY: check format tidy tidy-cpp checklist
 # -----------------------------------------------
 MAKEFLAGS += --no-print-directory
 
@@ -74,14 +74,14 @@ check:
 	@echo
 
 format:
-	@command -v clang-format >/dev/null || { echo "[c] clang-format not installed!"; exit 0; }; \
-	clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose && \
-	clang-format $(TEST_DIR)/*.cpp -i --verbose
+	@clang-format $(SRC_DIR)/*.c $(SRC_DIR)/*.h -i --verbose
+	@clang-format $(TEST_DIR)/*.cpp -i --verbose
 
 tidy:
-	@command -v clang-tidy >/dev/null ||  { echo "[c] clang-tidy not installed!"; exit 0; }; \
-	clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
-	@# && \ clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
+	@clang-tidy $(SRC_DIR)/*.c -- -I$(SRC_DIR) -std=c$(STANDARD)
+
+tidy-cpp:
+	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
 	@sh checklist.sh
