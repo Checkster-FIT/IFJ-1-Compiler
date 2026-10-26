@@ -13,15 +13,10 @@ TEX_DIR = tex
 
 # Project executable names
 MAIN_EXEC = ifj26compiler
-TEST_EXEC = ifj26tests
-
-# Units to be included in tests and the source files for tests
-TEST_UNITS = scanner.c
-TEST_FILES = *.cpp
 
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
-DB_TARGETS = build $(TEST_EXEC)
+
 
 ARCHIVE_NAME = archive
 ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
@@ -47,17 +42,11 @@ valgrind: $(SRC_DIR)/*.c
 
 clean:
 	@rm -fv $(MAIN_EXEC)
-	@rm -fv $(TEST_EXEC)
+	@rm -frv $(BUILD)
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
 	@rm -fv *.pdf
-
-# -----------------------------------------------
-.PHONY: database
-# -----------------------------------------------
-database:
-	bear -- make -B $(DB_TARGETS)
 
 # -----------------------------------------------
 .PHONY: check format tidy checklist
@@ -84,21 +73,71 @@ checklist:
 	@sh checklist.sh
 
 # -----------------------------------------------
-.PHONY: build-tests test
+.PHONY: test build-test
 # -----------------------------------------------
 
-GTEST_OBJ = ./tests/testing.o
-GTEST_FLAGS = -lgtest -lgtest_main -pthread
+GTEST_FLAGS = -lgtest -pthread -g
 
-$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
-	@gcc -Isrc -c src/error.c -o ./tests/error.o
-	@gcc -Isrc -c src/shared_data.c -o ./tests/shared_data.o
-	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) ./tests/error.o ./tests/shared_data.o $(GTEST_FLAGS) -o $(TEST_EXEC)
-	@rm -f $(GTEST_OBJ)
+# Units to be included in tests and the source files for tests
+TEST_UNITS = scanner parser
+TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
+TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
+TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-test: $(TEST_EXEC)
-	@./ifj26tests || true
+TEST_SHARED = error shared_data
+TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
+TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
+
+GTEST_MAIN = $(TEST_DIR)/test_main.cpp
+
+BUILD = $(TEST_DIR)/build
+OBJ = $(BUILD)/obj
+
+# Create build folder if necessary
+$(BUILD):
+	@mkdir -p $@
+
+$(OBJ):
+	@mkdir -p $@
+
+
+# Compile each module
+.SECONDARY:
+$(OBJ)/%.o: $(SRC_DIR)/%.c | $(BUILD) $(OBJ)
+	@gcc -I$(SRC_DIR) -c $< -o $@ -g -O0
+
+# Compile each test source file
+.SECONDARY:
+$(OBJ)/%_tests.o: $(TEST_DIR)/%_tests.cpp | $(BUILD) $(OBJ)
+	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+
+# Compile the shared test main
+$(OBJ)/test_main.o: $(GTEST_MAIN) | $(BUILD) $(OBJ)
+	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+
+# Create an executable for each test module
+SHARED_OBJECTS = $(addprefix $(OBJ)/,$(TEST_SHARED_O))
+TEST_MAIN_OBJECT = $(OBJ)/test_main.o
+
+# Link the object files together
+$(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJECT)
+	$(CXX) $^ $(GTEST_FLAGS) -o $@
+
+# [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
+$(BUILD)/parser_tests: $(OBJ)/scanner.o
+
+TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
+build-test: $(TEST_EXECUTABLES)
+test: $(TEST_EXECUTABLES)
+	$^ 2> /dev/null || true
+
+# -----------------------------------------------
+.PHONY: database
+# -----------------------------------------------
+DB_TARGETS = build test
+
+database:
+	bear -- make -B $(DB_TARGETS)
 
 # -----------------------------------------------
 .PHONY: doc archive
