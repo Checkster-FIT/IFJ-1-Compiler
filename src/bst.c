@@ -73,10 +73,10 @@ TNode* RotateRight(TNode* node)
     return node;
 }
 
-void* FlipColor(TNode* node)
+void FlipColor(TNode* node)
 {
     if (node->left == NULL || node->right == NULL) {
-        return NULL;
+        return;
     }
     if (node->left->color == RED && node->right->color == RED) {
         node->color = RED;
@@ -91,6 +91,9 @@ TNode* TreeInsert(RBTree* tree, void* key, void* value)
         return NULL;
     }
     tree->root = RecursiveInsert(tree->root, key, value, tree->cmp);
+    if (tree->root != NULL) {
+        tree->root->color = BLACK;
+    }
     return tree->root;
 }
 
@@ -136,7 +139,7 @@ TNode* Search(RBTree* tree, void* key)
         int comp_value = tree->cmp(key, node->key);
 
         if (comp_value < 0) node = node->left;
-        if (comp_value > 0) node = node->right;
+        else if (comp_value > 0) node = node->right;
         else break;
     }
     return node;

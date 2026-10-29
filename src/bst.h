@@ -32,7 +32,7 @@ typedef struct tnode_s {
     NodeColor color; // either r or b based on color of the node
 
     struct tnode_s* left; // pointer to left child/subtree
-    struct tnode_s* right; // pointer to left child/subtree
+    struct tnode_s* right; // pointer to right child/subtree
 } TNode;
 
 /**
@@ -46,7 +46,7 @@ typedef struct rbtree_s {
 /**
  * @brief Tree initialization
  *
- * @return Null pointer
+ * @return Pointer to the new tree
  *
  * Used to start the tree
  */
@@ -92,7 +92,7 @@ TNode* RotateRight(TNode* node);
  *
  * @param node The node whose color is being changed.
  */
-void* FlipColor(TNode* node);
+void FlipColor(TNode* node);
 
 /**
  * @brief Inserts new node into tree.
@@ -112,12 +112,12 @@ TNode* TreeInsert(RBTree* tree, void* key, void* value);
  * @param key Key of the data being inserted.
  * @param value Value of the data being inserted.
  *
- * @return Pointer to the inserted node
+ * @return Pointer to the subtree root
  */
 TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*));
 
 /**
- * @brief Recursively travel the tree and insert the node in its correct place.
+ * @brief Recursively travel the tree and search for the node with the key.
  *
  * @param tree The tree which is being searched.
  * @param key Key of the data being searched.
