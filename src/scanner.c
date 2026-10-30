@@ -1198,7 +1198,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_AT_SYMBOL:
-                clear_scanned_string(context->scanned_string);
 
                 if (c >= 'a' && c <= 'z')
                     state = STATE_MAIN_IDENTIFIER;

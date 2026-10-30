@@ -14,7 +14,6 @@
 static void escaped_print(const char* string)
 {
     if (string == NULL) {
-        printf("");
         return;
     }
 

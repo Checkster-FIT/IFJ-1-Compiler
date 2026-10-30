@@ -6,6 +6,7 @@
  */
 
 #include "error.h"
+#include "scanner.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,6 +77,18 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "The symbol @ can only be followed by identifier 'main'";
             error.code = 2;
             break;
+        case PARSER_SYNTAX_ERROR:
+            error.message = "Expected %s but got %s instead";
+            error.code = 2;
+            break;
+        case PARSER_GLOBAL_SCOPE_INVALID:
+            error.message = "Invalid use of %s in the global scope";
+            error.code = 2;
+            break;
+        case PARSER_MISSING_HEADER:
+            error.message = "Missing or incorrect 'ifj26.*' header";
+            error.code = 2;
+            break;
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
             error.code = 99;
@@ -112,6 +125,64 @@ char* get_error_type_str(const int exit_code)
         return "Program error";
 
     return "Unknown error";
+}
+
+const char* get_token_type_str(const int type)
+{
+    switch (type) {
+        case NONE:
+            return "NONE";
+        case ERROR:
+            return "ERROR";
+        case INTEGER:
+            return "INTEGER";
+        case DOUBLE:
+            return "DOUBLE";
+        case OPERATOR:
+            return "OPERATOR";
+        case IDENTIFIER:
+            return "IDENTIFIER";
+        case KEYWORD:
+            return "KEYWORD";
+        case BOOLEAN:
+            return "BOOLEAN";
+        case STRING_INTERPOLATION:
+            return "STRING_INTERPOLATION";
+        case STRING_INTERPOLATION_END:
+            return "STRING_INTERPOLATION_END";
+        case MULTILINE_STRING_INTERPOLATION:
+            return "MULTILINE_STRING_INTERPOLATION";
+        case MULTILINE_STRING_INTERPOLATION_END:
+            return "MULTILINE_STRING_INTERPOLATION_END";
+        case STRING:
+            return "STRING";
+        case MULTILINE_STRING:
+            return "MULTILINE_STRING";
+        case DOT:
+            return "DOT";
+        case DECLARATION_SIGN:
+            return "DECLARATION_SIGN";
+        case COMMA:
+            return "COMMA";
+        case INDENT:
+            return "INDENT";
+        case LINE_FEED:
+            return "LINE_FEED";
+        case WHITESPACE:
+            return "WHITESPACE";
+        case ASSIGNMENT:
+            return "ASSIGNMENT";
+        case COMPARE:
+            return "COMPARE";
+        case LEFT_BRACKET:
+            return "LEFT_BRACKET";
+        case RIGHT_BRACKET:
+            return "RIGHT_BRACKET";
+        case END_OF_FILE:
+            return "END_OF_FILE";
+        default:
+            return "UNKNOWN_TOKEN";
+    }
 }
 
 int print_error(const int error_id, ...)

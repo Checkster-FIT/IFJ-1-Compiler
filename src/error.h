@@ -22,6 +22,9 @@ typedef enum error_enum {
     SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS,
 
     // Parser error
+    PARSER_SYNTAX_ERROR,
+    PARSER_GLOBAL_SCOPE_INVALID,
+    PARSER_MISSING_HEADER,
 
     // Syntax error
     SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL,
@@ -63,5 +66,7 @@ int print_error(int error_id, ...);
  * @return the error type string ("Syntax error", "Semantic error", ...)
  */
 char* get_error_type_str(int exit_code);
+
+const char* get_token_type_str(int type);
 
 #endif // IFJ_1_COMPILER_SHARED_H
