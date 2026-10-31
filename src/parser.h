@@ -23,7 +23,7 @@ typedef struct {
 
     // Debug information
     bool debug;
-    bool debug_print_failed;
+    bool debug_highlight_failed;
     int debug_print_remaining;
 
 } ParserContext;

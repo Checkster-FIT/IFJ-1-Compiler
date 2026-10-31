@@ -26,9 +26,12 @@ void init_parser(ParserContext* parser, SharedData* data)
     parser->accepted.attribute_none = NULL;
     parser->exit_code = 0;
 
+    // Print debug token list
     parser->debug = false;
-    parser->debug_print_failed = false;
-    parser->debug_print_remaining = 0;
+    // Highlight where the parser failed with [!?]
+    parser->debug_highlight_failed = true;
+    // How many tokens after failure should be printed
+    parser->debug_print_remaining = 8;
 }
 
 int destroy_parser(const ParserContext* parser)
@@ -46,25 +49,18 @@ int run_parser(SharedData* data)
     parser.debug = true;
 
     next(&parser);
-    const int status = parse_program(&parser);
+    parse_program(&parser);
 
     if (parser.debug) {
-        // Highlight the invalid token
-        parser.debug_print_failed = (parser.exit_code == 0);
-        // How many tokens after failure should be printed
-        parser.debug_print_remaining = 8;
 
-        while (true) {
+        while (parser.next.type != END_OF_FILE && parser.next.type != ERROR) {
             next(&parser);
-            parser.debug_print_failed = false;
+            parser.debug_highlight_failed = false;
             parser.debug_print_remaining--;
-
-            if (parser.next.type == END_OF_FILE || parser.next.type == ERROR)
-                break;
         }
 
         if (parser.debug_print_remaining < 0)
-            printf("[**] %i more remaining\n", -(parser.debug_print_remaining));
+            fprintf(stderr, "[**] %i more remaining\n", -(parser.debug_print_remaining));
     }
 
     return destroy_parser(&parser);
@@ -81,8 +77,7 @@ int parse_program(ParserContext* parser)
     if (accept_next_keyword(IMPORT_KW, parser)) {
         if (!parse_header(parser))
             return FAILED;
-        if (!parse_body(parser))
-            return FAILED;
+        return parse_body(parser);
     }
 
     if (accept_next(ERROR, parser))
@@ -274,20 +269,20 @@ void next(ParserContext* parser)
     parser->accepted = parser->next;
     parser->next = get_token(&parser->scanner_context, parser->shared_data, stdin);
 
-    if (parser->debug) {
+    if (parser->debug && parser->accepted.type != NONE) {
         // Accepted token
-        if (parser->exit_code == 0 && parser->accepted.type != NONE) {
-            printf("[\033[1;32mOK\033[0m] ");
+        if (parser->exit_code == 0) {
+            fprintf(stderr, "[\033[1;32mOK\033[0m] ");
             print_token(&parser->accepted, parser->shared_data);
         }
         // First invalid token
-        else if (parser->debug_print_failed) {
-            printf("[\033[1;31m!?\033[0m] ");
+        else if (parser->debug_highlight_failed) {
+            fprintf(stderr, "[\033[1;31m!?\033[0m] ");
             print_token(&parser->accepted, parser->shared_data);
         }
         // Unprocessed tokens after
         else if (parser->debug_print_remaining > 0) {
-            printf("[  ] ");
+            fprintf(stderr, "[  ] ");
             print_token(&parser->accepted, parser->shared_data);
         }
     }

@@ -144,7 +144,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         // Program errors
         case PARSER_INCOMPLETE_RULE:
             error.message = "The required parser rule is incomplete";
-            error.fix = "Try adding this rule in parser.c";
+            // error.fix = "Try adding this rule in parser.c";
             error.code = 100;
             break;
         case SCANNER_NO_TRANSITION:
