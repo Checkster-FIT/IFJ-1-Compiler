@@ -385,7 +385,7 @@ int parse_statement_conditional(ParserContext* parser)
         return FAILED;
 
     if (accept_next_keyword(ELSE_KW, parser)) {
-        if (check_next(IF_KW, parser)) {
+        if (check_next_keyword(IF_KW, parser)) {
             if (!parse_else_if_list(parser))
                 return FAILED;
             return CORRECT;
@@ -432,7 +432,7 @@ int parse_else_if_list(ParserContext* parser)
         return FAILED;
 
     if (accept_next_keyword(ELSE_KW, parser)) {
-        if (check_next(IF_KW, parser)) {
+        if (check_next_keyword(IF_KW, parser)) {
             if (!parse_else_if_list(parser))
                 return FAILED;
             return CORRECT;
