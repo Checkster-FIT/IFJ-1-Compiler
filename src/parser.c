@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    parser.c
- * @brief
+ * @brief   The code parser module responsible for syntax and semantic analysis of IFJ26 code
  * @author  Filip Hajdusek (xhajduf00)
  */
 
@@ -30,8 +30,10 @@ void init_parser(ParserContext* parser, SharedData* data)
     parser->debug = false;
     // Highlight where the parser failed with [!?]
     parser->debug_highlight_failed = true;
+    // The next token was skipped without checking any syntax rules
+    parser->debug_skipped = false;
     // How many tokens after failure should be printed
-    parser->debug_print_remaining = 8;
+    parser->debug_print_remaining = 7;
 }
 
 int destroy_parser(const ParserContext* parser)
@@ -58,6 +60,7 @@ int run_parser(SharedData* data)
             parser.debug_highlight_failed = false;
             parser.debug_print_remaining--;
         }
+        next(&parser);
 
         if (parser.debug_print_remaining < 0)
             fprintf(stderr, "[**] %i more remaining\n", -(parser.debug_print_remaining));
@@ -128,7 +131,7 @@ int parse_body(ParserContext* parser)
         return CORRECT;
     }
 
-    if (accept_next_identifier("@main", parser) && accept_next_keyword(DEF_KW, parser)) {
+    if (accept_next(MAIN_IDENTIFIER, parser) && accept_next_keyword(DEF_KW, parser)) {
         if (!parse_function(parser))
             return FAILED;
         if (!parse_body(parser))
@@ -188,8 +191,7 @@ int parse_extension_body(ParserContext* parser)
         return CORRECT;
     }
 
-    // TODO: Change to dedent
-    if (accept_next(INDENT, parser)) {
+    if (accept_next(DEDENT, parser)) {
         return CORRECT;
     }
 
@@ -325,22 +327,38 @@ int parse_function_body(ParserContext* parser)
         return parse_statement_list(parser);
     }
 
-    return parse_expression(parser);
+    if (!parse_expression(parser))
+        return FAILED;
+
+    if (!accept_next(LINE_FEED, parser)) {
+        parser->exit_code = print_error(PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
+        return FAILED;
+    }
+
+    return CORRECT;
 }
 
 int parse_statement_list(ParserContext* parser)
 {
+    if (accept_next(DEDENT, parser)) {
+        return CORRECT;
+    }
+
     if (accept_next_keyword(VAR_KW, parser) || accept_next_keyword(VAL_KW, parser)) {
         if (!parse_statement_variable_definition(parser))
             return FAILED;
-        if (!accept_next(LINE_FEED, parser))
+    } else if (accept_next_keyword(WHILE_KW, parser)) {
+        // TODO: While loop
+        parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "while_loop");
+        return FAILED;
+    } else if (check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
+        if (!parse_expression(parser))
             return FAILED;
-        return parse_statement_list(parser);
     }
 
-    // TODO: Change to dedent
-    if (accept_next(INDENT, parser)) {
-        return CORRECT;
+    if (!accept_next(LINE_FEED, parser)) {
+        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+        return FAILED;
     }
 
     return parse_statement_list(parser);
@@ -368,7 +386,16 @@ int parse_statement_variable_definition(ParserContext* parser)
 
 int parse_expression(ParserContext* parser)
 {
-    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE);
+    while (true) {
+        if (check_next(LINE_FEED, parser) || check_next(END_OF_FILE, parser)) {
+            return CORRECT;
+        }
+
+        parser->debug_skipped = true;
+        next(parser);
+    }
+
+    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "expression");
     return FAILED;
 }
 
@@ -380,8 +407,15 @@ void next(ParserContext* parser)
     parser->next = get_token(&parser->scanner_context, parser->shared_data, stdin);
 
     if (parser->debug && parser->accepted.type != NONE) {
+        // TODO: Move debug prints to debug.c
+        // TODO: Add a blue [OK] tag to tokens parsed inside an expression
+
         // Accepted token
-        if (parser->exit_code == 0) {
+        if (parser->debug_skipped) {
+            fprintf(stderr, "[--] ");
+            print_token(&parser->accepted, parser->shared_data);
+            parser->debug_skipped = false;
+        } else if (parser->exit_code == 0) {
             fprintf(stderr, "[\033[1;32mOK\033[0m] ");
             print_token(&parser->accepted, parser->shared_data);
         }
@@ -391,7 +425,7 @@ void next(ParserContext* parser)
             print_token(&parser->accepted, parser->shared_data);
         }
         // Unprocessed tokens after
-        else if (parser->debug_print_remaining > 0) {
+        else if (parser->debug_print_remaining >= 0) {
             fprintf(stderr, "[  ] ");
             print_token(&parser->accepted, parser->shared_data);
         }

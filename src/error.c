@@ -178,6 +178,14 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Expected '=' after variable declaration";
             error.code = 2;
             break;
+        case PARSER_ST_MISSING_LINE_FEED:
+            error.message = "A statement must be ended with a new line";
+            error.code = 2;
+            break;
+        case PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED:
+            error.message = "A single-line function declaration must be ended with a new line";
+            error.code = 2;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
@@ -193,7 +201,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         // Program errors
         case PARSER_INCOMPLETE_RULE:
-            error.message = "The required parser rule is incomplete";
+            error.message = "The required parser rule for '%s' is incomplete";
             // error.fix = "Try adding this rule in parser.c";
             error.code = 100;
             break;

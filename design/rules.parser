@@ -39,10 +39,11 @@
         // -------------------------------------------------
 
             <function_body> -> [LF] [INDENT] <statement_list>
-            <function_body> -> <EXPRESSION>
+            <function_body> -> <EXPRESSION> [LF]
 
                 <statement_list> -> <statement> [LF] <statement_list>
                 <statement_list> -> [DEDENT]
+                <statement_list> -> [EOF]
 
                     <statement> := <st_vardef>, <st_assign>
 

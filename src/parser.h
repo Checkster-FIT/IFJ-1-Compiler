@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    parser.h
- * @brief
+ * @brief   The code parser module responsible for syntax and semantic analysis of IFJ26 code
  * @author  Filip Hajdusek (xhajduf00)
  */
 
@@ -24,6 +24,7 @@ typedef struct {
     // Debug information
     bool debug;
     bool debug_highlight_failed;
+    bool debug_skipped;
     int debug_print_remaining;
 
 } ParserContext;

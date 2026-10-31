@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    debug.h
- * @brief
+ * @brief   Various debug and logging functionality
  * @author  Filip Hajdusek (xhajduf00)
  */
 
