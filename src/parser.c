@@ -189,7 +189,7 @@ int parse_extension_body(ParserContext* parser)
     }
 
     // TODO: Change to dedent
-    if (accept_next_keyword(INDENT, parser)) {
+    if (accept_next(INDENT, parser)) {
         return CORRECT;
     }
 
@@ -314,6 +314,59 @@ int parse_param(ParserContext* parser)
 }
 
 int parse_function_body(ParserContext* parser)
+{
+    if (accept_next(LINE_FEED, parser)) {
+
+        if (!accept_next(INDENT, parser)) {
+            parser->exit_code = print_error(PARSER_FUNCTION_MISSING_INDENT);
+            return FAILED;
+        }
+
+        return parse_statement_list(parser);
+    }
+
+    return parse_expression(parser);
+}
+
+int parse_statement_list(ParserContext* parser)
+{
+    if (accept_next_keyword(VAR_KW, parser) || accept_next_keyword(VAL_KW, parser)) {
+        if (!parse_statement_variable_definition(parser))
+            return FAILED;
+        if (!accept_next(LINE_FEED, parser))
+            return FAILED;
+        return parse_statement_list(parser);
+    }
+
+    // TODO: Change to dedent
+    if (accept_next(INDENT, parser)) {
+        return CORRECT;
+    }
+
+    return parse_statement_list(parser);
+}
+
+int parse_statement_variable_definition(ParserContext* parser)
+{
+    if (!accept_next(IDENTIFIER, parser)) {
+        parser->exit_code = print_error(PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
+        return FAILED;
+    }
+
+    if (!parse_type_specifier(parser))
+        return FAILED;
+
+    if (!accept_next(ASSIGNMENT, parser)) {
+        parser->exit_code = print_error(PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
+        return FAILED;
+    }
+
+    return parse_expression(parser);
+}
+
+// =======================================================
+
+int parse_expression(ParserContext* parser)
 {
     parser->exit_code = print_error(PARSER_INCOMPLETE_RULE);
     return FAILED;

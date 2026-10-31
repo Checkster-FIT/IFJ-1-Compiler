@@ -47,15 +47,23 @@ bool accept_next_operator(const enum attribute_operation_type operator, ParserCo
 int parse_program(ParserContext* parser);
 int parse_header(ParserContext* parser);
 int parse_body(ParserContext* parser);
+
 int parse_extension(ParserContext* parser);
 int parse_extension_body(ParserContext* parser);
 int parse_function(ParserContext* parser);
 int parse_function_body(ParserContext* parser);
+
+int parse_statement_list(ParserContext* parser);
+int parse_statement_variable_definition(ParserContext* parser);
+
 int parse_type_specifier(ParserContext* parser);
 int parse_type(ParserContext* parser);
+
 int parse_param_group_list(ParserContext* parser);
 int parse_param_first(ParserContext* parser);
 int parse_param_list(ParserContext* parser);
 int parse_param(ParserContext* parser);
+
+int parse_expression(ParserContext* parser);
 
 #endif // IFJ_1_COMPILER_PARSER_H

@@ -39,20 +39,21 @@
         // -------------------------------------------------
 
             <function_body> -> [LF] [INDENT] <statement_list>
-            // TODO: Add rules for functions without newline
+            <function_body> -> <EXPRESSION>
 
-                <statement_list> -> <statement> <statement_list>
+                <statement_list> -> <statement> [LF] <statement_list>
                 <statement_list> -> [DEDENT]
 
-                    <statement> -> <statement> [LF]
                     <statement> := <st_vardef>, <st_assign>
 
-                <st_vardef> -> val [IDENTIFIER] <type_specifier> = <expression>
-                <st_vardef> -> var [IDENTIFIER] <type_specifier> = <expression>
+                    <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPRESSION>
+                    <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPRESSION>
 
-                <st_assign> -> [IDENTIFIER] = <expression>
+                    <st_assign> -> [IDENTIFIER] = <EXPRESSION>
 
         // -------------------------------------------------
+
+
 
 
 

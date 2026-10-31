@@ -154,6 +154,20 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Expected '=' after function declaration";
             error.code = 2;
             break;
+        case PARSER_FUNCTION_MISSING_INDENT:
+            error.message = "A multiline function declaration block needs to be indented";
+            error.fix = "Add a same size indent in front of all statements inside the function";
+            error.code = 2;
+            break;
+        case PARSER_ST_VAR_DEF_MISSING_IDENTIFIER:
+            error.message = "Missing variable identifier in its definition";
+            error.fix = "Add a valid identifier name after the variable definition keyword (var, val)";
+            error.code = 2;
+            break;
+        case PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT:
+            error.message = "Expected '=' after variable declaration";
+            error.code = 2;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
