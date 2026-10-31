@@ -72,6 +72,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "Remove the characters between the block comment and end of line";
             error.code = 1;
             break;
+        case SCANNER_INVALID_INDENTATION:
+            error.message = "Indentation used in an incorrect way";
+            error.fix = "Align indentation correctly";
+            error.code = 1;
+            break;
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
             error.message = "The symbol @ can only be followed by identifier 'main'";
             error.code = 2;

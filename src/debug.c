@@ -202,6 +202,9 @@ void print_token(const Token* token, const SharedData* data)
         case INDENT:
             printf("%-*s\n", ALIGNMENT, "INDENT");
             break;
+        case DEDENT:
+            printf("%-*s\n", ALIGNMENT, "DEDENT");
+            break;
         case LINE_FEED:
             printf("%-*s\n", ALIGNMENT, "LINE_FEED");
             break;

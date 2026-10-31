@@ -12,13 +12,26 @@
     context->read_buffer = true;         \
     return token;
 
+// keywords
+#define NUMBER_OF_KEYWORDS 24
 #define IS_IDENTIFIER (-1)
 #define IS_BOOLEAN_VALUE_TRUE 23
 #define IS_BOOLEAN_VALUE_FALSE 24
-#define NUMBER_OF_KEYWORDS 24
+
+// interpolated string types
 #define NO_INTERPOLATION 0
 #define SIMPLE_INTERPOLATED_STRING 1
 #define MULTILINE_INTERPOLATED_STRING 2
+
+// indentation types
+#define INVALID_INDENTATION (-1)
+#define NO_INDENTATION 0
+#define INDENTATION 1
+#define DEDENTATION 2
+
+// indentation stack
+#define EMPTY_STACK (-1)
+
 
 #include "error.h"
 #include "shared_data.h"
@@ -90,6 +103,7 @@ typedef struct token {
         DECLARATION_SIGN,
         COMMA,
         INDENT,
+        DEDENT,
         LINE_FEED,
         WHITESPACE,
         ASSIGNMENT,
@@ -210,6 +224,15 @@ typedef struct {
     size_t capacity;
 } ScannedString;
 
+typedef struct indent_el {
+    int value;
+    struct indent_el* next;
+} IndentEl;
+
+typedef struct {
+    IndentEl* top;
+} IndentStack;
+
 typedef struct {
     bool beginning_of_file;
     int interpolation;
@@ -218,6 +241,7 @@ typedef struct {
     // for return to correct type after processing expression inside the interpolated string
     int master_interpolated_string;
     ScannedString* scanned_string;
+    IndentStack* indent_stack;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
     bool lf_inside_block_comment;
@@ -246,7 +270,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream);
 int init_scanner(ScannerContext* scanner_context);
 
 /** Destroys and frees the whole scanner_context.
- * @param scanner_context
+ * @param scanner_context Pointer to the scanner context.
  */
 void destroy_scanner(const ScannerContext* scanner_context);
 
@@ -309,5 +333,22 @@ void dispose_scanned_string(ScannedString* string);
  * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
  */
 int check_identifier_for_kw(ScannedString* string);
+
+IndentStack* init_indent_stack();
+
+int push_indent(IndentStack* stack, int value);
+
+void pop_indent(IndentStack* stack);
+
+int top_indent(IndentStack* stack);
+
+/**
+ * @brief
+ *
+ * @param context Pointer to the scanner context.
+ * @param current_indent Indentation value for current line.
+ * @return returns 0 when no indentation value change occurred, 1 when the indentation value is bigger, 2 when the indentation value is smaller.
+ */
+int check_indentation(ScannerContext* context, int current_indent, bool first_call);
 
 #endif // IFJ_1_COMPILER_SCANNER_H

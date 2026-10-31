@@ -45,10 +45,15 @@ int init_scanner(ScannerContext* scanner_context)
     if (!scanned_string)
         return 1;
 
+    IndentStack* indent_stack = init_indent_stack();
+    if (!indent_stack)
+        return 1;
+
     scanner_context->beginning_of_file = true;
     scanner_context->interpolation = NO_INTERPOLATION;
     scanner_context->master_interpolated_string = NO_INTERPOLATION;
     scanner_context->scanned_string = scanned_string;
+    scanner_context->indent_stack = indent_stack;
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
@@ -157,11 +162,73 @@ int check_identifier_for_kw(ScannedString* string)
     return IS_IDENTIFIER;
 }
 
+IndentStack* init_indent_stack()
+{
+    IndentStack* indent_stack = malloc(sizeof(IndentStack));
+    if (!indent_stack)
+        return NULL;
+
+    indent_stack->top = NULL;
+    return indent_stack;
+}
+
+int push_indent(IndentStack* stack, int value)
+{
+    IndentEl* indent_el = malloc(sizeof(IndentEl));
+    if (!indent_el)
+        return 1;
+
+    indent_el->value = value;
+    indent_el->next = stack->top;
+    stack->top = indent_el;
+    return 0;
+}
+
+void pop_indent(IndentStack* stack)
+{
+    if (!stack->top)
+        return;
+
+    IndentEl* indent_el = stack->top;
+    stack->top = indent_el->next;
+    free(indent_el);
+}
+
+int top_indent(IndentStack* stack)
+{
+    if (!stack->top)
+        return EMPTY_STACK;
+
+    return stack->top->value;
+}
+
+
+int check_indentation(ScannerContext* context, int current_indent, bool first_call)
+{
+    int s_top = top_indent(context->indent_stack);
+    if (s_top == current_indent && first_call == true)
+        return NO_INDENTATION;
+    if (s_top == current_indent && first_call == false)
+        return DEDENTATION;
+    if (s_top < current_indent && first_call == true) {
+        push_indent(context->indent_stack, current_indent);
+        return INDENTATION;
+    }
+    if (s_top < current_indent && first_call == false) {
+        return INVALID_INDENTATION;
+    }
+
+    pop_indent(context->indent_stack);
+    return check_indentation(context, current_indent, false);
+}
+
 /** TODO:
  *
  * inline comments after new line send multiple new line tokens
  *
  * indent, dedent - for each block, use context to track number of dedents
+ *
+ * TAB on new line - ERR 1
  *
  */
 Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
@@ -1285,8 +1352,24 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 } else if (c == '\n' || c == EOF) {
                     state = STATE_LINE_FEED;
                 } else {
-                    token.type = INDENT;
-                    token.attribute_int = context->scanned_string->len;
+                    result = check_indentation(context, context->scanned_string->len, true);
+
+                    if (result == INVALID_INDENTATION) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(SCANNER_INVALID_INDENTATION);
+                        return token;
+                    }
+
+                    if (result == NO_INDENTATION) {
+                        state = STATE_START;
+                        clear_scanned_string(context->scanned_string);
+                        break;
+                    }
+
+                    if (result == INDENTATION)
+                        token.type = INDENT;
+                    else
+                        token.type = DEDENT;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
