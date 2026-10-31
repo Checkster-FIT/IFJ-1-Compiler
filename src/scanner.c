@@ -46,10 +46,12 @@ int init_scanner(ScannerContext* scanner_context)
         return 1;
 
     scanner_context->beginning_of_file = true;
-    scanner_context->inside_interpolated_string = false;
+    scanner_context->interpolation = NO_INTERPOLATION;
+    scanner_context->master_interpolated_string = NO_INTERPOLATION;
     scanner_context->scanned_string = scanned_string;
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
+    scanner_context->scanning_variable_inside_string_interpolation = false;
 
     return 0;
 }
@@ -159,9 +161,8 @@ int check_identifier_for_kw(ScannedString* string)
  *
  * inline comments after new line send multiple new line tokens
  *
- * set inside interpolated string to true after $var
+ * indent, dedent - for each block, use context to track number of dedents
  *
- * inside interpolated string returns unwanted token after $$
  */
 Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 {
@@ -199,10 +200,26 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
         switch (state) {
             case STATE_START:
 
-                if (context->inside_interpolated_string == true && c != EOF && c != '\n' && c != '"')
-                    state = STATE_STRING_INTERPOLATION;
-                else if (context->inside_interpolated_string == true && c == '"')
+                if (context->scanning_variable_inside_string_interpolation == true && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
+                    // handle the variable inside interpolated string as normal variable, then return back into interpolated string
+                    context->scanning_variable_inside_string_interpolation = false;
+                    state = STATE_IDENTIFIER;
+                } else if (context->scanning_variable_inside_string_interpolation == true && c == '_') {
+                    // handle the variable inside interpolated string as normal variable, then return back into interpolated string
+                    context->scanning_variable_inside_string_interpolation = false;
+                    state = STATE_UNDERSCORE_IDENTIFIER;
+                } else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c == '"')
                     state = STATE_STRING_INTERPOLATION_END;
+                else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c == '$')
+                    state = STATE_STRING_INTERPOLATION_DOLLAR;
+                else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c != EOF && c != '\n' && c != '"')
+                    state = STATE_STRING_INTERPOLATION;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c == '"')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_END_1;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c == '$')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c != EOF && c != '\n' && c != '"')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 else if (c == '&')
                     state = STATE_AMPERSAND_1;
                 else if (c == '|')
@@ -261,7 +278,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-                // OPERATOR
+            // OPERATOR
             case STATE_AMPERSAND_1:
 
                 if (c == '&')
@@ -540,6 +557,13 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_STRING_INTERPOLATION_WHICH_1:
                 clear_scanned_string(context->scanned_string); // remove s
                 clear_scanned_string(context->scanned_string); // remove "
+
+                // can be overwritten by multiline interpolation
+                // it is here to prevent code duplication as it would be needed to set in STATE_STRING_INTERPOLATION as well as in STATE_STRING_INTERPOLATION_DOLLAR
+                // (interpolated string can start with $: s"$var")
+                context->interpolation = SIMPLE_INTERPOLATED_STRING;
+                context->master_interpolated_string = SIMPLE_INTERPOLATED_STRING;
+
                 if (c == '"')
                     state = STATE_STRING_INTERPOLATION_WHICH_2;
                 else if (c == '\n') {
@@ -550,7 +574,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
-                } else
+                } else if (c == '$')
+                    state = STATE_STRING_INTERPOLATION_DOLLAR;
+                else
                     state = STATE_STRING_INTERPOLATION;
 
                 break;
@@ -560,10 +586,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '"') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
-                    break;
+                    continue; // don't save the last "
                 }
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
+                context->master_interpolated_string = NO_INTERPOLATION;
                 token.type = STRING;
                 result = add_string(data, "");
                 if (result == -1) {
@@ -578,6 +605,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
             case STATE_MULTILINE_STRING_INTERPOLATION:
+                context->interpolation = MULTILINE_INTERPOLATED_STRING;
+                context->master_interpolated_string = MULTILINE_INTERPOLATED_STRING;
                 if (c == '\\')
                     state = STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE;
                 else if (c == '$')
@@ -612,8 +641,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-                // TODO:
-                //   nested interpolation - simple string x multiline string
+            // TODO:
+            //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
@@ -621,7 +650,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '$')
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
-                if (c == '{')
+                else if (c == '{')
                     state = STATE_MULTILINE_STRING_INTERPOLATION_EXPRESSION;
                 else {
                     // pointer to the whole string before $
@@ -636,6 +665,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     }
 
                     token.attribute_str_idx = result;
+                    context->scanning_variable_inside_string_interpolation = true;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -644,7 +674,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_MULTILINE_STRING_INTERPOLATION_EXPRESSION:
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
 
                 scanned_string_remove_last(context->scanned_string); // removes { (dollar is already removed in the previous state)
 
@@ -687,7 +717,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_MULTILINE_STRING_INTERPOLATION_END_3:
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
+                context->master_interpolated_string = NO_INTERPOLATION;
+
                 // remove tailing """
                 for (int i = 0; i < 3; i++) {
                     scanned_string_remove_last(context->scanned_string);
@@ -708,9 +740,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
             case STATE_STRING_INTERPOLATION:
-
-                context->inside_interpolated_string = true;
-
                 if (c == '$')
                     state = STATE_STRING_INTERPOLATION_DOLLAR;
                 else if (c == '"')
@@ -737,7 +766,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '$')
                     state = STATE_STRING_INTERPOLATION;
-                if (c == '{')
+                else if (c == '{')
                     state = STATE_STRING_INTERPOLATION_EXPRESSION;
                 else {
                     // pointer to the whole string before $
@@ -752,6 +781,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     }
 
                     token.attribute_str_idx = result;
+                    context->scanning_variable_inside_string_interpolation = true;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -760,7 +790,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_STRING_INTERPOLATION_EXPRESSION:
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
 
                 scanned_string_remove_last(context->scanned_string); // removes {
 
@@ -780,7 +810,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_STRING_INTERPOLATION_END:
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
+                context->master_interpolated_string = NO_INTERPOLATION;
 
                 scanned_string_remove_last(context->scanned_string); // removes "
 
@@ -841,7 +872,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     result = check_identifier_for_kw(context->scanned_string);
                     if (result == IS_IDENTIFIER) {
                         token.type = IDENTIFIER;
-                        // pointer to the whole string before {
                         result = add_identifier(data, context->scanned_string->chars);
                         if (result == -1) {
                             token.type = ERROR;
@@ -1175,8 +1205,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
             case STATE_RIGHT_CURLY_BRACKET:
-                context->inside_interpolated_string = true;
-                scanned_string_remove_last(context->scanned_string); // remove {
+                context->interpolation = context->master_interpolated_string; // restore the type of string interpolation
+                scanned_string_remove_last(context->scanned_string); // remove }
                 state = STATE_START;
                 break;
 
@@ -1198,8 +1228,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_AT_SYMBOL:
-                clear_scanned_string(context->scanned_string);
-
                 if (c >= 'a' && c <= 'z')
                     state = STATE_MAIN_IDENTIFIER;
                 else {
@@ -1215,12 +1243,12 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 if (c >= 'a' && c <= 'z')
                     state = STATE_MAIN_IDENTIFIER;
                 else {
-                    token.type = IDENTIFIER;
+                    token.type = MAIN_IDENTIFIER;
 
                     result = add_identifier(data, context->scanned_string->chars);
                     if (result == -1) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "main identifier");
 
                         return token;
                     }

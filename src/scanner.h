@@ -16,6 +16,9 @@
 #define IS_BOOLEAN_VALUE_TRUE 23
 #define IS_BOOLEAN_VALUE_FALSE 24
 #define NUMBER_OF_KEYWORDS 24
+#define NO_INTERPOLATION 0
+#define SIMPLE_INTERPOLATED_STRING 1
+#define MULTILINE_INTERPOLATED_STRING 2
 
 #include "error.h"
 #include "shared_data.h"
@@ -74,6 +77,7 @@ typedef struct token {
         DOUBLE,
         OPERATOR,
         IDENTIFIER,
+        MAIN_IDENTIFIER,
         KEYWORD,
         BOOLEAN,
         STRING_INTERPOLATION,
@@ -208,12 +212,17 @@ typedef struct {
 
 typedef struct {
     bool beginning_of_file;
-    bool inside_interpolated_string;
+    int interpolation;
+
+    // we need to store master/parent type of string interpolation
+    // for return to correct type after processing expression inside the interpolated string
+    int master_interpolated_string;
     ScannedString* scanned_string;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
     bool lf_inside_block_comment;
     int block_comment_counter;
+    bool scanning_variable_inside_string_interpolation;
 } ScannerContext;
 
 /**

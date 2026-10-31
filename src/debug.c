@@ -154,6 +154,10 @@ void print_token(const Token* token, const SharedData* data)
             printf("%-*s%s\n", ALIGNMENT, "BOOLEAN",
                 token->attribute_bool ? "true" : "false");
             break;
+        case MAIN_IDENTIFIER:
+            printf("%-*s%s\n", ALIGNMENT, "MAIN_IDENTIFIER",
+                get_identifier(data, token->attribute_str_idx));
+            break;
 
         // STRINGS
         case STRING_INTERPOLATION:
