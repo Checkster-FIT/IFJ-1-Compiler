@@ -85,8 +85,17 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Invalid use of %s in the global scope";
             error.code = 2;
             break;
+        case PARSER_MISSING_IMPORT:
+            error.message = "Missing import header";
+            error.fix = "Add the required 'import ifj26.*' header at the start of the file";
+            error.code = 2;
+            break;
         case PARSER_MISSING_HEADER:
             error.message = "Missing or incorrect 'ifj26.*' header";
+            error.code = 2;
+            break;
+        case PARSER_INVALID_FUNCTION:
+            error.message = "Invalid function declaration";
             error.code = 2;
             break;
         case MEMORY_ALLOCATION_ERROR:

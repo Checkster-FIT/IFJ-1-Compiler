@@ -3,13 +3,14 @@
 <program> -> <header> <body>
 <header> -> import [IDENTIFIER] . *
 
-    <body> -> <function> <body>
     <body> -> [LF] <body>
     <body> -> [EOF]
+    <body> -> <function> <body>
+    <body> -> @main <function> <body>
+    // Parameterless requirement for the main function will be checked in the semantic analysis
 
         // -------------------------------------------------
 
-        <function> -> @main [IDENTIFIER] ( )
         <function> -> def [IDENTIFIER] <param_group_list> <data_type> = <function_body>
 
             <type> := String, Int, Double, Unit, Boolean
