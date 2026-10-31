@@ -112,6 +112,14 @@ int parse_header(ParserContext* parser)
 
 int parse_body(ParserContext* parser)
 {
+    if (accept_next_keyword(EXTENSION_KW, parser)) {
+        if (!parse_extension(parser))
+            return FAILED;
+        if (!parse_body(parser))
+            return FAILED;
+        return CORRECT;
+    }
+
     if (accept_next_keyword(DEF_KW, parser)) {
         if (!parse_function(parser))
             return FAILED;
@@ -137,6 +145,55 @@ int parse_body(ParserContext* parser)
     }
 
     parser->exit_code = print_error(PARSER_GLOBAL_SCOPE_INVALID, get_token_type_str(parser->next.type));
+    return FAILED;
+}
+
+int parse_extension(ParserContext* parser)
+{
+    if (!accept_next(LEFT_BRACKET, parser)) {
+        parser->exit_code = print_error(PARSER_MISSING_EXT_PARAM);
+        return FAILED;
+    }
+
+    if (accept_next(IDENTIFIER, parser)) {
+        if (!parse_param(parser))
+            return FAILED;
+    }
+
+    if (!accept_next(RIGHT_BRACKET, parser)) {
+        parser->exit_code = print_error(PARSER_MISSING_EXT_PARAM_END);
+        return FAILED;
+    }
+
+    if (!accept_next(LINE_FEED, parser)) {
+        parser->exit_code = print_error(PARSER_EXT_MISSING_NEWLINE);
+        return FAILED;
+    }
+
+    if (!accept_next(INDENT, parser)) {
+        parser->exit_code = print_error(PARSER_EXT_MISSING_INDENT);
+        return FAILED;
+    }
+
+    return parse_extension_body(parser);
+}
+
+int parse_extension_body(ParserContext* parser)
+{
+    if (accept_next_keyword(DEF_KW, parser)) {
+        if (!parse_function(parser))
+            return FAILED;
+        if (!parse_extension_body(parser))
+            return FAILED;
+        return CORRECT;
+    }
+
+    // TODO: Change to dedent
+    if (accept_next_keyword(INDENT, parser)) {
+        return CORRECT;
+    }
+
+    parser->exit_code = print_error(PARSER_EXT_BLOCK_INVALID);
     return FAILED;
 }
 

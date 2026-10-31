@@ -47,6 +47,8 @@ bool accept_next_operator(const enum attribute_operation_type operator, ParserCo
 int parse_program(ParserContext* parser);
 int parse_header(ParserContext* parser);
 int parse_body(ParserContext* parser);
+int parse_extension(ParserContext* parser);
+int parse_extension_body(ParserContext* parser);
 int parse_function(ParserContext* parser);
 int parse_function_body(ParserContext* parser);
 int parse_type_specifier(ParserContext* parser);

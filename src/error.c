@@ -91,8 +91,34 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Missing or incorrect 'ifj26.*' header";
             error.code = 2;
             break;
+        case PARSER_MISSING_EXT_PARAM:
+            error.message = "Missing extension parameter";
+            error.fix = "The 'extension' keyword should be followed by a valid parameter: 'extension (param: Type)'";
+            error.code = 2;
+            break;
+        case PARSER_MISSING_EXT_PARAM_END:
+            error.message = "Extension allows only one parameter";
+            error.fix = "Add ')' after the first extension parameter: 'extension (param: Type)'";
+            error.code = 2;
+            break;
+        case PARSER_EXT_MISSING_NEWLINE:
+            error.message = "An extension needs to be followed by a newline";
+            error.fix = "Add a line break after the extension before the function definitions";
+            error.code = 2;
+            break;
+        case PARSER_EXT_MISSING_INDENT:
+            error.message = "The extension block needs to be indented";
+            error.fix = "Add an indent in front of any function definitions inside the extension";
+            error.code = 2;
+            break;
+        case PARSER_EXT_BLOCK_INVALID:
+            error.message = "The extension block can only contain extension functions";
+            error.fix = "Did you mean to end the extension instead?";
+            error.code = 2;
+            break;
         case PARSER_INVALID_FUNCTION:
-            error.message = "Invalid function declaration";
+            error.message = "Missing function identifier";
+            error.fix = "The 'def' keyword should be followed by a valid identifier";
             error.code = 2;
             break;
         case PARSER_MISSING_PARAM_BRACKET:

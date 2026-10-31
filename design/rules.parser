@@ -1,13 +1,20 @@
 
 <program> -> [LF] <program>
-<program> -> <header> <body>
+<program> -> <header> <body> // TODO: Require newline after header?
 <header> -> import [IDENTIFIER] . *
 
     <body> -> [LF] <body>
     <body> -> [EOF]
     <body> -> <function> <body>
+    <body> -> <extension> <body>
     <body> -> @main <function> <body>
     // Parameterless requirement for the main function will be checked in the semantic analysis
+
+        // -------------------------------------------------
+        <extension> -> extension + ( + <param> + ) + [LF] + [INDENT] + <extension_body>
+
+            <extension_body> -> <function> + <extension_body>
+            <extension_body> -> [DEDENT]
 
         // -------------------------------------------------
 
@@ -31,12 +38,13 @@
 
         // -------------------------------------------------
 
-            <function_body> -> [INDENT] <statement_list>
+            <function_body> -> [LF] [INDENT] <statement_list>
+            // TODO: Add rules for functions without newline
 
                 <statement_list> -> <statement> <statement_list>
-                <statement_list> -> [UNINDENT]
+                <statement_list> -> [DEDENT]
 
-                    <statement> -> <statement> LF
+                    <statement> -> <statement> [LF]
                     <statement> := <st_vardef>, <st_assign>
 
                 <st_vardef> -> val [IDENTIFIER] <type_specifier> = <expression>
