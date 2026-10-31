@@ -18,36 +18,53 @@
 void init_parser(ParserContext* parser, SharedData* data)
 {
     init_scanner(&parser->scanner_context);
+    parser->shared_data = data;
 
     parser->next.type = NONE;
+    parser->next.attribute_none = NULL;
     parser->accepted.type = NONE;
+    parser->accepted.attribute_none = NULL;
     parser->exit_code = 0;
 
-    parser->shared_data = data;
+    parser->debug = false;
+    parser->debug_print_failed = false;
+    parser->debug_print_remaining = 0;
 }
 
 int destroy_parser(const ParserContext* parser)
 {
     destroy_scanner(&parser->scanner_context);
     return parser->exit_code;
-    ;
 }
+
+// =======================================================
 
 int run_parser(SharedData* data)
 {
     ParserContext parser;
     init_parser(&parser, data);
+    parser.debug = true;
 
-    const bool check_syntax = true;
-    if (check_syntax) {
-        next(&parser);
-        parse_program(&parser);
-    } else {
+    next(&parser);
+    parse_program(&parser);
+
+    if (parser.debug) {
+        // Highlight the invalid token
+        parser.debug_print_failed = (parser.exit_code != 0);
+        // How many tokens after failure should be printed
+        parser.debug_print_remaining = 8;
+
         while (true) {
             next(&parser);
+            parser.debug_print_failed = false;
+            parser.debug_print_remaining--;
+
             if (parser.next.type == END_OF_FILE || parser.next.type == ERROR)
                 break;
         }
+
+        if (parser.debug_print_remaining < 0)
+            printf("[**] %i more remaining\n", -(parser.debug_print_remaining));
     }
 
     return destroy_parser(&parser);
@@ -140,7 +157,23 @@ void next(ParserContext* parser)
     parser->accepted = parser->next;
     parser->next = get_token(&parser->scanner_context, parser->shared_data, stdin);
 
-    print_token(&parser->next, parser->shared_data);
+    if (parser->debug) {
+        // Accepted token
+        if (parser->exit_code == 0) {
+            printf("[\033[1;32mOK\033[0m] ");
+            print_token(&parser->accepted, parser->shared_data);
+        }
+        // First invalid token
+        else if (parser->debug_print_failed) {
+            printf("[\033[1;31m!?\033[0m] ");
+            print_token(&parser->accepted, parser->shared_data);
+        }
+        // Unprocessed tokens after
+        else if (parser->debug_print_remaining > 0) {
+            printf("[  ] ");
+            print_token(&parser->accepted, parser->shared_data);
+        }
+    }
 }
 
 bool check_next(const enum type_enum type, ParserContext* parser)
@@ -202,4 +235,3 @@ bool accept_next_operator(const enum attribute_operation_type operator, ParserCo
 }
 
 // =======================================================
-

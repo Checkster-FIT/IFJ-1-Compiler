@@ -2,7 +2,7 @@
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    parser.h
  * @brief
- * @author
+ * @author  Filip Hajdusek (xhajduf00)
  */
 
 #ifndef IFJ_1_COMPILER_PARSER_H
@@ -20,6 +20,12 @@ typedef struct {
     Token accepted;
     ScannerContext scanner_context;
     SharedData* shared_data;
+
+    // Debug information
+    bool debug;
+    bool debug_print_failed;
+    int debug_print_remaining;
+
 } ParserContext;
 
 // -----------------------------------------
@@ -35,7 +41,7 @@ bool accept_next(const enum type_enum type, ParserContext* parser);
 // -----------------------------------------
 bool accept_next_identifier(const char* name, ParserContext* parser);
 bool accept_next_keyword(const enum attribute_keyword keyword, ParserContext* parser);
-bool accept_next_operator(const enum attribute_operation_type operator, ParserContext* parser);
+bool accept_next_operator(const enum attribute_operation_type operator, ParserContext * parser);
 
 // -----------------------------------------
 int parse_header(ParserContext* parser);

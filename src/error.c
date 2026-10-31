@@ -205,7 +205,7 @@ int print_error(const int error_id, ...)
     // Create the format with or without the fix
     const char* format = "\033[1;31m[%s]: %s\n\033[0m -> %s\n";
     if (strlen(error.fix) <= 0)
-        format = "\033[1;31m[%s]: %s\n";
+        format = "\033[1;31m[%s]: %s\033[0m\n";
 
     snprintf(
         error_message,
