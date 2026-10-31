@@ -153,6 +153,10 @@ void print_token(const Token* token, const SharedData* data)
             fprintf(stderr, "%-*s%s\n", ALIGNMENT, "BOOLEAN",
                 token->attribute_bool ? "true" : "false");
             break;
+        case MAIN_IDENTIFIER:
+            printf("%-*s%s\n", ALIGNMENT, "MAIN_IDENTIFIER",
+                get_identifier(data, token->attribute_str_idx));
+            break;
 
         // STRINGS
         case STRING_INTERPOLATION:
@@ -196,6 +200,9 @@ void print_token(const Token* token, const SharedData* data)
             break;
         case INDENT:
             fprintf(stderr, "%-*s\n", ALIGNMENT, "INDENT");
+            break;
+        case DEDENT:
+            printf("%-*s\n", ALIGNMENT, "DEDENT");
             break;
         case LINE_FEED:
             fprintf(stderr, "%-*s\n", ALIGNMENT, "LINE_FEED");

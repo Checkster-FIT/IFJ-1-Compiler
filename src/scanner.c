@@ -45,11 +45,20 @@ int init_scanner(ScannerContext* scanner_context)
     if (!scanned_string)
         return 1;
 
+    IndentStack* indent_stack = init_indent_stack();
+    if (!indent_stack)
+        return 1;
+
     scanner_context->beginning_of_file = true;
-    scanner_context->inside_interpolated_string = false;
+    scanner_context->interpolation = NO_INTERPOLATION;
+    scanner_context->master_interpolated_string = NO_INTERPOLATION;
     scanner_context->scanned_string = scanned_string;
+    scanner_context->indent_stack = indent_stack;
+    scanner_context->pending_indent = false;
+    scanner_context->number_of_dedents = 0;
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
+    scanner_context->scanning_variable_inside_string_interpolation = false;
 
     return 0;
 }
@@ -155,13 +164,71 @@ int check_identifier_for_kw(ScannedString* string)
     return IS_IDENTIFIER;
 }
 
+IndentStack* init_indent_stack()
+{
+    IndentStack* indent_stack = malloc(sizeof(IndentStack));
+    if (!indent_stack)
+        return NULL;
+
+    indent_stack->top = NULL;
+
+    return indent_stack;
+}
+
+int push_indent(IndentStack* stack, int value)
+{
+    IndentEl* indent_el = malloc(sizeof(IndentEl));
+    if (!indent_el)
+        return 1;
+
+    indent_el->value = value;
+    indent_el->next = stack->top;
+    stack->top = indent_el;
+    return 0;
+}
+
+void pop_indent(IndentStack* stack)
+{
+    if (!stack->top)
+        return;
+
+    IndentEl* indent_el = stack->top;
+    stack->top = indent_el->next;
+    free(indent_el);
+}
+
+int top_indent(IndentStack* stack)
+{
+    if (!stack->top)
+        return 0; // on empty stack, return 0 - default indent value
+
+    return stack->top->value;
+}
+
+int check_indentation(ScannerContext* context, int current_indent, bool first_call)
+{
+    int s_top = top_indent(context->indent_stack);
+    if (s_top == current_indent && first_call == true)
+        return NO_INDENTATION;
+    if (s_top == current_indent && first_call == false)
+        return DEDENTATION;
+    if (s_top < current_indent && first_call == true) {
+        push_indent(context->indent_stack, current_indent);
+        return INDENTATION;
+    }
+    if (s_top < current_indent && first_call == false) {
+        return INVALID_INDENTATION;
+    }
+
+    pop_indent(context->indent_stack);
+    context->number_of_dedents += 1;
+    return check_indentation(context, current_indent, false);
+}
+
 /** TODO:
  *
- * inline comments after new line send multiple new line tokens
+ * TAB on new line - ERR 1
  *
- * set inside interpolated string to true after $var
- *
- * inside interpolated string returns unwanted token after $$
  */
 Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 {
@@ -172,6 +239,20 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
     token.attribute_error = 1; // lexical error exit code
 
     clear_scanned_string(context->scanned_string);
+
+    int indent_value = 0;
+
+    if (context->number_of_dedents) {
+        context->number_of_dedents -= 1;
+        token.type = DEDENT;
+        return token;
+    }
+
+    if (context->pending_indent) {
+        context->pending_indent = false;
+        token.type = INDENT;
+        return token;
+    }
 
     while (1) {
 
@@ -199,10 +280,26 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
         switch (state) {
             case STATE_START:
 
-                if (context->inside_interpolated_string == true && c != EOF && c != '\n' && c != '"')
-                    state = STATE_STRING_INTERPOLATION;
-                else if (context->inside_interpolated_string == true && c == '"')
+                if (context->scanning_variable_inside_string_interpolation == true && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
+                    // handle the variable inside interpolated string as normal variable, then return back into interpolated string
+                    context->scanning_variable_inside_string_interpolation = false;
+                    state = STATE_IDENTIFIER;
+                } else if (context->scanning_variable_inside_string_interpolation == true && c == '_') {
+                    // handle the variable inside interpolated string as normal variable, then return back into interpolated string
+                    context->scanning_variable_inside_string_interpolation = false;
+                    state = STATE_UNDERSCORE_IDENTIFIER;
+                } else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c == '"')
                     state = STATE_STRING_INTERPOLATION_END;
+                else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c == '$')
+                    state = STATE_STRING_INTERPOLATION_DOLLAR;
+                else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c != EOF && c != '\n' && c != '"')
+                    state = STATE_STRING_INTERPOLATION;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c == '"')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_END_1;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c == '$')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c != EOF && c != '\n' && c != '"')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 else if (c == '&')
                     state = STATE_AMPERSAND_1;
                 else if (c == '|')
@@ -245,9 +342,10 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_RIGHT_BRACKET;
                 else if (c == '}')
                     state = STATE_RIGHT_CURLY_BRACKET;
-                else if (c == ' ' && context->beginning_of_file == true)
+                else if (c == ' ' && context->beginning_of_file == true) {
+                    indent_value = 1;
                     state = STATE_INDENT;
-                else if (c == ' ' && context->beginning_of_file == false)
+                } else if (c == ' ' && context->beginning_of_file == false)
                     continue;
                 else if (c == EOF) {
                     token.type = END_OF_FILE;
@@ -261,7 +359,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-                // OPERATOR
+            // OPERATOR
             case STATE_AMPERSAND_1:
 
                 if (c == '&')
@@ -288,7 +386,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_SLASH:
                 if (c == '/')
-                    state = STATE_COMMENT_START;
+                    state = STATE_COMMENT;
                 else if (c == '*')
                     state = STATE_BLOCK_COMMENT_START;
                 else {
@@ -540,6 +638,13 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_STRING_INTERPOLATION_WHICH_1:
                 clear_scanned_string(context->scanned_string); // remove s
                 clear_scanned_string(context->scanned_string); // remove "
+
+                // can be overwritten by multiline interpolation
+                // it is here to prevent code duplication as it would be needed to set in STATE_STRING_INTERPOLATION as well as in STATE_STRING_INTERPOLATION_DOLLAR
+                // (interpolated string can start with $: s"$var")
+                context->interpolation = SIMPLE_INTERPOLATED_STRING;
+                context->master_interpolated_string = SIMPLE_INTERPOLATED_STRING;
+
                 if (c == '"')
                     state = STATE_STRING_INTERPOLATION_WHICH_2;
                 else if (c == '\n') {
@@ -550,7 +655,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
                     return token;
-                } else
+                } else if (c == '$')
+                    state = STATE_STRING_INTERPOLATION_DOLLAR;
+                else
                     state = STATE_STRING_INTERPOLATION;
 
                 break;
@@ -560,10 +667,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '"') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
-                    break;
+                    continue; // don't save the last "
                 }
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
+                context->master_interpolated_string = NO_INTERPOLATION;
                 token.type = STRING;
                 result = add_string(data, "");
                 if (result == -1) {
@@ -578,6 +686,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
             case STATE_MULTILINE_STRING_INTERPOLATION:
+                context->interpolation = MULTILINE_INTERPOLATED_STRING;
+                context->master_interpolated_string = MULTILINE_INTERPOLATED_STRING;
                 if (c == '\\')
                     state = STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE;
                 else if (c == '$')
@@ -621,7 +731,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '$')
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
-                if (c == '{')
+                else if (c == '{')
                     state = STATE_MULTILINE_STRING_INTERPOLATION_EXPRESSION;
                 else {
                     // pointer to the whole string before $
@@ -636,6 +746,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     }
 
                     token.attribute_str_idx = result;
+                    context->scanning_variable_inside_string_interpolation = true;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -644,7 +755,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_MULTILINE_STRING_INTERPOLATION_EXPRESSION:
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
 
                 scanned_string_remove_last(context->scanned_string); // removes { (dollar is already removed in the previous state)
 
@@ -687,7 +798,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_MULTILINE_STRING_INTERPOLATION_END_3:
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
+                context->master_interpolated_string = NO_INTERPOLATION;
+
                 // remove tailing """
                 for (int i = 0; i < 3; i++) {
                     scanned_string_remove_last(context->scanned_string);
@@ -708,9 +821,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER;
 
             case STATE_STRING_INTERPOLATION:
-
-                context->inside_interpolated_string = true;
-
                 if (c == '$')
                     state = STATE_STRING_INTERPOLATION_DOLLAR;
                 else if (c == '"')
@@ -737,7 +847,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '$')
                     state = STATE_STRING_INTERPOLATION;
-                if (c == '{')
+                else if (c == '{')
                     state = STATE_STRING_INTERPOLATION_EXPRESSION;
                 else {
                     // pointer to the whole string before $
@@ -752,6 +862,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     }
 
                     token.attribute_str_idx = result;
+                    context->scanning_variable_inside_string_interpolation = true;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
@@ -760,7 +871,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_STRING_INTERPOLATION_EXPRESSION:
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
 
                 scanned_string_remove_last(context->scanned_string); // removes {
 
@@ -780,7 +891,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_STRING_INTERPOLATION_END:
 
-                context->inside_interpolated_string = false;
+                context->interpolation = NO_INTERPOLATION;
+                context->master_interpolated_string = NO_INTERPOLATION;
 
                 scanned_string_remove_last(context->scanned_string); // removes "
 
@@ -841,7 +953,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     result = check_identifier_for_kw(context->scanned_string);
                     if (result == IS_IDENTIFIER) {
                         token.type = IDENTIFIER;
-                        // pointer to the whole string before {
                         result = add_identifier(data, context->scanned_string->chars);
                         if (result == -1) {
                             token.type = ERROR;
@@ -1175,8 +1286,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
             case STATE_RIGHT_CURLY_BRACKET:
-                context->inside_interpolated_string = true;
-                scanned_string_remove_last(context->scanned_string); // remove {
+                context->interpolation = context->master_interpolated_string; // restore the type of string interpolation
+                scanned_string_remove_last(context->scanned_string); // remove }
                 state = STATE_START;
                 break;
 
@@ -1198,7 +1309,6 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 break;
 
             case STATE_AT_SYMBOL:
-
                 if (c >= 'a' && c <= 'z')
                     state = STATE_MAIN_IDENTIFIER;
                 else {
@@ -1214,12 +1324,12 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 if (c >= 'a' && c <= 'z')
                     state = STATE_MAIN_IDENTIFIER;
                 else {
-                    token.type = IDENTIFIER;
+                    token.type = MAIN_IDENTIFIER;
 
                     result = add_identifier(data, context->scanned_string->chars);
                     if (result == -1) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "main identifier");
 
                         return token;
                     }
@@ -1230,46 +1340,75 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
+            // STATE_LINE_FEED servers as a kind of pipe into STATE_INDENT which will handle
+            // indentation as well as line feed tokens
             case STATE_LINE_FEED:
-
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
-                } else if (c == ' ') {
-                    clear_scanned_string(context->scanned_string);
-                    state = STATE_INDENT;
-                } else if (c == EOF) {
+                    break;
+                }
+                if (c == EOF) {
                     token.type = END_OF_FILE;
                     token.attribute_none = NULL;
                     return token;
-                } else {
-                    token.type = LINE_FEED;
-                    token.attribute_none = NULL;
-                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+                if (c == '/') {
+                    state = STATE_SLASH;
+                    break;
+                }
+                if (c == ' ') {
+                    indent_value = 1;
+                    state = STATE_INDENT;
+                    break;
                 }
 
+                // no whitespace on new line
+                indent_value = 0;
+                state = STATE_INDENT;
+                context->read_buffer = true; // keep the read char as STATE_INDENT needs to read it again
                 break;
 
+            // STATE_INDENT is only accessible after line feed (or BOF)
+            // read spaces as long as possible, then handle indent value
+            //      return line feed token and if needed,
+            //      INDENT/DEDENT token will be returned on the next get_token() call
             case STATE_INDENT:
 
                 if (c == ' ') {
+                    indent_value++;
                     state = STATE_INDENT;
-                } else if (c == '\n' || c == EOF) {
+                } else if (c == '\n' || c == EOF)
                     state = STATE_LINE_FEED;
-                } else {
-                    token.type = INDENT;
-                    token.attribute_int = context->scanned_string->len;
+                else if (c == '/')
+                    state = STATE_SLASH;
+                else {
+                    result = check_indentation(context, indent_value, true);
+
+                    if (result == INVALID_INDENTATION) {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(SCANNER_INVALID_INDENTATION);
+                        return token;
+                    }
+
+                    if (result == INDENTATION)
+                        context->pending_indent = true; // return INDENT token on the next get_token() call
+
+                    // dedentation is already handled by check_indentation()
+
+                    // no indentation:
+                    token.type = LINE_FEED;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
                 break;
 
             // COMMENT
-            case STATE_COMMENT_START:
+            case STATE_COMMENT:
 
-                if (c == '\n' || c == EOF) {
+                if (c == '\n' || c == EOF)
                     state = STATE_LINE_FEED;
-                } else {
-                    state = STATE_COMMENT_START;
+                else {
+                    state = STATE_COMMENT;
                 }
                 break;
 

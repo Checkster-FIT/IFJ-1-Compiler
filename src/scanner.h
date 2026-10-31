@@ -12,10 +12,25 @@
     context->read_buffer = true;         \
     return token;
 
+// keywords
+#define NUMBER_OF_KEYWORDS 24
 #define IS_IDENTIFIER (-1)
 #define IS_BOOLEAN_VALUE_TRUE 23
 #define IS_BOOLEAN_VALUE_FALSE 24
-#define NUMBER_OF_KEYWORDS 24
+
+// interpolated string types
+#define NO_INTERPOLATION 0
+#define SIMPLE_INTERPOLATED_STRING 1
+#define MULTILINE_INTERPOLATED_STRING 2
+
+// indentation types
+#define INVALID_INDENTATION (-1)
+#define NO_INDENTATION 0
+#define INDENTATION 1
+#define DEDENTATION 2
+
+// indentation stack
+#define EMPTY_STACK (-1)
 
 #include "error.h"
 #include "shared_data.h"
@@ -74,6 +89,7 @@ typedef struct token {
         DOUBLE,
         OPERATOR,
         IDENTIFIER,
+        MAIN_IDENTIFIER,
         KEYWORD,
         BOOLEAN,
         STRING_INTERPOLATION,
@@ -86,6 +102,7 @@ typedef struct token {
         DECLARATION_SIGN,
         COMMA,
         INDENT,
+        DEDENT,
         LINE_FEED,
         WHITESPACE,
         ASSIGNMENT,
@@ -170,7 +187,7 @@ typedef enum {
     STATE_LINE_FEED,
     STATE_INDENT,
     STATE_SLASH, // / is operator, or start of the comment followed by /
-    STATE_COMMENT_START,
+    STATE_COMMENT,
     STATE_BLOCK_COMMENT_START, // /*
     STATE_ANOTHER_BLOCK_COMMENT_START,
     STATE_ANOTHER_BLOCK_COMMENT_END,
@@ -206,14 +223,31 @@ typedef struct {
     size_t capacity;
 } ScannedString;
 
+typedef struct indent_el {
+    int value;
+    struct indent_el* next;
+} IndentEl;
+
+typedef struct {
+    IndentEl* top;
+} IndentStack;
+
 typedef struct {
     bool beginning_of_file;
-    bool inside_interpolated_string;
+    int interpolation;
+
+    // we need to store master/parent type of string interpolation
+    // for return to correct type after processing expression inside the interpolated string
+    int master_interpolated_string;
     ScannedString* scanned_string;
+    IndentStack* indent_stack;
+    bool pending_indent;
+    int number_of_dedents;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
     bool lf_inside_block_comment;
     int block_comment_counter;
+    bool scanning_variable_inside_string_interpolation;
 } ScannerContext;
 
 /**
@@ -237,7 +271,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream);
 int init_scanner(ScannerContext* scanner_context);
 
 /** Destroys and frees the whole scanner_context.
- * @param scanner_context
+ * @param scanner_context Pointer to the scanner context.
  */
 void destroy_scanner(const ScannerContext* scanner_context);
 
@@ -300,5 +334,22 @@ void dispose_scanned_string(ScannedString* string);
  * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
  */
 int check_identifier_for_kw(ScannedString* string);
+
+IndentStack* init_indent_stack();
+
+int push_indent(IndentStack* stack, int value);
+
+void pop_indent(IndentStack* stack);
+
+int top_indent(IndentStack* stack);
+
+/**
+ *
+ * @param context Pointer to scanner context containing indentation stack.
+ * @param current_indent Indentation value used for the comparison and other actions.
+ * @param first_call Whether the function is being called by the scanner or recursively by the function itself.
+ * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on the specification.
+ */
+int check_indentation(ScannerContext* context, int current_indent, bool first_call);
 
 #endif // IFJ_1_COMPILER_SCANNER_H
