@@ -54,6 +54,8 @@ int init_scanner(ScannerContext* scanner_context)
     scanner_context->master_interpolated_string = NO_INTERPOLATION;
     scanner_context->scanned_string = scanned_string;
     scanner_context->indent_stack = indent_stack;
+    scanner_context->pending_indent = false;
+    scanner_context->number_of_dedents = 0;
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
@@ -169,6 +171,7 @@ IndentStack* init_indent_stack()
         return NULL;
 
     indent_stack->top = NULL;
+
     return indent_stack;
 }
 
@@ -197,11 +200,10 @@ void pop_indent(IndentStack* stack)
 int top_indent(IndentStack* stack)
 {
     if (!stack->top)
-        return EMPTY_STACK;
+        return 0; // on empty stack, return 0 - default indent value
 
     return stack->top->value;
 }
-
 
 int check_indentation(ScannerContext* context, int current_indent, bool first_call)
 {
@@ -219,14 +221,11 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
     }
 
     pop_indent(context->indent_stack);
+    context->number_of_dedents += 1;
     return check_indentation(context, current_indent, false);
 }
 
 /** TODO:
- *
- * inline comments after new line send multiple new line tokens
- *
- * indent, dedent - for each block, use context to track number of dedents
  *
  * TAB on new line - ERR 1
  *
@@ -240,6 +239,20 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
     token.attribute_error = 1; // lexical error exit code
 
     clear_scanned_string(context->scanned_string);
+
+    int indent_value = 0;
+
+    if (context->number_of_dedents) {
+        context->number_of_dedents -= 1;
+        token.type = DEDENT;
+        return token;
+    }
+
+    if (context->pending_indent) {
+        context->pending_indent = false;
+        token.type = INDENT;
+        return token;
+    }
 
     while (1) {
 
@@ -329,9 +342,10 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_RIGHT_BRACKET;
                 else if (c == '}')
                     state = STATE_RIGHT_CURLY_BRACKET;
-                else if (c == ' ' && context->beginning_of_file == true)
+                else if (c == ' ' && context->beginning_of_file == true) {
+                    indent_value = 1;
                     state = STATE_INDENT;
-                else if (c == ' ' && context->beginning_of_file == false)
+                } else if (c == ' ' && context->beginning_of_file == false)
                     continue;
                 else if (c == EOF) {
                     token.type = END_OF_FILE;
@@ -372,7 +386,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             case STATE_SLASH:
                 if (c == '/')
-                    state = STATE_COMMENT_START;
+                    state = STATE_COMMENT;
                 else if (c == '*')
                     state = STATE_BLOCK_COMMENT_START;
                 else {
@@ -708,8 +722,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-            // TODO:
-            //   nested interpolation - simple string x multiline string
+                // TODO:
+                //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
@@ -1326,33 +1340,49 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
+            // STATE_LINE_FEED servers as a kind of pipe into STATE_INDENT which will handle
+            // indentation as well as line feed tokens
             case STATE_LINE_FEED:
-
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
-                } else if (c == ' ') {
-                    clear_scanned_string(context->scanned_string);
-                    state = STATE_INDENT;
-                } else if (c == EOF) {
+                    break;
+                }
+                if (c == EOF) {
                     token.type = END_OF_FILE;
                     token.attribute_none = NULL;
                     return token;
-                } else {
-                    token.type = LINE_FEED;
-                    token.attribute_none = NULL;
-                    RETURN_TOKEN_AND_SET_READ_BUFFER
+                }
+                if (c == '/') {
+                    state = STATE_SLASH;
+                    break;
+                }
+                if (c == ' ') {
+                    indent_value = 1;
+                    state = STATE_INDENT;
+                    break;
                 }
 
+                // no whitespace on new line
+                indent_value = 0;
+                state = STATE_INDENT;
+                context->read_buffer = true; // keep the read char as STATE_INDENT needs to read it again
                 break;
 
+            // STATE_INDENT is only accessible after line feed (or BOF)
+            // read spaces as long as possible, then handle indent value
+            //      return line feed token and if needed,
+            //      INDENT/DEDENT token will be returned on the next get_token() call
             case STATE_INDENT:
 
                 if (c == ' ') {
+                    indent_value++;
                     state = STATE_INDENT;
-                } else if (c == '\n' || c == EOF) {
+                } else if (c == '\n' || c == EOF)
                     state = STATE_LINE_FEED;
-                } else {
-                    result = check_indentation(context, context->scanned_string->len, true);
+                else if (c == '/')
+                    state = STATE_SLASH;
+                else {
+                    result = check_indentation(context, indent_value, true);
 
                     if (result == INVALID_INDENTATION) {
                         token.type = ERROR;
@@ -1360,28 +1390,25 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                         return token;
                     }
 
-                    if (result == NO_INDENTATION) {
-                        state = STATE_START;
-                        clear_scanned_string(context->scanned_string);
-                        break;
-                    }
-
                     if (result == INDENTATION)
-                        token.type = INDENT;
-                    else
-                        token.type = DEDENT;
+                        context->pending_indent = true; // return INDENT token on the next get_token() call
+
+                    // dedentation is already handled by check_indentation()
+
+                    // no indentation:
+                    token.type = LINE_FEED;
 
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
                 break;
 
             // COMMENT
-            case STATE_COMMENT_START:
+            case STATE_COMMENT:
 
-                if (c == '\n' || c == EOF) {
+                if (c == '\n' || c == EOF)
                     state = STATE_LINE_FEED;
-                } else {
-                    state = STATE_COMMENT_START;
+                else {
+                    state = STATE_COMMENT;
                 }
                 break;
 

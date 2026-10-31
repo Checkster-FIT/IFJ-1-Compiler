@@ -77,6 +77,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "Align indentation correctly";
             error.code = 1;
             break;
+        case SCANNER_INVALID_INDENTATION_USING_TAB:
+            error.message = "Tab cannot be used to indentation";
+            error.fix = "Replace tab with space";
+            error.code = 1;
+            break;
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
             error.message = "The symbol @ can only be followed by identifier 'main'";
             error.code = 2;

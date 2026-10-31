@@ -32,7 +32,6 @@
 // indentation stack
 #define EMPTY_STACK (-1)
 
-
 #include "error.h"
 #include "shared_data.h"
 #include <stdbool.h>
@@ -188,7 +187,7 @@ typedef enum {
     STATE_LINE_FEED,
     STATE_INDENT,
     STATE_SLASH, // / is operator, or start of the comment followed by /
-    STATE_COMMENT_START,
+    STATE_COMMENT,
     STATE_BLOCK_COMMENT_START, // /*
     STATE_ANOTHER_BLOCK_COMMENT_START,
     STATE_ANOTHER_BLOCK_COMMENT_END,
@@ -242,6 +241,8 @@ typedef struct {
     int master_interpolated_string;
     ScannedString* scanned_string;
     IndentStack* indent_stack;
+    bool pending_indent;
+    int number_of_dedents;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
     bool lf_inside_block_comment;
@@ -343,11 +344,11 @@ void pop_indent(IndentStack* stack);
 int top_indent(IndentStack* stack);
 
 /**
- * @brief
  *
- * @param context Pointer to the scanner context.
- * @param current_indent Indentation value for current line.
- * @return returns 0 when no indentation value change occurred, 1 when the indentation value is bigger, 2 when the indentation value is smaller.
+ * @param context Pointer to scanner context containing indentation stack.
+ * @param current_indent Indentation value used for the comparison and other actions.
+ * @param first_call Whether the function is being called by the scanner or recursively by the function itself.
+ * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on the specification.
  */
 int check_indentation(ScannerContext* context, int current_indent, bool first_call);
 
