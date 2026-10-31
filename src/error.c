@@ -24,11 +24,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
     // [!] Usage example:
     //   return print_error(SCANNER_INT_LEADING_ZERO, "0195", 195);
     switch (error.id) {
-        case SCANNER_NO_TRANSITION:
-            error.message = "No scanner transition was found for state '%i' and character '%c'";
-            error.fix = "Try adding this case in scanner.c";
-            error.code = 100;
-            break;
+        // Lexical error
         case SCANNER_INT_LEADING_ZERO:
             error.message = "Non-zero integers cannot contain leading zeros: '%s'";
             error.fix = "Integer literal can be replaced with a valid '%i' equivalent";
@@ -73,6 +69,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "Remove the characters between the block comment and end of line";
             error.code = 1;
             break;
+        // Syntax errors
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
             error.message = "The symbol @ can only be followed by identifier 'main'";
             error.code = 2;
@@ -98,6 +95,40 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Invalid function declaration";
             error.code = 2;
             break;
+        case PARSER_MISSING_PARAM_BRACKET:
+            error.message = "Missing closing ) bracket after function parameters";
+            error.fix = "Add ) at the end of the function parameter list";
+            error.code = 2;
+            break;
+        case PARSER_MISSING_PARAM_TYPE:
+            error.message = "Missing parameter type specifier";
+            error.fix = "Make sure every parameter has its type correctly specified '(param : Type)'";
+            error.code = 2;
+            break;
+        case PARSER_INCORRECT_TYPE:
+            error.message = "Unknown type";
+            error.fix = "Valid parameter types include: (String, Int, Double, Unit, Boolean)";
+            error.code = 2;
+            break;
+        case PARSER_INVALID_PARAM_LIST_END:
+            error.message = "Missing comma separator or closing bracket after function parameter list";
+            error.fix = "Add ',' between function parameters or ')' to close the parameter list: '(param1 : Int, param2: Int)'";
+            error.code = 2;
+            break;
+        case PARSER_INVALID_PARAM:
+            error.message = "Expected a parameter declaration or closing bracket";
+            error.code = 2;
+            break;
+        case PARSER_DOUBLE_PARAM_TYPE:
+            error.message = "Extra parameter type specification";
+            error.fix = "Remove the second type specification";
+            error.code = 2;
+            break;
+        case PARSER_MISSING_FUNCTION_ASSIGNMENT:
+            error.message = "Expected '=' after function declaration";
+            error.code = 2;
+            break;
+        // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
             error.code = 99;
@@ -109,6 +140,17 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         case CORRUPTED_MEMORY:
             error.message = "An error has occurred when trying to read from memory in state: '%i'";
             error.code = 99;
+            break;
+        // Program errors
+        case PARSER_INCOMPLETE_RULE:
+            error.message = "The required parser rule is incomplete";
+            error.fix = "Try adding this rule in parser.c";
+            error.code = 100;
+            break;
+        case SCANNER_NO_TRANSITION:
+            error.message = "No scanner transition was found for state '%i' and character '%c'";
+            error.fix = "Try adding this case in scanner.c";
+            error.code = 100;
             break;
         default:
             error.message = "An unknown error has occurred...?";

@@ -46,11 +46,11 @@ int run_parser(SharedData* data)
     parser.debug = true;
 
     next(&parser);
-    parse_program(&parser);
+    const int status = parse_program(&parser);
 
     if (parser.debug) {
         // Highlight the invalid token
-        parser.debug_print_failed = (parser.exit_code != 0);
+        parser.debug_print_failed = (parser.exit_code == 0);
         // How many tokens after failure should be printed
         parser.debug_print_remaining = 8;
 
@@ -147,9 +147,126 @@ int parse_body(ParserContext* parser)
 
 int parse_function(ParserContext* parser)
 {
-    parser->exit_code = print_error(PARSER_INVALID_FUNCTION);
+    if (!accept_next(IDENTIFIER, parser)) {
+        parser->exit_code = print_error(PARSER_INVALID_FUNCTION);
+        return FAILED;
+    }
+
+    if (!parse_param_group_list(parser))
+        return FAILED;
+
+    if (!parse_type_specifier(parser))
+        return FAILED;
+
+    if (!accept_next(ASSIGNMENT, parser)) {
+        parser->exit_code = print_error(PARSER_MISSING_FUNCTION_ASSIGNMENT);
+        return FAILED;
+    }
+
+    if (!parse_function_body(parser))
+        return FAILED;
+
+    return CORRECT;
+}
+
+int parse_type_specifier(ParserContext* parser)
+{
+    if (accept_next(DECLARATION_SIGN, parser)) {
+        if (!parse_type(parser))
+            return FAILED;
+    }
+
+    return CORRECT;
+}
+
+int parse_type(ParserContext* parser)
+{
+    if (!accept_next_keyword(STRING_KW, parser) && !accept_next_keyword(INT_KW, parser) && !accept_next_keyword(DOUBLE_KW, parser) && !accept_next_keyword(UNIT_KW, parser) && !accept_next_keyword(BOOLEAN_KW, parser)) {
+        parser->exit_code = print_error(PARSER_INCORRECT_TYPE);
+        return FAILED;
+    }
+
+    return CORRECT;
+}
+
+int parse_param_group_list(ParserContext* parser)
+{
+    if (accept_next(LEFT_BRACKET, parser)) {
+        if (!parse_param_first(parser))
+            return FAILED;
+        if (!parse_param_group_list(parser))
+            return FAILED;
+    }
+
+    return CORRECT;
+}
+
+int parse_param_first(ParserContext* parser)
+{
+    if (accept_next(RIGHT_BRACKET, parser)) {
+        return CORRECT;
+    }
+
+    if (accept_next(IDENTIFIER, parser)) {
+        if (!parse_param(parser))
+            return FAILED;
+        if (!parse_param_list(parser))
+            return FAILED;
+        return CORRECT;
+    }
+
+    print_error(PARSER_INVALID_PARAM);
     return FAILED;
 }
+
+int parse_param_list(ParserContext* parser)
+{
+    if (accept_next(RIGHT_BRACKET, parser)) {
+        return CORRECT;
+    }
+
+    if (!accept_next(COMMA, parser)) {
+
+        if (check_next(DECLARATION_SIGN, parser)) {
+            parser->exit_code = print_error(PARSER_DOUBLE_PARAM_TYPE);
+            return FAILED;
+        }
+
+        parser->exit_code = print_error(PARSER_INVALID_PARAM_LIST_END);
+        return FAILED;
+    }
+
+    if (accept_next(IDENTIFIER, parser)) {
+        if (!parse_param(parser))
+            return FAILED;
+        if (!parse_param_list(parser))
+            return FAILED;
+        return CORRECT;
+    }
+
+    print_error(PARSER_MISSING_PARAM_BRACKET);
+    return FAILED;
+}
+
+int parse_param(ParserContext* parser)
+{
+    if (!accept_next(DECLARATION_SIGN, parser)) {
+        parser->exit_code = print_error(PARSER_MISSING_PARAM_TYPE);
+        return FAILED;
+    }
+
+    if (!parse_type(parser))
+        return FAILED;
+
+    return CORRECT;
+}
+
+int parse_function_body(ParserContext* parser)
+{
+    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE);
+    return FAILED;
+}
+
 // =======================================================
 
 void next(ParserContext* parser)
@@ -159,7 +276,7 @@ void next(ParserContext* parser)
 
     if (parser->debug) {
         // Accepted token
-        if (parser->exit_code == 0) {
+        if (parser->exit_code == 0 && parser->accepted.type != NONE) {
             printf("[\033[1;32mOK\033[0m] ");
             print_token(&parser->accepted, parser->shared_data);
         }

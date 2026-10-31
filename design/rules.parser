@@ -11,22 +11,23 @@
 
         // -------------------------------------------------
 
-        <function> -> def [IDENTIFIER] <param_group_list> <data_type> = <function_body>
+        <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
 
             <type> := String, Int, Double, Unit, Boolean
 
-            <param_group_list> -> <param_group> <param_group_list>
+            <param_group_list> -> ( <param_first> ) <param_group_list>
             <param_group_list> -> 3
 
-                <param_group> -> ( <param_list> )
+                    <param_first> -> <param> <param_list>
+                    <param_first> -> 3
 
-                    <param_list> -> <param> <param_list>
+                    <param_list> -> , <param> <param_list>
                     <param_list> -> 3
 
                         <param> -> [IDENTIFIER] : <type>
 
-            <data_type> -> : <type>
-            <data_type> -> 3
+            <type_specifier> -> : <type>
+            <type_specifier> -> 3
 
         // -------------------------------------------------
 
@@ -38,8 +39,8 @@
                     <statement> -> <statement> LF
                     <statement> := <st_vardef>, <st_assign>
 
-                <st_vardef> -> val [IDENTIFIER] <data_type> = <expression>
-                <st_vardef> -> var [IDENTIFIER] <data_type> = <expression>
+                <st_vardef> -> val [IDENTIFIER] <type_specifier> = <expression>
+                <st_vardef> -> var [IDENTIFIER] <type_specifier> = <expression>
 
                 <st_assign> -> [IDENTIFIER] = <expression>
 
