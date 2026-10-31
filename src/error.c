@@ -186,6 +186,26 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "A single-line function declaration must be ended with a new line";
             error.code = 2;
             break;
+        case PARSER_WHILE_MISSING_DO:
+            error.message = "Expected 'do' keyword after while loop condition";
+            error.code = 2;
+            break;
+        case PARSER_WHILE_MISSING_LINE_FEED:
+            error.message = "A while loop block must be on a new line";
+            error.code = 2;
+            break;
+        case PARSER_WHILE_MISSING_INDENT:
+            error.message = "A while loop block needs to be indented";
+            error.code = 2;
+            break;
+        case PARSER_IF_MISSING_THEN:
+            error.message = "Expected 'then' keyword after if statement condition";
+            error.code = 2;
+            break;
+        case PARSER_IF_MISSING_INDENT:
+            error.message = "A multiline if statement needs to be indented";
+            error.code = 2;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";

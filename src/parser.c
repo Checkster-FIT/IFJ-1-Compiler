@@ -347,17 +347,141 @@ int parse_statement_list(ParserContext* parser)
     if (accept_next_keyword(VAR_KW, parser) || accept_next_keyword(VAL_KW, parser)) {
         if (!parse_statement_variable_definition(parser))
             return FAILED;
-    } else if (accept_next_keyword(WHILE_KW, parser)) {
-        // TODO: While loop
-        parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "while_loop");
+    }
+    else if (accept_next_keyword(WHILE_KW, parser)) {
+        if (!parse_statement_while(parser))
+            return FAILED;
+    }
+    else if (accept_next_keyword(IF_KW, parser)) {
+        if (!parse_statement_conditional(parser))
+            return FAILED;
+    }
+    else if (accept_next_keyword(RETURN_KW, parser)) {
+        if (!parse_statement_return(parser))
+            return FAILED;
+    }
+    else if (accept_next_keyword(FOR_KW, parser)) {
+        parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "for_loop");
         return FAILED;
-    } else if (check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
+    }
+    else if (check_next(LEFT_BRACKET, parser) || check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
+        // TODO: Assignments, Strings, Function calls, Returns values, ...
+
         if (!parse_expression(parser))
+            return FAILED;
+
+        if (!accept_next(LINE_FEED, parser)) {
+            parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+            return FAILED;
+        }
+    }
+
+    return parse_statement_list(parser);
+}
+
+int parse_statement_conditional(ParserContext* parser)
+{
+    if (!parse_if_then(parser))
+        return FAILED;
+
+    if (accept_next_keyword(ELSE_KW, parser)) {
+        if (check_next(IF_KW, parser)) {
+            if (!parse_else_if_list(parser))
+                return FAILED;
+            return CORRECT;
+        }
+
+        if (!parse_else(parser))
             return FAILED;
     }
 
+    return CORRECT;
+}
+
+int parse_if_then(ParserContext* parser)
+{
+    if (!parse_relational_expression(parser))
+        return FAILED;
+
+    if (!accept_next_keyword(THEN_KW, parser)) {
+        parser->exit_code = print_error(PARSER_IF_MISSING_THEN);
+        return FAILED;
+    }
+
+    const bool indented = accept_next(LINE_FEED, parser);
+    if (indented && !accept_next(INDENT, parser)) {
+        parser->exit_code = print_error(PARSER_IF_MISSING_INDENT);
+        return FAILED;
+    }
+
+    if (!parse_statement_list(parser))
+        return FAILED;
+
+    // TODO: Needs to be extracted from statement list
+    // if (indented && !accept_next(DEDENT, parser)) {
+    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT);
+    //     return FAILED;
+    // }
+
+    return CORRECT;
+}
+
+int parse_else_if_list(ParserContext* parser)
+{
+    if (!parse_if_then(parser))
+        return FAILED;
+
+    if (accept_next_keyword(ELSE_KW, parser)) {
+        if (check_next(IF_KW, parser)) {
+            if (!parse_else_if_list(parser))
+                return FAILED;
+            return CORRECT;
+        }
+
+        if (!parse_else(parser))
+            return FAILED;
+    }
+
+    return CORRECT;
+}
+
+int parse_else(ParserContext* parser)
+{
+    const bool indented = accept_next(LINE_FEED, parser);
+    if (indented && !accept_next(INDENT, parser)) {
+        parser->exit_code = print_error(PARSER_IF_MISSING_INDENT);
+        return FAILED;
+    }
+
+    if (!parse_statement_list(parser))
+        return FAILED;
+
+    // TODO: Needs to be extracted from statement list
+    // if (indented && !accept_next(DEDENT, parser)) {
+    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT);
+    //     return FAILED;
+    // }
+
+    return CORRECT;
+}
+
+int parse_statement_while(ParserContext* parser)
+{
+    if (!parse_relational_expression(parser))
+        return FAILED;
+
+    if (!accept_next_keyword(DO_KW, parser)) {
+        parser->exit_code = print_error(PARSER_WHILE_MISSING_DO);
+        return FAILED;
+    }
+
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+        parser->exit_code = print_error(PARSER_WHILE_MISSING_LINE_FEED);
+        return FAILED;
+    }
+
+    if (!accept_next(INDENT, parser)) {
+        parser->exit_code = print_error(PARSER_WHILE_MISSING_INDENT);
         return FAILED;
     }
 
@@ -379,10 +503,46 @@ int parse_statement_variable_definition(ParserContext* parser)
         return FAILED;
     }
 
-    return parse_expression(parser);
+    if (!parse_expression(parser))
+        return FAILED;
+
+    if (!accept_next(LINE_FEED, parser)) {
+        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+        return FAILED;
+    }
+
+    return CORRECT;
+}
+
+int parse_statement_return(ParserContext* parser)
+{
+    if (!parse_expression(parser))
+        return FAILED;
+
+    if (!accept_next(LINE_FEED, parser)) {
+        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+        return FAILED;
+    }
+
+    return CORRECT;
 }
 
 // =======================================================
+
+int parse_relational_expression(ParserContext* parser)
+{
+    while (true) {
+        if (check_next_keyword(DO_KW, parser) || check_next_keyword(THEN_KW, parser)) {
+            return CORRECT;
+        }
+
+        parser->debug_skipped = true;
+        next(parser);
+    }
+
+    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "relational_expression");
+    return FAILED;
+}
 
 int parse_expression(ParserContext* parser)
 {
@@ -444,6 +604,17 @@ bool check_next(const enum type_enum type, ParserContext* parser)
     return true;
 }
 
+bool check_next_keyword(const enum attribute_keyword keyword, ParserContext* parser)
+{
+    if (check_next(KEYWORD, parser) == false)
+        return false;
+
+    if (parser->next.attribute_keyword != keyword)
+        return false;
+
+    return true;
+}
+
 bool accept_next(const enum type_enum type, ParserContext* parser)
 {
     if (check_next(type, parser) == false)
@@ -468,10 +639,7 @@ bool accept_next_identifier(const char* name, ParserContext* parser)
 
 bool accept_next_keyword(const enum attribute_keyword keyword, ParserContext* parser)
 {
-    if (check_next(KEYWORD, parser) == false)
-        return false;
-
-    if (parser->next.attribute_keyword != keyword)
+    if (check_next_keyword(keyword, parser) == false)
         return false;
 
     next(parser);
