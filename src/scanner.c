@@ -655,7 +655,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == '"')
                     state = STATE_STRING_INTERPOLATION_WHICH_1;
-                else if (c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+                else if (c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
                     state = STATE_IDENTIFIER;
                 else {
                     token.type = IDENTIFIER;
@@ -762,8 +762,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-            // TODO:
-            //   nested interpolation - simple string x multiline string
+                // TODO:
+                //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
