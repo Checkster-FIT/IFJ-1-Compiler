@@ -51,16 +51,20 @@ int run_parser(SharedData* data)
     parser.debug = true;
 
     next(&parser);
-    parse_program(&parser);
+    const int status = parse_program(&parser);
 
-    if (parser.debug) {
+    if (parser.debug && status == FAILED) {
 
-        while (parser.next.type != END_OF_FILE && parser.next.type != ERROR) {
+        while (parser.next.type != ERROR) {
             next(&parser);
             parser.debug_highlight_failed = false;
             parser.debug_print_remaining--;
+
+            if (parser.next.type == END_OF_FILE) {
+                next(&parser);
+                break;
+            }
         }
-        next(&parser);
 
         if (parser.debug_print_remaining < 0)
             fprintf(stderr, "[**] %i more remaining\n", -(parser.debug_print_remaining));
@@ -646,12 +650,12 @@ bool accept_next_keyword(const enum attribute_keyword keyword, ParserContext* pa
     return true;
 }
 
-bool accept_next_operator(const enum attribute_operation_type operator, ParserContext* parser)
+bool accept_next_operator(const enum attribute_operation_type operation, ParserContext* parser)
 {
     if (check_next(OPERATOR, parser) == false)
         return false;
 
-    if (parser->next.attribute_operation_type != operator)
+    if (parser->next.attribute_operation_type != operation)
         return false;
 
     next(parser);

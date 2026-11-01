@@ -81,37 +81,39 @@ enum attribute_compare_type {
     GREATER_EQUAL, // >=
 };
 
+enum type_enum {
+    NONE,
+    ERROR,
+    INTEGER,
+    DOUBLE,
+    OPERATOR,
+    IDENTIFIER,
+    MAIN_IDENTIFIER,
+    KEYWORD,
+    BOOLEAN,
+    STRING_INTERPOLATION,
+    STRING_INTERPOLATION_END,
+    MULTILINE_STRING_INTERPOLATION,
+    MULTILINE_STRING_INTERPOLATION_END,
+    STRING,
+    MULTILINE_STRING,
+    DOT,
+    DECLARATION_SIGN,
+    COMMA,
+    INDENT,
+    DEDENT,
+    LINE_FEED,
+    WHITESPACE,
+    ASSIGNMENT,
+    COMPARE,
+    LEFT_BRACKET,
+    RIGHT_BRACKET,
+    END_OF_FILE,
+    SEMICOLON,
+};
+
 typedef struct token {
-    enum type_enum {
-        NONE,
-        ERROR,
-        INTEGER,
-        DOUBLE,
-        OPERATOR,
-        IDENTIFIER,
-        MAIN_IDENTIFIER,
-        KEYWORD,
-        BOOLEAN,
-        STRING_INTERPOLATION,
-        STRING_INTERPOLATION_END,
-        MULTILINE_STRING_INTERPOLATION,
-        MULTILINE_STRING_INTERPOLATION_END,
-        STRING,
-        MULTILINE_STRING,
-        DOT,
-        DECLARATION_SIGN,
-        COMMA,
-        INDENT,
-        DEDENT,
-        LINE_FEED,
-        WHITESPACE,
-        ASSIGNMENT,
-        COMPARE,
-        LEFT_BRACKET,
-        RIGHT_BRACKET,
-        END_OF_FILE,
-        SEMICOLON,
-    } type;
+    enum type_enum type;
 
     union {
         long attribute_int;

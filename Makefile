@@ -3,7 +3,7 @@
 
 # Compiler parameters
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -g -O0
 STANDARD = 17
 
 # Project directory structure
@@ -87,7 +87,7 @@ TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-TEST_SHARED = error shared_data
+TEST_SHARED = error shared_data debug
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
 
@@ -105,12 +105,11 @@ $(OBJ):
 
 
 # Compile each module
-.SECONDARY:
+
 $(OBJ)/%.o: $(SRC_DIR)/%.c | $(BUILD) $(OBJ)
 	@gcc -I$(SRC_DIR) -c $< -o $@ -g -O0
 
 # Compile each test source file
-.SECONDARY:
 $(OBJ)/%_tests.o: $(TEST_DIR)/%_tests.cpp | $(BUILD) $(OBJ)
 	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
 
@@ -132,7 +131,13 @@ $(BUILD)/parser_tests: $(OBJ)/scanner.o
 TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
 build-test: $(TEST_EXECUTABLES)
 test: $(TEST_EXECUTABLES)
-	$^ 2> /dev/null || true
+	@for test in $^; do echo; $$test 2>/dev/null || true; done
+
+test-parser: $(BUILD)/parser_tests
+	@$^ 2>/dev/null || true
+
+test-scanner: $(BUILD)/scanner_tests
+	@$^ 2>/dev/null || true
 
 # -----------------------------------------------
 .PHONY: database

@@ -13,5 +13,6 @@ extern "C" {
 
 TEST(parser, dummy_test)
 {
-    return;
+    EXPECT_EQ(1, 1);
+    return ;
 }
