@@ -109,7 +109,8 @@ typedef struct token {
         COMPARE,
         LEFT_BRACKET,
         RIGHT_BRACKET,
-        END_OF_FILE
+        END_OF_FILE,
+        SEMICOLON,
     } type;
 
     union {
@@ -154,6 +155,7 @@ typedef enum {
     STATE_AT_SYMBOL, // @
     STATE_MAIN_IDENTIFIER,
     STATE_COLON, // :
+    STATE_SEMICOLON, // ;
     STATE_COMMA, // ,
     STATE_DOT, // .
 

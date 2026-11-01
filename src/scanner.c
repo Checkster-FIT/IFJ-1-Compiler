@@ -349,6 +349,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_ZERO;
                 else if (c == ':')
                     state = STATE_COLON;
+                else if (c == ';')
+                    state = STATE_SEMICOLON;
                 else if (c == '@')
                     state = STATE_AT_SYMBOL;
                 else if (c == ',')
@@ -367,7 +369,12 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_RIGHT_BRACKET;
                 else if (c == '}')
                     state = STATE_RIGHT_CURLY_BRACKET;
-                else if (c == ' ' && context->beginning_of_file == true) {
+                else if (c == 9) {
+                    // tab
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB);
+                    return token;
+                } else if (c == ' ' && context->beginning_of_file == true) {
                     indent_value = 1;
                     state = STATE_INDENT;
                 } else if (c == ' ' && context->beginning_of_file == false)
@@ -1323,6 +1330,12 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 RETURN_TOKEN_AND_SET_READ_BUFFER
                 break;
 
+            case STATE_SEMICOLON:
+                token.type = SEMICOLON;
+                token.attribute_none = NULL;
+
+                RETURN_TOKEN_AND_SET_READ_BUFFER
+
             case STATE_COMMA:
 
                 token.type = COMMA;
@@ -1363,8 +1376,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-            // STATE_LINE_FEED servers as a kind of pipe into STATE_INDENT which will handle
-            // indentation as well as line feed tokens
+            // STATE_LINE_FEED serves as a kind of pipe into STATE_INDENT which will handle
+            // indentation as well as line feed token
             case STATE_LINE_FEED:
 
                 context->line_number += 1;
@@ -1383,6 +1396,12 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     indent_value = 1;
                     state = STATE_INDENT;
                     break;
+                }
+                if (c == 9) {
+                    // tab
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB);
+                    return token;
                 }
 
                 // no whitespace on new line

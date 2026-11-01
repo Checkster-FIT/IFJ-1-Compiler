@@ -79,7 +79,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         case SCANNER_INVALID_INDENTATION_USING_TAB:
             error.message = "Tab cannot be used to indentation";
-            error.fix = "Replace tab with space";
+            error.fix = "Replace tab with spaces";
             error.code = 1;
             break;
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
@@ -144,7 +144,7 @@ int print_error(const int error_id, ...)
         get_error_type_str(error.code), error.message, error.fix);
 
     // Print the constructed format with the user specified arguments
-    va_list args = { };
+    va_list args = {};
     va_start(args, error_id);
     vfprintf(stderr, error_message, args);
     va_end(args);
