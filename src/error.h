@@ -82,11 +82,12 @@ ErrorMessage get_error_by_id(enum error_enum error_id);
 /**
  * @brief Prints and error message to @c stderr
  * @param error_id the error index from the @c error_enum
+ * @param line the program line where the error occured
  * @param ... parameters for the formatted messages in the @c ErrorMessage struct,
  * each message requires different parameters (some error messages do not require any)
  * @return the exit code for the given error message
  */
-int print_error(int error_id, ...);
+int print_error(int error_id, int line, ...);
 
 /**
  * @brief Checks the range of exit codes and returns the corresponding error type

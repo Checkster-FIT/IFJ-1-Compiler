@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define LINE (parser->shared_data->line)
+
 // =======================================================
 
 void init_parser(ParserContext* parser, SharedData* data)
@@ -75,24 +77,24 @@ int parse_program(ParserContext* parser)
     if (accept_next(ERROR, parser))
         return FAILED;
 
-    parser->exit_code = print_error(PARSER_MISSING_HEADER);
+    parser->exit_code = print_error(PARSER_MISSING_HEADER, LINE);
     return FAILED;
 }
 
 int parse_header(ParserContext* parser)
 {
     if (!accept_next_identifier("ifj26", parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_HEADER);
+        parser->exit_code = print_error(PARSER_MISSING_HEADER, LINE);
         return FAILED;
     }
 
     if (!accept_next(DOT, parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_HEADER);
+        parser->exit_code = print_error(PARSER_MISSING_HEADER, LINE);
         return FAILED;
     }
 
     if (!accept_next_operator(MULTIPLY, parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_HEADER);
+        parser->exit_code = print_error(PARSER_MISSING_HEADER, LINE);
         return FAILED;
     }
 
@@ -136,14 +138,14 @@ int parse_body(ParserContext* parser)
         return parse_body(parser);
     }
 
-    parser->exit_code = print_error(PARSER_GLOBAL_SCOPE_INVALID, str_token(&parser->next, GET_NAME, parser->shared_data));
+    parser->exit_code = print_error(PARSER_GLOBAL_SCOPE_INVALID, LINE, str_token(&parser->next, GET_NAME, parser->shared_data));
     return FAILED;
 }
 
 int parse_extension(ParserContext* parser)
 {
     if (!accept_next(LEFT_BRACKET, parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_EXT_PARAM);
+        parser->exit_code = print_error(PARSER_MISSING_EXT_PARAM, LINE);
         return FAILED;
     }
 
@@ -153,17 +155,17 @@ int parse_extension(ParserContext* parser)
     }
 
     if (!accept_next(RIGHT_BRACKET, parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_EXT_PARAM_END);
+        parser->exit_code = print_error(PARSER_MISSING_EXT_PARAM_END, LINE);
         return FAILED;
     }
 
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_EXT_MISSING_NEWLINE);
+        parser->exit_code = print_error(PARSER_EXT_MISSING_NEWLINE, LINE);
         return FAILED;
     }
 
     if (!accept_next(INDENT, parser)) {
-        parser->exit_code = print_error(PARSER_EXT_MISSING_INDENT);
+        parser->exit_code = print_error(PARSER_EXT_MISSING_INDENT, LINE);
         return FAILED;
     }
 
@@ -184,14 +186,14 @@ int parse_extension_body(ParserContext* parser)
         return CORRECT;
     }
 
-    parser->exit_code = print_error(PARSER_EXT_BLOCK_INVALID);
+    parser->exit_code = print_error(PARSER_EXT_BLOCK_INVALID, LINE);
     return FAILED;
 }
 
 int parse_function(ParserContext* parser)
 {
     if (!accept_next(IDENTIFIER, parser)) {
-        parser->exit_code = print_error(PARSER_INVALID_FUNCTION);
+        parser->exit_code = print_error(PARSER_INVALID_FUNCTION, LINE);
         return FAILED;
     }
 
@@ -202,7 +204,7 @@ int parse_function(ParserContext* parser)
         return FAILED;
 
     if (!accept_next(ASSIGNMENT, parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_FUNCTION_ASSIGNMENT);
+        parser->exit_code = print_error(PARSER_MISSING_FUNCTION_ASSIGNMENT, LINE);
         return FAILED;
     }
 
@@ -225,7 +227,7 @@ int parse_type_specifier(ParserContext* parser)
 int parse_type(ParserContext* parser)
 {
     if (!accept_next_keyword(STRING_KW, parser) && !accept_next_keyword(INT_KW, parser) && !accept_next_keyword(DOUBLE_KW, parser) && !accept_next_keyword(UNIT_KW, parser) && !accept_next_keyword(BOOLEAN_KW, parser)) {
-        parser->exit_code = print_error(PARSER_INCORRECT_TYPE);
+        parser->exit_code = print_error(PARSER_INCORRECT_TYPE, LINE);
         return FAILED;
     }
 
@@ -258,7 +260,7 @@ int parse_param_first(ParserContext* parser)
         return CORRECT;
     }
 
-    print_error(PARSER_INVALID_PARAM);
+    print_error(PARSER_INVALID_PARAM, LINE);
     return FAILED;
 }
 
@@ -271,11 +273,11 @@ int parse_param_list(ParserContext* parser)
     if (!accept_next(COMMA, parser)) {
 
         if (check_next(DECLARATION_SIGN, parser)) {
-            parser->exit_code = print_error(PARSER_DOUBLE_PARAM_TYPE);
+            parser->exit_code = print_error(PARSER_DOUBLE_PARAM_TYPE, LINE);
             return FAILED;
         }
 
-        parser->exit_code = print_error(PARSER_INVALID_PARAM_LIST_END);
+        parser->exit_code = print_error(PARSER_INVALID_PARAM_LIST_END, LINE);
         return FAILED;
     }
 
@@ -287,14 +289,14 @@ int parse_param_list(ParserContext* parser)
         return CORRECT;
     }
 
-    print_error(PARSER_MISSING_PARAM_BRACKET);
+    print_error(PARSER_MISSING_PARAM_BRACKET, LINE);
     return FAILED;
 }
 
 int parse_param(ParserContext* parser)
 {
     if (!accept_next(DECLARATION_SIGN, parser)) {
-        parser->exit_code = print_error(PARSER_MISSING_PARAM_TYPE);
+        parser->exit_code = print_error(PARSER_MISSING_PARAM_TYPE, LINE);
         return FAILED;
     }
 
@@ -309,7 +311,7 @@ int parse_function_body(ParserContext* parser)
     if (accept_next(LINE_FEED, parser)) {
 
         if (!accept_next(INDENT, parser)) {
-            parser->exit_code = print_error(PARSER_FUNCTION_MISSING_INDENT);
+            parser->exit_code = print_error(PARSER_FUNCTION_MISSING_INDENT, LINE);
             return FAILED;
         }
 
@@ -320,7 +322,7 @@ int parse_function_body(ParserContext* parser)
         return FAILED;
 
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
+        parser->exit_code = print_error(PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED, LINE);
         return FAILED;
     }
 
@@ -346,7 +348,7 @@ int parse_statement_list(ParserContext* parser)
         if (!parse_statement_return(parser))
             return FAILED;
     } else if (accept_next_keyword(FOR_KW, parser)) {
-        parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "for_loop");
+        parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, LINE, "for_loop");
         return FAILED;
     } else if (check_next(LEFT_BRACKET, parser) || check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
         // TODO: Assignments, Strings, Function calls, Returns values, ...
@@ -355,7 +357,7 @@ int parse_statement_list(ParserContext* parser)
             return FAILED;
 
         if (!accept_next(LINE_FEED, parser)) {
-            parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+            parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED, LINE);
             return FAILED;
         }
     }
@@ -388,13 +390,13 @@ int parse_if_then(ParserContext* parser)
         return FAILED;
 
     if (!accept_next_keyword(THEN_KW, parser)) {
-        parser->exit_code = print_error(PARSER_IF_MISSING_THEN);
+        parser->exit_code = print_error(PARSER_IF_MISSING_THEN, LINE);
         return FAILED;
     }
 
     const bool indented = accept_next(LINE_FEED, parser);
     if (indented && !accept_next(INDENT, parser)) {
-        parser->exit_code = print_error(PARSER_IF_MISSING_INDENT);
+        parser->exit_code = print_error(PARSER_IF_MISSING_INDENT, LINE);
         return FAILED;
     }
 
@@ -403,7 +405,7 @@ int parse_if_then(ParserContext* parser)
 
     // TODO: Needs to be extracted from statement list
     // if (indented && !accept_next(DEDENT, parser)) {
-    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT);
+    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT, LINE);
     //     return FAILED;
     // }
 
@@ -433,7 +435,7 @@ int parse_else(ParserContext* parser)
 {
     const bool indented = accept_next(LINE_FEED, parser);
     if (indented && !accept_next(INDENT, parser)) {
-        parser->exit_code = print_error(PARSER_IF_MISSING_INDENT);
+        parser->exit_code = print_error(PARSER_IF_MISSING_INDENT, LINE);
         return FAILED;
     }
 
@@ -442,7 +444,7 @@ int parse_else(ParserContext* parser)
 
     // TODO: Needs to be extracted from statement list
     // if (indented && !accept_next(DEDENT, parser)) {
-    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT);
+    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT, LINE);
     //     return FAILED;
     // }
 
@@ -455,17 +457,17 @@ int parse_statement_while(ParserContext* parser)
         return FAILED;
 
     if (!accept_next_keyword(DO_KW, parser)) {
-        parser->exit_code = print_error(PARSER_WHILE_MISSING_DO);
+        parser->exit_code = print_error(PARSER_WHILE_MISSING_DO, LINE);
         return FAILED;
     }
 
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_WHILE_MISSING_LINE_FEED);
+        parser->exit_code = print_error(PARSER_WHILE_MISSING_LINE_FEED, LINE);
         return FAILED;
     }
 
     if (!accept_next(INDENT, parser)) {
-        parser->exit_code = print_error(PARSER_WHILE_MISSING_INDENT);
+        parser->exit_code = print_error(PARSER_WHILE_MISSING_INDENT, LINE);
         return FAILED;
     }
 
@@ -475,7 +477,7 @@ int parse_statement_while(ParserContext* parser)
 int parse_statement_variable_definition(ParserContext* parser)
 {
     if (!accept_next(IDENTIFIER, parser)) {
-        parser->exit_code = print_error(PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
+        parser->exit_code = print_error(PARSER_ST_VAR_DEF_MISSING_IDENTIFIER, LINE);
         return FAILED;
     }
 
@@ -483,7 +485,7 @@ int parse_statement_variable_definition(ParserContext* parser)
         return FAILED;
 
     if (!accept_next(ASSIGNMENT, parser)) {
-        parser->exit_code = print_error(PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
+        parser->exit_code = print_error(PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT, LINE);
         return FAILED;
     }
 
@@ -491,7 +493,7 @@ int parse_statement_variable_definition(ParserContext* parser)
         return FAILED;
 
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED, LINE);
         return FAILED;
     }
 
@@ -504,7 +506,7 @@ int parse_statement_return(ParserContext* parser)
         return FAILED;
 
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED);
+        parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED, LINE);
         return FAILED;
     }
 
@@ -524,7 +526,7 @@ int parse_relational_expression(ParserContext* parser)
         next(parser);
     }
 
-    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "relational_expression");
+    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, LINE, "relational_expression");
     return FAILED;
 }
 
@@ -539,7 +541,7 @@ int parse_expression(ParserContext* parser)
         next(parser);
     }
 
-    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "expression");
+    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, LINE, "expression");
     return FAILED;
 }
 

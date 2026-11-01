@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     DynamicString identifiers;
     DynamicString strings;
+    int line;
 } SharedData;
 
 /**

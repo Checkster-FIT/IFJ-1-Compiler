@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define LINE (data->line)
+
 static const char* keywords[NUMBER_OF_KEYWORDS] = {
     "def",
     "do",
@@ -59,7 +61,6 @@ int init_scanner(ScannerContext* scanner_context)
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
-    scanner_context->line_number = 1;
     scanner_context->pending_eof = false;
 
     return 0;
@@ -288,7 +289,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
             if (ferror(stream)) {
                 token.type = ERROR;
-                token.attribute_error = print_error(STREAM_READ_ERROR);
+                token.attribute_error = print_error(STREAM_READ_ERROR, LINE);
                 return token;
             }
 
@@ -368,7 +369,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 else if (c == 9) {
                     // tab
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB);
+                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB, LINE);
                     return token;
                 } else if (c == ' ' && context->beginning_of_file == true) {
                     indent_value = 1;
@@ -379,7 +380,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_END_OF_FILE;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, c);
+                    token.attribute_error = print_error(SCANNER_NO_TRANSITION, LINE, state, c);
                     return token;
                 }
 
@@ -392,7 +393,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_OPERATOR;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string->chars, "&&");
+                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, LINE, context->scanned_string->chars, "&&");
                     return token;
                 }
 
@@ -404,7 +405,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_OPERATOR;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, context->scanned_string->chars, "||");
+                    token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, LINE, context->scanned_string->chars, "||");
                     return token;
                 }
 
@@ -454,7 +455,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(CORRUPTED_MEMORY, state);
+                    token.attribute_error = print_error(CORRUPTED_MEMORY, LINE, state);
                     return token;
                 }
 
@@ -474,11 +475,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_BEGIN;
                 else if (c == '\n') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -494,11 +495,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_BEGIN;
                 else if (c == '\n') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -514,7 +515,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     if (result == 1) {
                         // memory allocation fail
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned_string");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
                         return token;
                     }
                     continue; // ignore 'n'
@@ -523,11 +524,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_BEGIN;
                 else if (c == '\n') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -541,7 +542,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, context->scanned_string->chars);
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned string");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned string");
 
                     return token;
                 }
@@ -563,7 +564,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, "");
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned string");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned string");
 
                     return token;
                 }
@@ -581,7 +582,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -595,7 +596,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -609,7 +610,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -627,7 +628,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, context->scanned_string->chars);
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned multiline string");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned multiline string");
 
                     return token;
                 }
@@ -649,7 +650,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     result = add_identifier(data, context->scanned_string->chars);
                     if (result == -1) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "identifier");
 
                         return token;
                     }
@@ -675,11 +676,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_INTERPOLATION_WHICH_2;
                 else if (c == '\n') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
                 } else if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 } else if (c == '$')
                     state = STATE_STRING_INTERPOLATION_DOLLAR;
@@ -702,7 +703,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, "");
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
 
                     return token;
                 }
@@ -722,7 +723,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_1;
                 else if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 } else
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
@@ -735,7 +736,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -748,8 +749,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-            // TODO:
-            //   nested interpolation - simple string x multiline string
+                // TODO:
+                //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
@@ -766,7 +767,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     result = add_string(data, context->scanned_string->chars);
                     if (result == -1) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "multiline string interpolation");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
 
                         return token;
                     }
@@ -790,7 +791,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, context->scanned_string->chars);
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "multiline string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
 
                     return token;
                 }
@@ -802,7 +803,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_MULTILINE_STRING_INTERPOLATION_END_1:
                 if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 } else if (c == '"') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_2;
@@ -814,7 +815,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             case STATE_MULTILINE_STRING_INTERPOLATION_END_2:
                 if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 } else if (c == '"') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_3;
@@ -837,7 +838,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, context->scanned_string->chars);
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "multiline string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
 
                     return token;
                 }
@@ -857,11 +858,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_STRING_INTERPOLATION;
                 else if (c == '\n') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -882,7 +883,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     result = add_string(data, context->scanned_string->chars);
                     if (result == -1) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
 
                         return token;
                     }
@@ -906,7 +907,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, context->scanned_string->chars);
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
 
                     return token;
                 }
@@ -928,7 +929,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 result = add_string(data, context->scanned_string->chars);
                 if (result == -1) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
 
                     return token;
                 }
@@ -948,11 +949,11 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     continue; // ignore 'n'
                 } else if (c == '\n') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "a new line character", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
@@ -965,7 +966,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_IDENTIFIER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_IDENTIFIER, "_");
+                    token.attribute_error = print_error(SCANNER_INVALID_IDENTIFIER, LINE, "_");
                     return token;
                 }
 
@@ -982,7 +983,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                         result = add_identifier(data, context->scanned_string->chars);
                         if (result == -1) {
                             token.type = ERROR;
-                            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "identifier");
+                            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "identifier");
 
                             return token;
                         }
@@ -997,7 +998,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                         token.attribute_bool = false;
                     } else if (result == -2) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(CORRUPTED_MEMORY, state);
+                        token.attribute_error = print_error(CORRUPTED_MEMORY, LINE, state);
                         return token;
                     } else {
                         token.type = KEYWORD;
@@ -1024,7 +1025,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                     if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                         token.type = ERROR;
-                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
+                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, LINE, state);
                         return token;
                     }
 
@@ -1076,7 +1077,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_INTEGER_UNDERSCORE;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1087,7 +1088,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_DECIMAL_NUMBER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_DOUBLE_INVALID_DECIMAL_POINT, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_DOUBLE_INVALID_DECIMAL_POINT, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1105,7 +1106,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 else {
                     token.type = ERROR;
                     long valid_alternative = strtol(context->scanned_string->chars, &end_ptr, 10);
-                    token.attribute_error = print_error(SCANNER_INT_LEADING_ZERO, context->scanned_string->chars, valid_alternative);
+                    token.attribute_error = print_error(SCANNER_INT_LEADING_ZERO, LINE, context->scanned_string->chars, valid_alternative);
                     return token;
                 }
 
@@ -1121,7 +1122,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_WHOLE_NUMBER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1141,7 +1142,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                     if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                         token.type = ERROR;
-                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
+                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, LINE, state);
                         return token;
                     }
 
@@ -1163,7 +1164,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_DECIMAL_NUMBER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1176,7 +1177,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                     token.type = ERROR;
-                    token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
+                    token.attribute_error = print_error(NUMBER_CONVERT_ERROR, LINE, state);
                     return token;
                 }
 
@@ -1194,7 +1195,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_EXPONENT_NUMBER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1205,7 +1206,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_EXPONENT_NUMBER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1221,7 +1222,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                     if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
                         token.type = ERROR;
-                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, state);
+                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, LINE, state);
                         return token;
                     }
 
@@ -1243,7 +1244,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_DOUBLE_EXPONENT_NUMBER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE, context->scanned_string->chars);
                     return token;
                 }
 
@@ -1291,7 +1292,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     token.attribute_compare_type = LESS_EQUAL;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(CORRUPTED_MEMORY, state);
+                    token.attribute_error = print_error(CORRUPTED_MEMORY, LINE, state);
                     return token;
                 }
 
@@ -1345,7 +1346,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_MAIN_IDENTIFIER;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL);
+                    token.attribute_error = print_error(SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL, LINE);
 
                     return token;
                 }
@@ -1361,7 +1362,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     result = add_identifier(data, context->scanned_string->chars);
                     if (result == -1) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "main identifier");
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "main identifier");
 
                         return token;
                     }
@@ -1376,7 +1377,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             // indentation as well as line feed token
             case STATE_LINE_FEED:
 
-                context->line_number += 1;
+                data->line += 1;
 
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
@@ -1398,7 +1399,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 if (c == 9) {
                     // tab
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB);
+                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB, LINE);
                     return token;
                 }
 
@@ -1426,7 +1427,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                     if (result == INVALID_INDENTATION) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(SCANNER_INVALID_INDENTATION);
+                        token.attribute_error = print_error(SCANNER_INVALID_INDENTATION, LINE);
                         return token;
                     }
 
@@ -1469,7 +1470,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
                 if (c == '/') {
@@ -1488,7 +1489,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
                 if (c == '*') {
@@ -1503,7 +1504,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 if (c == EOF) {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, "end of file", context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
                 if (c == '/' && context->block_comment_counter != 0) {
@@ -1531,14 +1532,14 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_LINE_FEED;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS, context->scanned_string->chars);
+                    token.attribute_error = print_error(SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS, LINE, context->scanned_string->chars);
                     return token;
                 }
 
                 break;
 
             default:
-                token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, c);
+                token.attribute_error = print_error(SCANNER_NO_TRANSITION, LINE, state, c);
                 return token;
         }
 
@@ -1548,7 +1549,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
         if (result == 1) {
             // memory allocation fail
             token.type = ERROR;
-            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, "scanned_string");
+            token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
             return token;
         }
 

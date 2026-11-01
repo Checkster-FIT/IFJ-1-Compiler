@@ -12,13 +12,15 @@
 
 int init_shared_data(SharedData* data)
 {
+    data->line = 1;
+
     data->identifiers.ptr = malloc(sizeof(char) * IDENTIFIERS_BASE_CAPACITY);
     data->identifiers.char_capacity = IDENTIFIERS_BASE_CAPACITY;
     data->identifiers.char_length = 0;
     data->identifiers.count = 0;
 
     if (data->identifiers.ptr == NULL) {
-        return print_error(MEMORY_ALLOCATION_ERROR);
+        return print_error(MEMORY_ALLOCATION_ERROR, data->line);
     }
 
     data->strings.ptr = malloc(sizeof(char) * STRINGS_BASE_CAPACITY);
@@ -28,7 +30,7 @@ int init_shared_data(SharedData* data)
 
     if (data->strings.ptr == NULL) {
         free(data->identifiers.ptr);
-        return print_error(MEMORY_ALLOCATION_ERROR);
+        return print_error(MEMORY_ALLOCATION_ERROR, data->line);
     }
 
     return 0;

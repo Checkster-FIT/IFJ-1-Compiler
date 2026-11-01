@@ -156,8 +156,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 2;
             break;
         case PARSER_DOUBLE_PARAM_TYPE:
-            error.message = "Extra parameter type specification";
-            error.fix = "Remove the second type specification";
+            error.message = "Multiple data types specified for a single function parameter";
+            error.fix = "Valid parameter format: 'param: Type'";
             error.code = 2;
             break;
         case PARSER_MISSING_FUNCTION_ASSIGNMENT:
@@ -255,7 +255,7 @@ char* get_error_type_str(const int exit_code)
     return "Unknown error";
 }
 
-int print_error(const int error_id, ...)
+int print_error(const int error_id, const int line, ...)
 {
     // Gets the full error message for the error with this id
     const ErrorMessage error = get_error_by_id(error_id);
@@ -264,19 +264,23 @@ int print_error(const int error_id, ...)
     char error_message[1024];
 
     // Create the format with or without the fix
-    const char* format = "\033[1;31m[%s]: %s\n\033[0m -> %s\n";
+    const char* format = "\033[1;31m[%s] on line %i: \n"
+                         " -> %s\n"
+                         " -> %s\033[0m\n";
     if (strlen(error.fix) <= 0)
-        format = "\033[1;31m[%s]: %s\033[0m\n";
+        format = "\033[1;31m[%s] on line %i: \n"
+                 " -> %s\033[0m\n";
 
     snprintf(
         error_message,
         sizeof(error_message),
         format,
-        get_error_type_str(error.code), error.message, error.fix);
+        get_error_type_str(error.code), line,
+        error.message, error.fix);
 
     // Print the constructed format with the user specified arguments
     va_list args = { };
-    va_start(args, error_id);
+    va_start(args, line);
     vfprintf(stderr, error_message, args);
     va_end(args);
 
