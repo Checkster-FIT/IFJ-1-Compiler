@@ -95,6 +95,4 @@ int print_error(int error_id, ...);
  */
 char* get_error_type_str(int exit_code);
 
-const char* get_token_type_str(int type);
-
 #endif // IFJ_1_COMPILER_SHARED_H

@@ -222,7 +222,6 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         // Program errors
         case PARSER_INCOMPLETE_RULE:
             error.message = "The required parser rule for '%s' is incomplete";
-            // error.fix = "Try adding this rule in parser.c";
             error.code = 100;
             break;
         case SCANNER_NO_TRANSITION:
@@ -256,64 +255,6 @@ char* get_error_type_str(const int exit_code)
     return "Unknown error";
 }
 
-const char* get_token_type_str(const int type)
-{
-    switch (type) {
-        case NONE:
-            return "NONE";
-        case ERROR:
-            return "ERROR";
-        case INTEGER:
-            return "INTEGER";
-        case DOUBLE:
-            return "DOUBLE";
-        case OPERATOR:
-            return "OPERATOR";
-        case IDENTIFIER:
-            return "IDENTIFIER";
-        case KEYWORD:
-            return "KEYWORD";
-        case BOOLEAN:
-            return "BOOLEAN";
-        case STRING_INTERPOLATION:
-            return "STRING_INTERPOLATION";
-        case STRING_INTERPOLATION_END:
-            return "STRING_INTERPOLATION_END";
-        case MULTILINE_STRING_INTERPOLATION:
-            return "MULTILINE_STRING_INTERPOLATION";
-        case MULTILINE_STRING_INTERPOLATION_END:
-            return "MULTILINE_STRING_INTERPOLATION_END";
-        case STRING:
-            return "STRING";
-        case MULTILINE_STRING:
-            return "MULTILINE_STRING";
-        case DOT:
-            return "DOT";
-        case DECLARATION_SIGN:
-            return "DECLARATION_SIGN";
-        case COMMA:
-            return "COMMA";
-        case INDENT:
-            return "INDENT";
-        case LINE_FEED:
-            return "LINE_FEED";
-        case WHITESPACE:
-            return "WHITESPACE";
-        case ASSIGNMENT:
-            return "ASSIGNMENT";
-        case COMPARE:
-            return "COMPARE";
-        case LEFT_BRACKET:
-            return "LEFT_BRACKET";
-        case RIGHT_BRACKET:
-            return "RIGHT_BRACKET";
-        case END_OF_FILE:
-            return "END_OF_FILE";
-        default:
-            return "UNKNOWN_TOKEN";
-    }
-}
-
 int print_error(const int error_id, ...)
 {
     // Gets the full error message for the error with this id
@@ -334,7 +275,7 @@ int print_error(const int error_id, ...)
         get_error_type_str(error.code), error.message, error.fix);
 
     // Print the constructed format with the user specified arguments
-    va_list args = {};
+    va_list args = { };
     va_start(args, error_id);
     vfprintf(stderr, error_message, args);
     va_end(args);

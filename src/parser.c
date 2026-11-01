@@ -26,12 +26,10 @@ void init_parser(ParserContext* parser, SharedData* data)
     parser->accepted.attribute_none = NULL;
     parser->exit_code = 0;
 
-    // Print debug token list
-    parser->debug = false;
-    // Highlight where the parser failed with [!?]
-    parser->debug_highlight_failed = true;
-    // The next token was skipped without checking any syntax rules
-    parser->debug_skipped = false;
+    parser->debug = true; // TODO: Disable debug
+    parser->debug_prefix_failed = false;
+    parser->debug_prefix_skipped = false;
+    parser->debug_prefix_expression = false;
     // How many tokens after failure should be printed
     parser->debug_print_remaining = 7;
 }
@@ -48,26 +46,13 @@ int run_parser(SharedData* data)
 {
     ParserContext parser;
     init_parser(&parser, data);
-    parser.debug = true;
 
     next(&parser);
     const int status = parse_program(&parser);
 
     if (parser.debug && status == FAILED) {
-
-        while (parser.next.type != ERROR) {
-            next(&parser);
-            parser.debug_highlight_failed = false;
-            parser.debug_print_remaining--;
-
-            if (parser.next.type == END_OF_FILE) {
-                next(&parser);
-                break;
-            }
-        }
-
-        if (parser.debug_print_remaining < 0)
-            fprintf(stderr, "[**] %i more remaining\n", -(parser.debug_print_remaining));
+        parser.debug_prefix_failed = true;
+        log_remaining(&parser);
     }
 
     return destroy_parser(&parser);
@@ -151,7 +136,7 @@ int parse_body(ParserContext* parser)
         return parse_body(parser);
     }
 
-    parser->exit_code = print_error(PARSER_GLOBAL_SCOPE_INVALID, get_token_type_str(parser->next.type));
+    parser->exit_code = print_error(PARSER_GLOBAL_SCOPE_INVALID, str_token(&parser->next, GET_NAME, parser->shared_data));
     return FAILED;
 }
 
@@ -351,24 +336,19 @@ int parse_statement_list(ParserContext* parser)
     if (accept_next_keyword(VAR_KW, parser) || accept_next_keyword(VAL_KW, parser)) {
         if (!parse_statement_variable_definition(parser))
             return FAILED;
-    }
-    else if (accept_next_keyword(WHILE_KW, parser)) {
+    } else if (accept_next_keyword(WHILE_KW, parser)) {
         if (!parse_statement_while(parser))
             return FAILED;
-    }
-    else if (accept_next_keyword(IF_KW, parser)) {
+    } else if (accept_next_keyword(IF_KW, parser)) {
         if (!parse_statement_conditional(parser))
             return FAILED;
-    }
-    else if (accept_next_keyword(RETURN_KW, parser)) {
+    } else if (accept_next_keyword(RETURN_KW, parser)) {
         if (!parse_statement_return(parser))
             return FAILED;
-    }
-    else if (accept_next_keyword(FOR_KW, parser)) {
+    } else if (accept_next_keyword(FOR_KW, parser)) {
         parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, "for_loop");
         return FAILED;
-    }
-    else if (check_next(LEFT_BRACKET, parser) || check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
+    } else if (check_next(LEFT_BRACKET, parser) || check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
         // TODO: Assignments, Strings, Function calls, Returns values, ...
 
         if (!parse_expression(parser))
@@ -540,7 +520,7 @@ int parse_relational_expression(ParserContext* parser)
             return CORRECT;
         }
 
-        parser->debug_skipped = true;
+        parser->debug_prefix_skipped = true;
         next(parser);
     }
 
@@ -555,7 +535,7 @@ int parse_expression(ParserContext* parser)
             return CORRECT;
         }
 
-        parser->debug_skipped = true;
+        parser->debug_prefix_skipped = true;
         next(parser);
     }
 
@@ -570,29 +550,8 @@ void next(ParserContext* parser)
     parser->accepted = parser->next;
     parser->next = get_token(&parser->scanner_context, parser->shared_data, stdin);
 
-    if (parser->debug && parser->accepted.type != NONE) {
-        // TODO: Move debug prints to debug.c
-        // TODO: Add a blue [OK] tag to tokens parsed inside an expression
-
-        // Accepted token
-        if (parser->debug_skipped) {
-            fprintf(stderr, "[--] ");
-            print_token(&parser->accepted, parser->shared_data);
-            parser->debug_skipped = false;
-        } else if (parser->exit_code == 0) {
-            fprintf(stderr, "[\033[1;32mOK\033[0m] ");
-            print_token(&parser->accepted, parser->shared_data);
-        }
-        // First invalid token
-        else if (parser->debug_highlight_failed) {
-            fprintf(stderr, "[\033[1;31m!?\033[0m] ");
-            print_token(&parser->accepted, parser->shared_data);
-        }
-        // Unprocessed tokens after
-        else if (parser->debug_print_remaining >= 0) {
-            fprintf(stderr, "[  ] ");
-            print_token(&parser->accepted, parser->shared_data);
-        }
+    if (parser->debug) {
+        log_parsed(parser);
     }
 }
 

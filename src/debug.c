@@ -6,253 +6,248 @@
  */
 
 #include "debug.h"
+#include "parser.h"
 #include "scanner.h"
 #include "shared_data.h"
 
-#define ALIGNMENT 34
-
-static void escaped_print(const char* string)
+void log_parsed(ParserContext* parser)
 {
-    if (string == NULL) {
+    if (parser->accepted.type == NONE)
+        return;
+
+    const char* prefix = "  ";
+    const char* color = "\033[1;30m";
+
+    // Skipped tokens
+    if (parser->debug_prefix_skipped) {
+        prefix = "--";
+    }
+    // Accepted tokens (Expressions)
+    else if (parser->debug_prefix_expression) {
+        prefix = "OK";
+        color = "\033[1;34m";
+    }
+    // Accepted tokens (Recursive descent)
+    else if (parser->exit_code == 0) {
+        prefix = "OK";
+        color = "\033[1;32m";
+    }
+    // Invalid token
+    else if (parser->debug_prefix_failed) {
+        prefix = "!?";
+        color = "\033[1;31m";
+    }
+    // Unprocessed tokens
+    else if (parser->debug_print_remaining >= 0) {
+        prefix = "  ";
+    }
+    // Hidden tokens
+    else {
         return;
     }
 
-    int idx = 0;
-    while (string[idx] != '\0') {
-        if (string[idx] == '\n')
-            fprintf(stderr, "\\n");
-        else
-            fprintf(stderr, "%c", string[idx]);
-        idx++;
+    fprintf(stderr, "[%s%s\033[0m] ", color, prefix);
+    print_token(&parser->accepted, parser->shared_data);
+
+    parser->debug_prefix_skipped = false;
+    parser->debug_prefix_expression = false;
+}
+
+void log_remaining(ParserContext* parser)
+{
+    while (parser->next.type != ERROR) {
+        next(parser);
+
+        parser->debug_prefix_failed = false;
+        parser->debug_print_remaining--;
+
+        if (parser->next.type == END_OF_FILE) {
+            next(parser);
+            break;
+        }
+    }
+
+    if (parser->debug_print_remaining >= 0)
+        return;
+
+    fprintf(stderr, "[**] %i more remaining\n", -(parser->debug_print_remaining));
+}
+
+// =======================================================
+
+const char* str_token(const Token* token, const TokenStringType mode, const SharedData* data)
+{
+    static const char* name_map[] = {
+        [NONE] = "NONE",
+        [ERROR] = "ERROR",
+        [INTEGER] = "INTEGER",
+        [DOUBLE] = "DOUBLE",
+        [OPERATOR] = "OPERATOR",
+        [IDENTIFIER] = "IDENTIFIER",
+        [MAIN_IDENTIFIER] = "MAIN_IDENTIFIER",
+        [KEYWORD] = "KEYWORD",
+        [BOOLEAN] = "BOOLEAN",
+        [STRING_INTERPOLATION] = "STRING_INTERPOLATION",
+        [STRING_INTERPOLATION_END] = "STRING_INTERPOLATION_END",
+        [MULTILINE_STRING_INTERPOLATION] = "MULTILINE_STRING_INTERPOLATION",
+        [MULTILINE_STRING_INTERPOLATION_END] = "MULTILINE_STRING_INTERPOLATION_END",
+        [STRING] = "STRING",
+        [MULTILINE_STRING] = "MULTILINE_STRING",
+        [DOT] = "DOT",
+        [DECLARATION_SIGN] = "DECLARATION_SIGN",
+        [COMMA] = "COMMA",
+        [SEMICOLON] = "SEMICOLON",
+        [INDENT] = "INDENT",
+        [DEDENT] = "DEDENT",
+        [LINE_FEED] = "LINE_FEED",
+        [WHITESPACE] = "WHITESPACE",
+        [ASSIGNMENT] = "ASSIGNMENT",
+        [COMPARE] = "COMPARE",
+        [LEFT_BRACKET] = "LEFT_BRACKET",
+        [RIGHT_BRACKET] = "RIGHT_BRACKET",
+        [END_OF_FILE] = "END_OF_FILE"
+    };
+
+    const char* attribute_map[] = {
+        [DOT] = ".",
+        [DECLARATION_SIGN] = ":",
+        [SEMICOLON] = ";",
+        [COMMA] = ",",
+        [ASSIGNMENT] = "=",
+        [LEFT_BRACKET] = "(",
+        [RIGHT_BRACKET] = ")",
+        [KEYWORD] = str_keyword(token->attribute_keyword),
+        [OPERATOR] = str_operator(token->attribute_operation_type),
+        [COMPARE] = str_compare(token->attribute_compare_type),
+        [BOOLEAN] = (token->attribute_bool ? "true" : "false"),
+        [IDENTIFIER] = get_identifier(data, token->attribute_str_idx),
+        [MAIN_IDENTIFIER] = get_identifier(data, token->attribute_str_idx),
+        [STRING] = get_string(data, token->attribute_str_idx),
+        [STRING_INTERPOLATION] = get_string(data, token->attribute_str_idx),
+        [STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx),
+        [MULTILINE_STRING] = get_string(data, token->attribute_str_idx),
+        [MULTILINE_STRING_INTERPOLATION] = get_string(data, token->attribute_str_idx),
+        [MULTILINE_STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx)
+    };
+
+    int size = 0;
+    switch (mode) {
+        case GET_NAME:
+            size = sizeof(name_map) / sizeof(name_map[0]);
+            return map_str(name_map, size, token->type, "[Unknown token]");
+        case GET_ATTRIBUTE:
+            size = sizeof(attribute_map) / sizeof(attribute_map[0]);
+            return map_str(attribute_map, size, token->type, "");
+        default:
+            return "unknown";
     }
 }
 
+// =======================================================
+
 void print_token(const Token* token, const SharedData* data)
 {
+    const char* name = str_token(token, GET_NAME, data);
+    const char* attribute = str_token(token, GET_ATTRIBUTE, data);
+
     switch (token->type) {
-        case NONE:
-            fprintf(stderr, "%-*s\n", ALIGNMENT, "NONE");
-            break;
-        case ERROR:
-            fprintf(stderr, "%-*s%i\n", ALIGNMENT, "ERROR", token->attribute_error);
+        default:
+            fprintf(stderr, "%-*s", ALIGNMENT, name);
+            fprintf_escaped(stderr, attribute);
+            fprintf(stderr, "\n");
             break;
         case INTEGER:
-            fprintf(stderr, "%-*s%li\n", ALIGNMENT, "INTEGER", token->attribute_int);
+            fprintf(stderr, "%-*s%li\n", ALIGNMENT, name, token->attribute_int);
             break;
         case DOUBLE:
-            fprintf(stderr, "%-*s%lf\n", ALIGNMENT, "DOUBLE", token->attribute_double);
+            fprintf(stderr, "%-*s%lf\n", ALIGNMENT, name, token->attribute_double);
             break;
-        case OPERATOR:
-            switch (token->attribute_operation_type) {
-                case PLUS:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "+");
-                    break;
-                case MINUS:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "-");
-                    break;
-                case MULTIPLY:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "*");
-                    break;
-                case AND:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "&&");
-                    break;
-                case OR:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "||");
-                    break;
-                case NOT:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "!");
-                    break;
-                case DIVIDE:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "OPERATOR", "/");
-                    break;
-                default:
-                    fprintf(stderr, "%-*s%i\n", ALIGNMENT, "OPERATOR",
-                        token->attribute_operation_type);
-                    break;
-            }
-            break;
-        case IDENTIFIER:
-            fprintf(stderr, "%-*s%s\n", ALIGNMENT, "IDENTIFIER",
-                get_identifier(data, token->attribute_str_idx));
-            break;
-        case KEYWORD:
-            switch (token->attribute_keyword) {
-                case DEF_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "def");
-                    break;
-                case DO_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "do");
-                    break;
-                case DOUBLE_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "Double");
-                    break;
-                case ELSE_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "else");
-                    break;
-                case IF_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "if");
-                    break;
-                case IMPORT_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "import");
-                    break;
-                case INT_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "Int");
-                    break;
-                case RETURN_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "return");
-                    break;
-                case STRING_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "String");
-                    break;
-                case THEN_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "then");
-                    break;
-                case UNIT_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "Unit");
-                    break;
-                case VAL_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "val");
-                    break;
-                case VAR_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "var");
-                    break;
-                case WHILE_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "while");
-                    break;
-                case BOOLEAN_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "Boolean");
-                    break;
-                case CASE_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "case");
-                    break;
-                case CLASS_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "class");
-                    break;
-                case EXTENSION_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "extension");
-                    break;
-                case FOR_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "for");
-                    break;
-                case LIST_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "List");
-                    break;
-                case MATCH_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "match");
-                    break;
-                case TYPE_KW:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "KEYWORD", "type");
-                    break;
-                default:
-                    fprintf(stderr, "%-*s%i\n", ALIGNMENT, "KEYWORD",
-                        token->attribute_keyword);
-                    break;
-            }
-            break;
-        case BOOLEAN:
-            fprintf(stderr, "%-*s%s\n", ALIGNMENT, "BOOLEAN",
-                token->attribute_bool ? "true" : "false");
-            break;
-        case MAIN_IDENTIFIER:
-            printf("%-*s%s\n", ALIGNMENT, "MAIN_IDENTIFIER",
-                get_identifier(data, token->attribute_str_idx));
-            break;
-
-        // STRINGS
-        case STRING_INTERPOLATION:
-            fprintf(stderr, "%-*s", ALIGNMENT, "STRING_INTERPOLATION");
-            escaped_print(get_string(data, token->attribute_str_idx));
-            fprintf(stderr, "\n");
-            break;
-        case STRING_INTERPOLATION_END:
-            fprintf(stderr, "%-*s", ALIGNMENT, "STRING_INTERPOLATION_END");
-            escaped_print(get_string(data, token->attribute_str_idx));
-            fprintf(stderr, "\n");
-            break;
-        case MULTILINE_STRING_INTERPOLATION:
-            fprintf(stderr, "%-*s", ALIGNMENT, "MULTILINE_STRING_INTERPOLATION");
-            escaped_print(get_string(data, token->attribute_str_idx));
-            fprintf(stderr, "\n");
-            break;
-        case MULTILINE_STRING_INTERPOLATION_END:
-            fprintf(stderr, "%-*s", ALIGNMENT, "MULTILINE_STRING_INTERPOLATION_END");
-            escaped_print(get_string(data, token->attribute_str_idx));
-            fprintf(stderr, "\n");
-            break;
-        case STRING:
-            fprintf(stderr, "%-*s", ALIGNMENT, "STRING");
-            escaped_print(get_string(data, token->attribute_str_idx));
-            fprintf(stderr, "\n");
-            break;
-        case MULTILINE_STRING:
-            fprintf(stderr, "%-*s", ALIGNMENT, "MULTILINE_STRING");
-            fprintf(stderr, "\n");
-            break;
-
-        case DOT:
-            fprintf(stderr, "%-*s.\n", ALIGNMENT, "DOT");
-            break;
-        case DECLARATION_SIGN:
-            fprintf(stderr, "%-*s:\n", ALIGNMENT, "DECLARATION_SIGN");
-            break;
-        case COMMA:
-            fprintf(stderr, "%-*s,\n", ALIGNMENT, "COMMA");
-            break;
-        case INDENT:
-            fprintf(stderr, "%-*s\n", ALIGNMENT, "INDENT");
-            break;
-        case DEDENT:
-            printf("%-*s\n", ALIGNMENT, "DEDENT");
-            break;
-        case LINE_FEED:
-            fprintf(stderr, "%-*s\n", ALIGNMENT, "LINE_FEED");
-            break;
-        case WHITESPACE:
-            fprintf(stderr, "%-*s\n", ALIGNMENT, "WHITESPACE");
-            break;
-        case ASSIGNMENT:
-            fprintf(stderr, "%-*s=\n", ALIGNMENT, "ASSIGNMENT");
-            break;
-        case COMPARE:
-            switch (token->attribute_compare_type) {
-                case EQUAL:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "COMPARE", "==");
-                    break;
-                case NOT_EQUAL:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "COMPARE", "!=");
-                    break;
-                case LESS:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "COMPARE", "<");
-                    break;
-                case GREATER:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "COMPARE", ">");
-                    break;
-                case LESS_EQUAL:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "COMPARE", "<=");
-                    break;
-                case GREATER_EQUAL:
-                    fprintf(stderr, "%-*s%s\n", ALIGNMENT, "COMPARE", ">=");
-                    break;
-                default:
-                    fprintf(stderr, "%-*s%i\n", ALIGNMENT, "COMPARE",
-                        token->attribute_compare_type);
-                    break;
-            }
-            break;
-        case LEFT_BRACKET:
-            fprintf(stderr, "%-*s(\n", ALIGNMENT, "LEFT_BRACKET");
-            break;
-        case RIGHT_BRACKET:
-            fprintf(stderr, "%-*s)\n", ALIGNMENT, "RIGHT_BRACKET");
-            break;
-        case SEMICOLON:
-            fprintf(stderr, "%-*s;\n", ALIGNMENT, "SEMICOLON");
-            break;
-        case END_OF_FILE:
-            fprintf(stderr, "%-*s\n", ALIGNMENT, "END_OF_FILE");
-            break;
-        default:
-            fprintf(stderr, "%-*s%i\n", ALIGNMENT, "UNKNOWN_TOKEN", token->type);
+        case ERROR:
+            fprintf(stderr, "%-*s%i\n", ALIGNMENT, name, token->attribute_error);
             break;
     }
+}
+
+// =======================================================
+
+const char* str_keyword(const int idx)
+{
+    static const char* map[] = {
+        [DEF_KW] = "def",
+        [DO_KW] = "do",
+        [DOUBLE_KW] = "Double",
+        [ELSE_KW] = "else",
+        [IF_KW] = "if",
+        [IMPORT_KW] = "import",
+        [INT_KW] = "Int",
+        [RETURN_KW] = "return",
+        [STRING_KW] = "String",
+        [THEN_KW] = "then",
+        [UNIT_KW] = "Unit",
+        [VAL_KW] = "val",
+        [VAR_KW] = "var",
+        [WHILE_KW] = "while",
+        [BOOLEAN_KW] = "Boolean",
+        [CASE_KW] = "case",
+        [CLASS_KW] = "class",
+        [EXTENSION_KW] = "extension",
+        [FOR_KW] = "for",
+        [LIST_KW] = "List",
+        [MATCH_KW] = "match",
+        [TYPE_KW] = "type"
+    };
+
+    return map_str(map, sizeof(map) / sizeof(map[0]), idx, "[Unknown keyword]");
+}
+
+const char* str_operator(const int idx)
+{
+    static const char* map[] = {
+        [PLUS] = "+",
+        [MINUS] = "-",
+        [MULTIPLY] = "*",
+        [AND] = "&&",
+        [OR] = "||",
+        [NOT] = "!",
+        [DIVIDE] = "/"
+    };
+
+    return map_str(map, sizeof(map) / sizeof(map[0]), idx, "[Unknown operator]");
+}
+
+const char* str_compare(const int idx)
+{
+    static const char* map[] = {
+        [EQUAL] = "==",
+        [NOT_EQUAL] = "!=",
+        [LESS] = "<",
+        [GREATER] = ">",
+        [LESS_EQUAL] = "<=",
+        [GREATER_EQUAL] = ">="
+    };
+
+    return map_str(map, sizeof(map) / sizeof(map[0]), idx, "[Unknown comparator]");
+}
+
+// =======================================================
+
+void fprintf_escaped(FILE* stream, const char* string)
+{
+    if (string == NULL)
+        return;
+
+    for (size_t idx = 0; string[idx] != '\0'; idx++) {
+        if (string[idx] == '\n')
+            fprintf(stream, "\\n");
+        else
+            fputc(string[idx], stream);
+    }
+}
+
+const char* map_str(const char** map, const int size, const int idx, const char* fallback)
+{
+    if (0 <= idx && idx < size && map[idx] != NULL)
+        return map[idx];
+
+    return fallback;
 }

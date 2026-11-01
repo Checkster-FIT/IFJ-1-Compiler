@@ -23,8 +23,9 @@ typedef struct {
 
     // Debug information
     bool debug;
-    bool debug_highlight_failed;
-    bool debug_skipped;
+    bool debug_prefix_failed;
+    bool debug_prefix_skipped;
+    bool debug_prefix_expression;
     int debug_print_remaining;
 
 } ParserContext;
@@ -41,7 +42,7 @@ bool check_next_keyword(enum attribute_keyword keyword, ParserContext* parser);
 bool accept_next(enum type_enum type, ParserContext* parser);
 bool accept_next_keyword(enum attribute_keyword keyword, ParserContext* parser);
 bool accept_next_identifier(const char* name, ParserContext* parser);
-bool accept_next_operator(enum attribute_operation_type operation, ParserContext * parser);
+bool accept_next_operator(enum attribute_operation_type operation, ParserContext* parser);
 
 // -----------------------------------------
 int parse_program(ParserContext* parser);
