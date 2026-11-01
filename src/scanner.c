@@ -273,8 +273,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
     }
 
     // then check for pending EOF
+    // once the EOF is reached by scanner, EOF token will be returned on each following get_token() call
     if (context->pending_eof) {
-        context->pending_eof = false;
         token.type = END_OF_FILE;
         return token;
     }

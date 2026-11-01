@@ -343,17 +343,62 @@ int push_indent(IndentStack* stack, int value);
 
 void pop_indent(IndentStack* stack);
 
+/**
+ *
+ * @param stack Pointer to stack.
+ * @return Value on the top of the stack.
+ */
 int top_indent(IndentStack* stack);
 
 /**
+ * @brief Compares current indent value with values on stack. And returns corresponding macro.
+ *
+ * If current indent value is identical with the value on top of the stack AND
+ *  it was scanner calling this function (first_call == true), NO_INDENTATION is returned.
+ *
+ * If current indent value is larger than the value on top of the stack AND
+ *  it was scanner calling this function (first_call == true), INDENTATION is returned.
+ *
+ * If current indent value is smaller than the value on top of the stack,
+ *  context's attribute number of pending dedents is increased by one and the stack is popped.
+ *  Then the function recursively calls itself to either find matching indent and return DEDENTATION
+ *  with number of dedents stored in the context OR to find an indent which is now larger then the current value
+ *  meaning it's an INVALID_INDENTATION.
+ *
+ * Examples:
+ *
+ *  NO_INDENTATION
+ *   stack: | 4 |
+ *   current value: 4
+ *
+ *  INDENTATION
+ *   stack: | 4 |
+ *   current value: 8
+ *
+ *  DEDENTATION
+ *   stack | 4 |
+ *   current value: 0
+ *
+ *  INVALID_INDENTATION
+ *   stack: | 4 |
+ *   current value: 2
  *
  * @param context Pointer to scanner context containing indentation stack.
  * @param current_indent Indentation value used for the comparison and other actions.
  * @param first_call Whether the function is being called by the scanner or recursively by the function itself.
- * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on the specification.
+ * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on specification.
  */
 int check_indentation(ScannerContext* context, int current_indent, bool first_call);
 
+/**
+ * @brief Sets number of pending dedents in context, sets pending EOF to true and return line feed token.
+ *
+ * Correct handling of EOF is needed for parser. When EOF is found by scanner, this function is called.
+ * It sets context's parameters: pending dedents and pending EOF.
+ *
+ * @param context Pointer to scanner context.
+ * @return Line feed token.
+ */
 Token end_of_file(ScannerContext* context);
 
 #endif // IFJ_1_COMPILER_SCANNER_H
