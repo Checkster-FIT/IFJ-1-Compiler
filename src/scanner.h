@@ -341,6 +341,8 @@ int check_identifier_for_kw(ScannedString* string);
 
 IndentStack* init_indent_stack();
 
+void dispose_indent_stack(IndentStack* stack);
+
 int push_indent(IndentStack* stack, int value);
 
 void pop_indent(IndentStack* stack);
