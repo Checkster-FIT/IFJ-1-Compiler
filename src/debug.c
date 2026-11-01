@@ -245,6 +245,9 @@ void print_token(const Token* token, const SharedData* data)
         case RIGHT_BRACKET:
             fprintf(stderr, "%-*s)\n", ALIGNMENT, "RIGHT_BRACKET");
             break;
+        case SEMICOLON:
+            fprintf(stderr, "%-*s;\n", ALIGNMENT, "SEMICOLON");
+            break;
         case END_OF_FILE:
             fprintf(stderr, "%-*s\n", ALIGNMENT, "END_OF_FILE");
             break;
