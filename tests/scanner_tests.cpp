@@ -331,7 +331,7 @@ TEST_F(scanner, double_without_full_with_d)
 
 TEST_F(scanner, double_with_underscores)
 {
-    verify_token_sequence("1_134_123.24",
+    verify_token_sequence("1_134_123.24d",
         {
             token(DOUBLE, 1134123.24)
         });
@@ -344,7 +344,7 @@ TEST_F(scanner, double_with_underscores_in_decimal)
             token(DOUBLE, 1134123.242029)
         });
 
-    verify_token_sequence("11_34_12_3.2_4_202_9",
+    verify_token_sequence("11_34_12_3.2_4_202_9D",
         {
             token(DOUBLE, 1134123.242029)
         });
@@ -355,5 +355,68 @@ TEST_F(scanner, double_with_underscores_without_full)
     verify_token_sequence(".242_029",
         {
             token(DOUBLE, .242029)
+        });
+}
+
+// =====================================================
+// Double tests with exponents
+
+TEST_F(scanner, double_with_negative_exponent)
+{
+    verify_token_sequence("12.3E-2",
+        {
+            token(DOUBLE, 0.123)
+        });
+}
+
+TEST_F(scanner, double_with_positive_exponent)
+{
+    verify_token_sequence("12.323E+2",
+        {
+            token(DOUBLE, 1232.3)
+        });
+
+    verify_token_sequence("12.323E2",
+        {
+            token(DOUBLE, 1232.3)
+        });
+}
+
+TEST_F(scanner, double_exp_no_full_number)
+{
+    verify_token_sequence(".31E-2",
+        {
+            token(DOUBLE, 0.0031)
+        });
+
+    verify_token_sequence(".312E2",
+        {
+            token(DOUBLE, 31.2)
+        });
+}
+
+TEST_F(scanner, double_exp_err_no_decimal_number)
+{
+    verify_token_sequence(".E-2",
+        {
+            token(DOT, ".E-2")
+        });
+
+    verify_token_sequence(".E2",
+        {
+            token(DOT, ".E2")
+        });
+}
+
+TEST_F(scanner, double_exp_full_number)
+{
+    verify_token_sequence("1E-2",
+        {
+            token(DOUBLE, 0.01)
+        });
+
+    verify_token_sequence("1E+2",
+        {
+            token(DOUBLE, 100.0)
         });
 }
