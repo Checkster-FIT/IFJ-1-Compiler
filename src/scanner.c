@@ -55,11 +55,12 @@ int init_scanner(ScannerContext* scanner_context)
     scanner_context->scanned_string = scanned_string;
     scanner_context->indent_stack = indent_stack;
     scanner_context->pending_indent = false;
-    scanner_context->number_of_dedents = 0;
+    scanner_context->number_of_pending_dedents = 0;
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
     scanner_context->line_number = 1;
+    scanner_context->pending_eof = false;
 
     return 0;
 }
@@ -222,8 +223,23 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
     }
 
     pop_indent(context->indent_stack);
-    context->number_of_dedents += 1;
+    context->number_of_pending_dedents += 1;
     return check_indentation(context, current_indent, false);
+}
+
+Token end_of_file(ScannerContext* context)
+{
+    context->pending_eof = true;
+
+    while (context->indent_stack->top != NULL) {
+        context->number_of_pending_dedents += 1;
+        pop_indent(context->indent_stack);
+    }
+
+    Token token;
+    token.type = LINE_FEED;
+    token.attribute_none = NULL;
+    return token;
 }
 
 /** TODO:
@@ -243,8 +259,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
     int indent_value = 0;
 
-    if (context->number_of_dedents) {
-        context->number_of_dedents -= 1;
+    // first check for pending dedent
+    if (context->number_of_pending_dedents) {
+        context->number_of_pending_dedents -= 1;
         token.type = DEDENT;
         return token;
     }
@@ -252,6 +269,13 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
     if (context->pending_indent) {
         context->pending_indent = false;
         token.type = INDENT;
+        return token;
+    }
+
+    // then check for pending EOF
+    if (context->pending_eof) {
+        context->pending_eof = false;
+        token.type = END_OF_FILE;
         return token;
     }
 
@@ -348,11 +372,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_INDENT;
                 } else if (c == ' ' && context->beginning_of_file == false)
                     continue;
-                else if (c == EOF) {
-                    token.type = END_OF_FILE;
-                    token.attribute_none = NULL;
-                    return token;
-                } else {
+                else if (c == EOF)
+                    return end_of_file(context);
+                else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, c);
                     return token;
@@ -1351,11 +1373,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_LINE_FEED;
                     break;
                 }
-                if (c == EOF) {
-                    token.type = END_OF_FILE;
-                    token.attribute_none = NULL;
-                    return token;
-                }
+                if (c == EOF)
+                    return end_of_file(context);
                 if (c == '/') {
                     state = STATE_SLASH;
                     break;
