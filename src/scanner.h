@@ -242,12 +242,14 @@ typedef struct {
     ScannedString* scanned_string;
     IndentStack* indent_stack;
     bool pending_indent;
-    int number_of_dedents;
+    int number_of_pending_dedents;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid
     bool lf_inside_block_comment;
     int block_comment_counter;
     bool scanning_variable_inside_string_interpolation;
+    int line_number; // used for error guidance
+    bool pending_eof;
 } ScannerContext;
 
 /**
@@ -351,5 +353,7 @@ int top_indent(IndentStack* stack);
  * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on the specification.
  */
 int check_indentation(ScannerContext* context, int current_indent, bool first_call);
+
+Token end_of_file(ScannerContext* context);
 
 #endif // IFJ_1_COMPILER_SCANNER_H
