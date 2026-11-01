@@ -68,6 +68,7 @@ int init_scanner(ScannerContext* scanner_context)
 void destroy_scanner(const ScannerContext* scanner_context)
 {
     dispose_scanned_string(scanner_context->scanned_string);
+    dispose_indent_stack(scanner_context->indent_stack);
 }
 
 ScannedString* init_scanned_string()
@@ -177,6 +178,15 @@ IndentStack* init_indent_stack()
     return indent_stack;
 }
 
+void dispose_indent_stack(IndentStack* stack)
+{
+    while (stack->top != NULL) {
+        pop_indent(stack);
+    }
+
+    free(stack);
+}
+
 int push_indent(IndentStack* stack, int value)
 {
     IndentEl* indent_el = malloc(sizeof(IndentEl));
@@ -244,7 +254,7 @@ Token end_of_file(ScannerContext* context)
 
 /** TODO:
  *
- * TAB on new line - ERR 1
+ * TAB on empty line should not throw an error
  *
  */
 Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
