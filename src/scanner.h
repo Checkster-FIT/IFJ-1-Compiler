@@ -15,8 +15,8 @@
 // keywords
 #define NUMBER_OF_KEYWORDS 24
 #define IS_IDENTIFIER (-1)
-#define IS_BOOLEAN_VALUE_TRUE 23
-#define IS_BOOLEAN_VALUE_FALSE 24
+#define IS_BOOLEAN_VALUE_TRUE 22
+#define IS_BOOLEAN_VALUE_FALSE 23
 
 // interpolated string types
 #define NO_INTERPOLATION 0
