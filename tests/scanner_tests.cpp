@@ -244,3 +244,116 @@ TEST_F(scanner, int_err_leading_zero)
 }
 
 // =====================================================
+// Double tests
+
+TEST_F(scanner, double_simple)
+{
+    verify_token_sequence("1.12",
+        {
+            token(DOUBLE, 1.12),
+        });
+}
+
+TEST_F(scanner, double_zero_after_dot)
+{
+    verify_token_sequence("1.012",
+        {
+            token(DOUBLE, 1.012),
+        });
+}
+
+TEST_F(scanner, double_zero_before_dot)
+{
+    verify_token_sequence("0.12",
+        {
+            token(DOUBLE, 0.12),
+        });
+}
+
+TEST_F(scanner, double_but_int)
+{
+    verify_token_sequence("1.0",
+        {
+            token(DOUBLE, 1.0),
+        });
+}
+
+TEST_F(scanner, double_two_dots)
+{
+    verify_token_sequence("1.1.12",
+        {
+            token(DOUBLE, 1.1),
+            token(DOUBLE, 0.12)
+        });
+}
+
+TEST_F(scanner, double_no_full_number)
+{
+    verify_token_sequence(".23",
+        {
+            token(DOUBLE, .23)
+        });
+}
+
+TEST_F(scanner, double_no_decimal)
+{
+    verify_token_sequence("1.",
+        {
+            token(ERROR)
+        });
+}
+
+TEST_F(scanner, double_with_d)
+{
+    verify_token_sequence("1.2d",
+        {
+            token(DOUBLE, 1.2)
+        });
+
+    verify_token_sequence("1.2D",
+        {
+            token(DOUBLE, 1.2)
+        });
+}
+
+TEST_F(scanner, double_without_full_with_d)
+{
+    verify_token_sequence(".432d",
+        {
+            token(DOUBLE, .432)
+        });
+
+    verify_token_sequence(".432D",
+        {
+            token(DOUBLE, .432)
+        });
+}
+
+TEST_F(scanner, double_with_underscores)
+{
+    verify_token_sequence("1_134_123.24",
+        {
+            token(DOUBLE, 1134123.24)
+        });
+}
+
+TEST_F(scanner, double_with_underscores_in_decimal)
+{
+    verify_token_sequence("1_134_123.242_029",
+        {
+            token(DOUBLE, 1134123.242029)
+        });
+
+    verify_token_sequence("11_34_12_3.2_4_202_9",
+        {
+            token(DOUBLE, 1134123.242029)
+        });
+}
+
+TEST_F(scanner, double_with_underscores_without_full)
+{
+    verify_token_sequence(".242_029",
+        {
+            token(DOUBLE, .242029)
+        });
+}
