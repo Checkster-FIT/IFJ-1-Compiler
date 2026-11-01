@@ -1252,7 +1252,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 scanned_string_remove_last(context->scanned_string); // remove _
 
                 if (c == '_')
-                    state = STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE;
+                    state = STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE;
                 else if (c >= '0' && c <= '9')
                     state = STATE_DOUBLE_EXPONENT_NUMBER;
                 else {
