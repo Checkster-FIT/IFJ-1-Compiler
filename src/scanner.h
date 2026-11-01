@@ -187,6 +187,7 @@ typedef enum {
     STATE_UNIT,
     STATE_RIGHT_CURLY_BRACKET,
 
+    STATE_END_OF_FILE,
     // block comment
     STATE_LINE_FEED,
     STATE_INDENT,
@@ -395,16 +396,5 @@ int top_indent(IndentStack* stack);
  * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on specification.
  */
 int check_indentation(ScannerContext* context, int current_indent, bool first_call);
-
-/**
- * @brief Sets number of pending dedents in context, sets pending EOF to true and return line feed token.
- *
- * Correct handling of EOF is needed for parser. When EOF is found by scanner, this function is called.
- * It sets context's parameters: pending dedents and pending EOF.
- *
- * @param context Pointer to scanner context.
- * @return Line feed token.
- */
-Token end_of_file(ScannerContext* context);
 
 #endif // IFJ_1_COMPILER_SCANNER_H

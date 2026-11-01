@@ -237,21 +237,6 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
     return check_indentation(context, current_indent, false);
 }
 
-Token end_of_file(ScannerContext* context)
-{
-    context->pending_eof = true;
-
-    while (context->indent_stack->top != NULL) {
-        context->number_of_pending_dedents += 1;
-        pop_indent(context->indent_stack);
-    }
-
-    Token token;
-    token.type = LINE_FEED;
-    token.attribute_none = NULL;
-    return token;
-}
-
 /** TODO:
  *
  * TAB on empty line should not throw an error
@@ -298,6 +283,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
         if (context->read_buffer) {
             c = context->scanned_char_buffer;
         } else {
+            // TODO: 'ABC\xffDEF' > test.txt behaves incorrectly (255 value treated as EOF)
             c = (char)fgetc(stream);
 
             if (ferror(stream)) {
@@ -390,7 +376,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 } else if (c == ' ' && context->beginning_of_file == false)
                     continue;
                 else if (c == EOF)
-                    return end_of_file(context);
+                    state = STATE_END_OF_FILE;
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NO_TRANSITION, state, c);
@@ -762,8 +748,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-                // TODO:
-                //   nested interpolation - simple string x multiline string
+            // TODO:
+            //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
@@ -1252,7 +1238,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                 scanned_string_remove_last(context->scanned_string); // remove _
 
                 if (c == '_')
-                    state = STATE_DOUBLE_DECIMAL_NUMBER_UNDERSCORE;
+                    state = STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE;
                 else if (c >= '0' && c <= '9')
                     state = STATE_DOUBLE_EXPONENT_NUMBER;
                 else {
@@ -1396,8 +1382,10 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     state = STATE_LINE_FEED;
                     break;
                 }
-                if (c == EOF)
-                    return end_of_file(context);
+                if (c == EOF) {
+                    state = STATE_END_OF_FILE;
+                    break;
+                }
                 if (c == '/') {
                     state = STATE_SLASH;
                     break;
@@ -1453,6 +1441,19 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
                     RETURN_TOKEN_AND_SET_READ_BUFFER
                 }
                 break;
+
+            // Correct handling of EOF is needed for parser.
+            // When EOF is found by scanner, set context's parameters: pending dedents and pending EOF.
+            case STATE_END_OF_FILE:
+                context->pending_eof = true;
+
+                while (context->indent_stack->top != NULL) {
+                    context->number_of_pending_dedents += 1;
+                    pop_indent(context->indent_stack);
+                }
+
+                token.type = LINE_FEED;
+                return token;
 
             // COMMENT
             case STATE_COMMENT:
