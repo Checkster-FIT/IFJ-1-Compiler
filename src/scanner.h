@@ -248,6 +248,7 @@ typedef struct {
     bool lf_inside_block_comment;
     int block_comment_counter;
     bool scanning_variable_inside_string_interpolation;
+    int line_number; // used for error guidance
 } ScannerContext;
 
 /**

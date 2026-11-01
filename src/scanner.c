@@ -59,6 +59,7 @@ int init_scanner(ScannerContext* scanner_context)
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
+    scanner_context->line_number = 1;
 
     return 0;
 }
@@ -722,8 +723,8 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
 
                 break;
 
-                // TODO:
-                //   nested interpolation - simple string x multiline string
+            // TODO:
+            //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
@@ -1343,6 +1344,9 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream)
             // STATE_LINE_FEED servers as a kind of pipe into STATE_INDENT which will handle
             // indentation as well as line feed tokens
             case STATE_LINE_FEED:
+
+                context->line_number += 1;
+
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
                     break;
