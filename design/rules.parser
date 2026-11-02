@@ -20,46 +20,47 @@
 
     <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
 
-        <type> := String, Int, Double, Unit, Boolean
-
-        <param_group_list> -> ( <param_first> ) <param_group_list>
-        <param_group_list> -> 3
-
-            <param_first> -> <param> <param_list>
-            <param_first> -> 3
-
-            <param_list> -> , <param> <param_list>
-            <param_list> -> 3
-
-                <param> -> [IDENTIFIER] : <type>
-
         <type_specifier> -> : <type>
         <type_specifier> -> 3
 
-    // -------------------------------------------------
+        <type> := String, Int, Double, Unit, Boolean
 
-        <function_body> -> [LF] [INDENT] <statement_list>
-        <function_body> -> <EXPRESSION> [LF]
+    <param_group_list> -> ( <param_list_first> ) <param_group_list>
+    <param_group_list> -> 3
 
-        <statement_list> -> <statement> <statement_list>
-        <statement_list> -> [DEDENT]
+        <param_list_first> -> <param> <param_list>
+        <param_list_first> -> 3
 
-            <statement> := <st_vardef>, <st_assign>, <st_conditional>, <st_while>, <st_return>
+        <param_list> -> , <param> <param_list>
+        <param_list> -> 3
 
-            <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPRESSION> [LF]
-            <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPRESSION> [LF]
-
-            <st_assign> -> [IDENTIFIER] = <EXPRESSION> [LF]
-            <st_return> -> return <EXPRESSION> [LF]
+            <param> -> [IDENTIFIER] : <type>
 
     // -------------------------------------------------
 
-            <st_while> -> while <RELATIONAL_EXPRESSION> do [LF] [INDENT] <statement_list> [DEDENT]
+    <function_body> -> [LF] [INDENT] <statement_list> [DEDENT]
+    <function_body> -> <EXPR> [LF]
 
-            // This statement LF and dedent needs to be replaced (second statement list?)
-            <st_conditional> -> if <RELATIONAL_EXPRESSION> then [LF*] [INDENT*] <statement_list> <else_branch>
+    <statement_list> -> <statement> [LF] <statement_list> // Add ';' as a separator
+    <statement_list> -> <construct> <statement_list>
+    <statement_list> -> 3
 
-            <else_branch> -> else [LF*] [INDENT*] <statement_list>
-            <else_branch> -> [DEDENT]
+        <statement> := <st_vardef>, <st_assign>, , <st_return>, <EXPR>
+
+            // Implement assignment as EXPR ???
+            <st_assign> ->     [IDENTIFIER]                  = <EXPR>
+            <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
+            <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
+            <st_return> -> return <EXPR>
+
+        <construct> := <c_while> <c_if_then> <c_for>
+
+            <c_while> -> while <REL_EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
+            <c_if_then> -> if <REL_EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
+            <c_else> -> else [LF*] [INDENT*] <statement_list> [DEDENT*]
+            <c_for> -> ???
 
     // -------------------------------------------------
+
+    <EXPR> -> ...
+    <REL_EXPR> -> ...

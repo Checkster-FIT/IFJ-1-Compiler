@@ -18,7 +18,7 @@ def factorial(n: Int): Int =
 
 def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     var abc = 1; val _def = 65;
-    var = if abc == 1 then "One" else "Not one"
+    var xyz = if abc == 1 then "One" else "Not one"
 
     while abc < 5 do
         abc = abc + abc;

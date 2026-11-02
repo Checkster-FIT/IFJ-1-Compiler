@@ -7,6 +7,8 @@
 
 #ifndef IFJ_1_COMPILER_ERROR_H
 #define IFJ_1_COMPILER_ERROR_H
+#include <stdarg.h>
+#include <stdio.h>
 
 typedef enum error_enum {
     // Scanner error
@@ -46,7 +48,6 @@ typedef enum error_enum {
     PARSER_DOUBLE_PARAM_TYPE,
     PARSER_INVALID_PARAM,
     PARSER_MISSING_FUNCTION_ASSIGNMENT,
-    PARSER_INCOMPLETE_RULE,
     PARSER_WHILE_MISSING_DO,
     PARSER_WHILE_MISSING_LINE_FEED,
     PARSER_WHILE_MISSING_INDENT,
@@ -54,6 +55,9 @@ typedef enum error_enum {
     PARSER_IF_MISSING_INDENT,
     PARSER_IF_MISSING_DEDENT,
     PARSER_COND_STATEMENT_UNCLOSED,
+
+    PARSER_RULE_INCOMPLETE,
+    PARSER_RULE_INCORRECT_CALL,
 
     // Syntax error
     SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL,
@@ -89,6 +93,7 @@ ErrorMessage get_error_by_id(enum error_enum error_id);
  * @return the exit code for the given error message
  */
 int print_error(int error_id, int line, ...);
+int va_print_error(int error_id, int line, va_list args);
 
 /**
  * @brief Checks the range of exit codes and returns the corresponding error type

@@ -207,10 +207,6 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "A multiline if statement needs to be indented";
             error.code = 2;
             break;
-        case PARSER_COND_STATEMENT_UNCLOSED:
-            error.message = "The if statement was not properly ended with a newline, ';' or the 'else' keyword";
-            error.code = 2;
-            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
@@ -225,8 +221,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 99;
             break;
         // Program errors
-        case PARSER_INCOMPLETE_RULE:
+        case PARSER_RULE_INCOMPLETE:
             error.message = "The required parser rule for '%s' is incomplete";
+            error.code = 100;
+            break;
+        case PARSER_RULE_INCORRECT_CALL:
+            error.message = "A rule was called when it does not match the next token";
             error.code = 100;
             break;
         case SCANNER_NO_TRANSITION:
@@ -262,6 +262,17 @@ char* get_error_type_str(const int exit_code)
 
 int print_error(const int error_id, const int line, ...)
 {
+    va_list args = { };
+    va_start(args, line);
+
+    const int code = va_print_error(error_id, line, args);
+
+    va_end(args);
+    return code;
+}
+
+int va_print_error(const int error_id, const int line, va_list args)
+{
     // Gets the full error message for the error with this id
     const ErrorMessage error = get_error_by_id(error_id);
 
@@ -283,11 +294,7 @@ int print_error(const int error_id, const int line, ...)
         get_error_type_str(error.code), line,
         error.message, error.fix);
 
-    // Print the constructed format with the user specified arguments
-    va_list args = { };
-    va_start(args, line);
     vfprintf(stderr, error_message, args);
-    va_end(args);
 
     return error.code;
 }

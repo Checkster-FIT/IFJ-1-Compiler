@@ -52,7 +52,7 @@ clean:
 	@rm -fv *.pdf
 
 # -----------------------------------------------
-.PHONY: check format tidy tidy-cpp checklist
+.PHONY: check format tidy tidy-cpp checklist examples
 # -----------------------------------------------
 MAKEFLAGS += --no-print-directory
 
@@ -74,6 +74,9 @@ tidy-cpp:
 
 checklist:
 	@sh checklist.sh
+
+examples: $(MAIN_EXEC)
+	@sh ./tests/data/compile.sh
 
 # -----------------------------------------------
 .PHONY: test build-test
