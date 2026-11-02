@@ -148,7 +148,6 @@ const char* str_token(const Token* token, const TokenStringType mode, const Shar
         [ERROR] = num_to_str_buffer
     };
 
-
     int size = 0;
     switch (mode) {
         case GET_NAME:

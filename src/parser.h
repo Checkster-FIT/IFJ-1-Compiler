@@ -60,6 +60,7 @@ int parse_statement_list(ParserContext* parser);
 int parse_statement_variable_definition(ParserContext* parser);
 int parse_statement_while(ParserContext* parser);
 int parse_statement_return(ParserContext* parser);
+int parse_statement(ParserContext* parser);
 
 int parse_statement_conditional(ParserContext* parser);
 int parse_if_then(ParserContext* parser);

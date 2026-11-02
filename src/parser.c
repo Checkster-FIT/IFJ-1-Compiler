@@ -134,7 +134,9 @@ int parse_body(ParserContext* parser)
         return parse_body(parser);
     }
 
-    parser->exit_code = print_error(PARSER_GLOBAL_SCOPE_INVALID, get_line(parser), str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data));
+    parser->exit_code = print_error(
+        PARSER_GLOBAL_SCOPE_INVALID, get_line(parser),
+        str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data));
     return FAILED;
 }
 
@@ -222,8 +224,12 @@ int parse_type_specifier(ParserContext* parser)
 
 int parse_type(ParserContext* parser)
 {
-    if (!accept_next_keyword(STRING_KW, parser) && !accept_next_keyword(INT_KW, parser) && !accept_next_keyword(DOUBLE_KW, parser) && !accept_next_keyword(UNIT_KW, parser) && !accept_next_keyword(BOOLEAN_KW, parser)) {
-        parser->exit_code = print_error(PARSER_INCORRECT_TYPE, get_line(parser), str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data));
+    if (!accept_next_keyword(STRING_KW, parser) && !accept_next_keyword(INT_KW, parser)
+        && !accept_next_keyword(DOUBLE_KW, parser) && !accept_next_keyword(UNIT_KW, parser)
+        && !accept_next_keyword(BOOLEAN_KW, parser)) {
+        parser->exit_code = print_error(
+            PARSER_INCORRECT_TYPE, get_line(parser),
+            str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data));
         return FAILED;
     }
 
@@ -318,7 +324,8 @@ int parse_function_body(ParserContext* parser)
         return FAILED;
 
     if (!accept_next(LINE_FEED, parser)) {
-        parser->exit_code = print_error(PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED, get_line(parser));
+        parser->exit_code
+            = print_error(PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED, get_line(parser));
         return FAILED;
     }
 
@@ -331,6 +338,14 @@ int parse_statement_list(ParserContext* parser)
         return CORRECT;
     }
 
+    if (!parse_statement(parser))
+        return FAILED;
+
+    return parse_statement_list(parser);
+}
+
+int parse_statement(ParserContext* parser)
+{
     if (accept_next_keyword(VAR_KW, parser) || accept_next_keyword(VAL_KW, parser)) {
         if (!parse_statement_variable_definition(parser))
             return FAILED;
@@ -346,8 +361,17 @@ int parse_statement_list(ParserContext* parser)
     } else if (accept_next_keyword(FOR_KW, parser)) {
         parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, get_line(parser), "for_loop");
         return FAILED;
-    } else if (check_next(LEFT_BRACKET, parser) || check_next(IDENTIFIER, parser) || check_next(STRING, parser) || check_next(STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING_INTERPOLATION, parser) || check_next(MULTILINE_STRING, parser) || check_next(INTEGER, parser) || check_next(DOUBLE, parser) || check_next(BOOLEAN, parser)) {
-        // TODO: Assignments, Strings, Function calls, Returns values, ...
+    } else if (
+        check_next(LEFT_BRACKET, parser)
+        || check_next(IDENTIFIER, parser)
+        || check_next(STRING, parser)
+        || check_next(STRING_INTERPOLATION, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION, parser)
+        || check_next(MULTILINE_STRING, parser)
+        || check_next(INTEGER, parser)
+        || check_next(DOUBLE, parser)
+        || check_next(BOOLEAN, parser)
+        ) {
 
         if (!parse_expression(parser))
             return FAILED;
@@ -356,9 +380,12 @@ int parse_statement_list(ParserContext* parser)
             parser->exit_code = print_error(PARSER_ST_MISSING_LINE_FEED, get_line(parser));
             return FAILED;
         }
+
+    } else {
+        return FAILED;
     }
 
-    return parse_statement_list(parser);
+    return CORRECT;
 }
 
 int parse_statement_conditional(ParserContext* parser)
@@ -522,7 +549,8 @@ int parse_relational_expression(ParserContext* parser)
         next(parser);
     }
 
-    parser->exit_code = print_error(PARSER_INCOMPLETE_RULE, get_line(parser), "relational_expression");
+    parser->exit_code
+        = print_error(PARSER_INCOMPLETE_RULE, get_line(parser), "relational_expression");
     return FAILED;
 }
 
