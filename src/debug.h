@@ -17,7 +17,8 @@ typedef enum {
     GET_ATTRIBUTE
 } TokenStringType;
 
-#define ALIGNMENT 34
+#define ALIGNMENT 35
+#define BUFFER_SIZE 32
 
 void log_parsed(ParserContext* parser);
 void log_remaining(ParserContext* parser);

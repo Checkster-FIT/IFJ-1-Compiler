@@ -7,6 +7,7 @@
 
 #ifndef IFJ_1_COMPILER_PARSER_H
 #define IFJ_1_COMPILER_PARSER_H
+
 #include "scanner.h"
 #include "shared_data.h"
 #include <stdbool.h>
@@ -16,6 +17,7 @@
 
 typedef struct {
     int exit_code;
+    int token_error;
     Token next;
     Token accepted;
     ScannerContext scanner_context;
@@ -37,7 +39,7 @@ int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------
 void next(ParserContext* parser);
-bool check_next(enum type_enum type, ParserContext* parser);
+bool check_next(enum type_enum type, const ParserContext* parser);
 bool check_next_keyword(enum attribute_keyword keyword, ParserContext* parser);
 bool accept_next(enum type_enum type, ParserContext* parser);
 bool accept_next_keyword(enum attribute_keyword keyword, ParserContext* parser);
@@ -74,5 +76,12 @@ int parse_param(ParserContext* parser);
 
 int parse_expression(ParserContext* parser);
 int parse_relational_expression(ParserContext* parser);
+
+/**
+ * Gets the correct line number adjusted for newlines
+ * @param parser context with the line number and next token needed for the adjustment
+ * @return the adjusted line number
+ */
+int get_line(const ParserContext* parser);
 
 #endif // IFJ_1_COMPILER_PARSER_H

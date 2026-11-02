@@ -5,8 +5,8 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
-#ifndef IFJ_1_COMPILER_SHARED_H
-#define IFJ_1_COMPILER_SHARED_H
+#ifndef IFJ_1_COMPILER_ERROR_H
+#define IFJ_1_COMPILER_ERROR_H
 
 typedef enum error_enum {
     // Scanner error
@@ -96,4 +96,4 @@ int print_error(int error_id, int line, ...);
  */
 char* get_error_type_str(int exit_code);
 
-#endif // IFJ_1_COMPILER_SHARED_H
+#endif // IFJ_1_COMPILER_ERROR_H

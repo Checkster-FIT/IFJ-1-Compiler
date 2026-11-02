@@ -36,6 +36,7 @@ void log_parsed(ParserContext* parser)
     else if (parser->debug_prefix_failed) {
         prefix = "!?";
         color = "\033[1;31m";
+        parser->debug_prefix_failed = false;
     }
     // Unprocessed tokens
     else if (parser->debug_print_remaining >= 0) {
@@ -55,10 +56,9 @@ void log_parsed(ParserContext* parser)
 
 void log_remaining(ParserContext* parser)
 {
-    while (parser->next.type != ERROR) {
+    while (true) {
         next(parser);
 
-        parser->debug_prefix_failed = false;
         parser->debug_print_remaining--;
 
         if (parser->next.type == END_OF_FILE) {
@@ -108,6 +108,21 @@ const char* str_token(const Token* token, const TokenStringType mode, const Shar
         [END_OF_FILE] = "END_OF_FILE"
     };
 
+    static char num_to_str_buffer[BUFFER_SIZE];
+
+    switch (token->type) {
+        case INTEGER:
+            snprintf(num_to_str_buffer, BUFFER_SIZE, "%li", token->attribute_int);
+            break;
+        case DOUBLE:
+            snprintf(num_to_str_buffer, BUFFER_SIZE, "%lf", token->attribute_double);
+            break;
+        case ERROR:
+            snprintf(num_to_str_buffer, BUFFER_SIZE, "%i", token->attribute_error);
+            break;
+        default:;
+    }
+
     const char* attribute_map[] = {
         [DOT] = ".",
         [DECLARATION_SIGN] = ":",
@@ -127,8 +142,12 @@ const char* str_token(const Token* token, const TokenStringType mode, const Shar
         [STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx),
         [MULTILINE_STRING] = get_string(data, token->attribute_str_idx),
         [MULTILINE_STRING_INTERPOLATION] = get_string(data, token->attribute_str_idx),
-        [MULTILINE_STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx)
+        [MULTILINE_STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx),
+        [INTEGER] = num_to_str_buffer,
+        [DOUBLE] = num_to_str_buffer,
+        [ERROR] = num_to_str_buffer
     };
+
 
     int size = 0;
     switch (mode) {
@@ -150,22 +169,9 @@ void print_token(const Token* token, const SharedData* data)
     const char* name = str_token(token, GET_NAME, data);
     const char* attribute = str_token(token, GET_ATTRIBUTE, data);
 
-    switch (token->type) {
-        default:
-            fprintf(stderr, "%-*s", ALIGNMENT, name);
-            fprintf_escaped(stderr, attribute);
-            fprintf(stderr, "\n");
-            break;
-        case INTEGER:
-            fprintf(stderr, "%-*s%li\n", ALIGNMENT, name, token->attribute_int);
-            break;
-        case DOUBLE:
-            fprintf(stderr, "%-*s%lf\n", ALIGNMENT, name, token->attribute_double);
-            break;
-        case ERROR:
-            fprintf(stderr, "%-*s%i\n", ALIGNMENT, name, token->attribute_error);
-            break;
-    }
+    fprintf(stderr, "%-*s", ALIGNMENT, name);
+    fprintf_escaped(stderr, attribute);
+    fprintf(stderr, "\n");
 }
 
 // =======================================================

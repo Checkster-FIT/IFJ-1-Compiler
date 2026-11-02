@@ -6,6 +6,7 @@
  */
 
 #include "error.h"
+#include "parser.h"
 #include "scanner.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -60,8 +61,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 1;
             break;
         case SCANNER_INVALID_IDENTIFIER:
-            error.message = "'%s' is not a valid identifier";
-            error.fix = "An identifier can only contain letters, digits, and underscore. It begins with a letter or an underscore. The underscore itself is not a valid identifier";
+            error.message = "'%s' is not a valid identifier (only letters, digits, and underscores are allowed)";
+            error.fix = "Identifier cannot begin with a digit. An underscore is not a valid identifier by itself";
             error.code = 1;
             break;
         case SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS:
@@ -89,7 +90,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 2;
             break;
         case PARSER_GLOBAL_SCOPE_INVALID:
-            error.message = "Invalid use of %s in the global scope";
+            error.message = "Invalid use of '%s' in the global scope";
             error.code = 2;
             break;
         case PARSER_MISSING_IMPORT:
@@ -142,7 +143,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 2;
             break;
         case PARSER_INCORRECT_TYPE:
-            error.message = "Unknown type";
+            error.message = "Unknown variable type: '%s'";
             error.fix = "Valid parameter types include: (String, Int, Double, Unit, Boolean)";
             error.code = 2;
             break;
@@ -191,7 +192,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 2;
             break;
         case PARSER_WHILE_MISSING_LINE_FEED:
-            error.message = "A while loop block must be on a new line";
+            error.message = "A while loop block must start on a new line";
             error.code = 2;
             break;
         case PARSER_WHILE_MISSING_INDENT:
@@ -265,11 +266,11 @@ int print_error(const int error_id, const int line, ...)
 
     // Create the format with or without the fix
     const char* format = "\033[1;31m[%s] on line %i: \n"
-                         " -> %s\n"
-                         " -> %s\033[0m\n";
+                         "     | %s\n"
+                         "     | %s\033[0m\n";
     if (strlen(error.fix) <= 0)
         format = "\033[1;31m[%s] on line %i: \n"
-                 " -> %s\033[0m\n";
+                 "     | %s\033[0m\n";
 
     snprintf(
         error_message,
