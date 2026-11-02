@@ -207,6 +207,10 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "A multiline if statement needs to be indented";
             error.code = 2;
             break;
+        case PARSER_COND_STATEMENT_UNCLOSED:
+            error.message = "The if statement was not properly ended with a newline, ';' or the 'else' keyword";
+            error.code = 2;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";

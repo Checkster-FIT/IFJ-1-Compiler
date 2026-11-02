@@ -66,9 +66,7 @@ int run_parser(SharedData* data)
 
 int parse_program(ParserContext* parser)
 {
-    if (accept_next(LINE_FEED, parser)) {
-        return parse_program(parser);
-    }
+    while (accept_next(LINE_FEED, parser)) {};
 
     if (accept_next_keyword(IMPORT_KW, parser)) {
         if (!parse_header(parser))
@@ -102,6 +100,8 @@ int parse_header(ParserContext* parser)
 
 int parse_body(ParserContext* parser)
 {
+    while (accept_next(LINE_FEED, parser)) {};
+
     if (accept_next_keyword(EXTENSION_KW, parser)) {
         if (!parse_extension(parser))
             return FAILED;
@@ -128,10 +128,6 @@ int parse_body(ParserContext* parser)
 
     if (accept_next(END_OF_FILE, parser)) {
         return CORRECT;
-    }
-
-    if (accept_next(LINE_FEED, parser)) {
-        return parse_body(parser);
     }
 
     parser->exit_code = print_error(
@@ -390,25 +386,6 @@ int parse_statement(ParserContext* parser)
 
 int parse_statement_conditional(ParserContext* parser)
 {
-    if (!parse_if_then(parser))
-        return FAILED;
-
-    if (accept_next_keyword(ELSE_KW, parser)) {
-        if (check_next_keyword(IF_KW, parser)) {
-            if (!parse_else_if_list(parser))
-                return FAILED;
-            return CORRECT;
-        }
-
-        if (!parse_else(parser))
-            return FAILED;
-    }
-
-    return CORRECT;
-}
-
-int parse_if_then(ParserContext* parser)
-{
     if (!parse_relational_expression(parser))
         return FAILED;
 
@@ -426,36 +403,23 @@ int parse_if_then(ParserContext* parser)
     if (!parse_statement_list(parser))
         return FAILED;
 
-    // TODO: Needs to be extracted from statement list
-    // if (indented && !accept_next(DEDENT, parser)) {
-    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT, get_error_line(parser));
-    //     return FAILED;
-    // }
-
-    return CORRECT;
-}
-
-int parse_else_if_list(ParserContext* parser)
-{
-    if (!parse_if_then(parser))
+    if (!parse_else_branch(parser))
         return FAILED;
 
-    if (accept_next_keyword(ELSE_KW, parser)) {
-        if (check_next_keyword(IF_KW, parser)) {
-            if (!parse_else_if_list(parser))
-                return FAILED;
-            return CORRECT;
-        }
-
-        if (!parse_else(parser))
-            return FAILED;
-    }
-
     return CORRECT;
 }
 
-int parse_else(ParserContext* parser)
+int parse_else_branch(ParserContext* parser)
 {
+    if (accept_next(DEDENT, parser)) {
+        return CORRECT;
+    }
+
+    if (!accept_next_keyword(ELSE_KW, parser)) {
+        parser->exit_code = print_error(PARSER_COND_STATEMENT_UNCLOSED, get_line(parser));
+        return FAILED;
+    }
+
     const bool indented = accept_next(LINE_FEED, parser);
     if (indented && !accept_next(INDENT, parser)) {
         parser->exit_code = print_error(PARSER_IF_MISSING_INDENT, get_line(parser));
@@ -464,12 +428,6 @@ int parse_else(ParserContext* parser)
 
     if (!parse_statement_list(parser))
         return FAILED;
-
-    // TODO: Needs to be extracted from statement list
-    // if (indented && !accept_next(DEDENT, parser)) {
-    //     parser->exit_code = print_error(PARSER_IF_MISSING_DEDENT, get_error_line(parser));
-    //     return FAILED;
-    // }
 
     return CORRECT;
 }

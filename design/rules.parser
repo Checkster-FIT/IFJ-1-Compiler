@@ -56,15 +56,10 @@
 
             <st_while> -> while <RELATIONAL_EXPRESSION> do [LF] [INDENT] <statement_list> [DEDENT]
 
-            <st_conditional> -> <if_then> <else_if_list> <else>
-
             // This statement LF and dedent needs to be replaced (second statement list?)
-            <if_then> -> if <RELATIONAL_EXPRESSION> then [LF*] [INDENT*] <statement_list> [DEDENT]
+            <st_conditional> -> if <RELATIONAL_EXPRESSION> then [LF*] [INDENT*] <statement_list> <else_branch>
 
-            <else_if_list> -> else <if_then> <else_if_list>
-            <else_if_list> -> 3
-
-            <else_if_list> -> else [LF*] [INDENT*] <statement_list> [DEDENT]
-            <else_if_list> -> 3
+            <else_branch> -> else [LF*] [INDENT*] <statement_list>
+            <else_branch> -> [DEDENT]
 
     // -------------------------------------------------

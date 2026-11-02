@@ -63,9 +63,7 @@ int parse_statement_return(ParserContext* parser);
 int parse_statement(ParserContext* parser);
 
 int parse_statement_conditional(ParserContext* parser);
-int parse_if_then(ParserContext* parser);
-int parse_else_if_list(ParserContext* parser);
-int parse_else(ParserContext* parser);
+int parse_else_branch(ParserContext* parser);
 
 int parse_type_specifier(ParserContext* parser);
 int parse_type(ParserContext* parser);

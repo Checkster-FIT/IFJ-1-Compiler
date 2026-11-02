@@ -1,0 +1,26 @@
+import ifj26.*
+
+def factorial(n: Int): Int =
+    var result = 1
+    var i: Int = n
+    while i > 1 do
+        result = result * i
+        i = i - 1
+    if i == 42 then
+        return 42;
+    result
+
+@main def runFoo(): Unit =
+    val n = readInt()
+    val result = factorial(n)
+    print(result)
+    print("\n")
+
+def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
+    var abc = 1; val _def = 65;
+    var = if abc == 1 then "One" else "Not one"
+
+    while abc < 5 do
+        abc = abc + abc;
+
+    ()
