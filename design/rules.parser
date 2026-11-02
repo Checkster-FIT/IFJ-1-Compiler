@@ -45,7 +45,7 @@
     <statement_list> -> <construct> <statement_list>
     <statement_list> -> 3
 
-        <statement> := <st_vardef>, <st_assign>, , <st_return>, <EXPR>
+        <statement> := <st_vardef>, <st_assign>, <st_return>, <EXPR>
 
             // Implement assignment as EXPR ???
             <st_assign> ->     [IDENTIFIER]                  = <EXPR>

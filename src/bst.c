@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    bst.c
- * @brief   RBTree implementation
+ * @brief   Red-Black tree abstract data type implementation
  * @author  Tobiáš Mikan <xmikant00>
  */
 
@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-RBTree* TreeInit(int(*cmp)(void* a, void* b))
+RBTree* tree_init(int (*cmp)(void* a, void* b))
 {
     RBTree* tree = (RBTree*)malloc(sizeof(RBTree));
     if (tree == NULL) {
@@ -20,7 +20,7 @@ RBTree* TreeInit(int(*cmp)(void* a, void* b))
     return tree;
 }
 
-TNode* NodeCreate(void* key, void* value)
+TNode* node_create(void* key, void* value)
 {
     TNode* node = malloc(sizeof(TNode));
     if (node == NULL) {
@@ -37,7 +37,7 @@ TNode* NodeCreate(void* key, void* value)
     return node;
 }
 
-NodeColor ColorCheck(TNode* node)
+NodeColor color_check(TNode* node)
 {
     if (node == NULL || node->color == BLACK) {
         return BLACK;
@@ -45,7 +45,7 @@ NodeColor ColorCheck(TNode* node)
     return RED;
 }
 
-TNode* RotateLeft(TNode* node)
+TNode* rotate_left(TNode* node)
 {
     TNode* moving_node = node->right;
     node->right = moving_node->left;
@@ -59,7 +59,7 @@ TNode* RotateLeft(TNode* node)
     return node;
 }
 
-TNode* RotateRight(TNode* node)
+TNode* rotate_right(TNode* node)
 {
     TNode* moving_node = node->left;
     node->left = moving_node->right;
@@ -73,7 +73,7 @@ TNode* RotateRight(TNode* node)
     return node;
 }
 
-void FlipColor(TNode* node)
+void flip_color(TNode* node)
 {
     if (node->left == NULL || node->right == NULL) {
         return;
@@ -85,49 +85,50 @@ void FlipColor(TNode* node)
     }
 }
 
-TNode* TreeInsert(RBTree* tree, void* key, void* value)
+TNode* tree_insert(RBTree* tree, void* key, void* value)
 {
     if (tree == NULL) {
         return NULL;
     }
-    tree->root = RecursiveInsert(tree->root, key, value, tree->cmp);
+    tree->root = recursive_insert(tree->root, key, value, tree->cmp);
     if (tree->root != NULL) {
         tree->root->color = BLACK;
     }
     return tree->root;
 }
 
-TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*))
+TNode* recursive_insert(TNode* node, void* key, void* value, int (*cmp)(void*, void*))
 {
     if (node == NULL) {
-        node = NodeCreate(key, value);
+        node = node_create(key, value);
         return node;
     }
-    int cmp_outcome = cmp(key, node->key);
+
+    const int cmp_outcome = cmp(key, node->key);
 
     if (cmp_outcome < 0) {
-        node->left = RecursiveInsert(node->left, key, value, cmp);
+        node->left = recursive_insert(node->left, key, value, cmp);
 
     } else if (cmp_outcome > 0) {
-        node->right = RecursiveInsert(node->right, key, value, cmp);
+        node->right = recursive_insert(node->right, key, value, cmp);
     } else {
         node->value = value;
         return node;
     }
 
-    if (ColorCheck(node->right) == RED && ColorCheck(node->left) == BLACK) {
-        node = RotateLeft(node);
+    if (color_check(node->right) == RED && color_check(node->left) == BLACK) {
+        node = rotate_left(node);
     }
-    if (ColorCheck(node->left) == RED && ColorCheck(node->left->left) == RED) {
-        node = RotateRight(node);
+    if (color_check(node->left) == RED && color_check(node->left->left) == RED) {
+        node = rotate_right(node);
     }
-    if (ColorCheck(node->left) == RED && ColorCheck(node->right) == RED) {
-        FlipColor(node);
+    if (color_check(node->left) == RED && color_check(node->right) == RED) {
+        flip_color(node);
     }
     return node;
 }
 
-TNode* Search(RBTree* tree, void* key)
+TNode* search(const RBTree* tree, void* key)
 {
     if (tree == NULL || tree->root == NULL) {
         return NULL;
@@ -136,16 +137,19 @@ TNode* Search(RBTree* tree, void* key)
     TNode* node = tree->root;
 
     while (node != NULL) {
-        int comp_value = tree->cmp(key, node->key);
+        const int comp_value = tree->cmp(key, node->key);
 
-        if (comp_value < 0) node = node->left;
-        else if (comp_value > 0) node = node->right;
-        else break;
+        if (comp_value < 0)
+            node = node->left;
+        else if (comp_value > 0)
+            node = node->right;
+        else
+            break;
     }
     return node;
 }
 
-int RBTreeStrcmp(void* a, void* b)
+int rb_tree_strcmp(void* a, void* b)
 {
     return strcmp((char*)a, (char*)b);
 }
