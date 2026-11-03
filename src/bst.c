@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-RBTree* TreeInit(int(*cmp)(void* a, void* b))
+RBTree* TreeInit(int (*cmp)(void* a, void* b))
 {
     RBTree* tree = (RBTree*)malloc(sizeof(RBTree));
     if (tree == NULL) {
@@ -90,14 +90,17 @@ TNode* TreeInsert(RBTree* tree, void* key, void* value)
     if (tree == NULL) {
         return NULL;
     }
-    tree->root = RecursiveInsert(tree->root, key, value, tree->cmp);
-    if (tree->root != NULL) {
-        tree->root->color = BLACK;
+    TNode* null_check = RecursiveInsert(tree->root, key, value, tree->cmp);
+    if (null_check == NULL) {
+        return NULL;
     }
+    tree->root = null_check;
+
+    tree->root->color = BLACK;
     return tree->root;
 }
 
-TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*))
+TNode* RecursiveInsert(TNode* node, void* key, void* value, int (*cmp)(void*, void*))
 {
     if (node == NULL) {
         node = NodeCreate(key, value);
@@ -138,9 +141,12 @@ TNode* Search(RBTree* tree, void* key)
     while (node != NULL) {
         int comp_value = tree->cmp(key, node->key);
 
-        if (comp_value < 0) node = node->left;
-        else if (comp_value > 0) node = node->right;
-        else break;
+        if (comp_value < 0)
+            node = node->left;
+        else if (comp_value > 0)
+            node = node->right;
+        else
+            break;
     }
     return node;
 }

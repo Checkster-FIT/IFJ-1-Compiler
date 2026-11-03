@@ -19,7 +19,6 @@ typedef enum {
     RED = 1
 } NodeColor;
 
-
 /**
  * @brief Structure representing a node in a RB tree
  *
@@ -114,7 +113,7 @@ TNode* TreeInsert(RBTree* tree, void* key, void* value);
  *
  * @return Pointer to the subtree root
  */
-TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*));
+TNode* RecursiveInsert(TNode* node, void* key, void* value, int (*cmp)(void*, void*));
 
 /**
  * @brief Recursively travel the tree and search for the node with the key.
