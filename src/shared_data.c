@@ -62,7 +62,7 @@ int dynamic_add(DynamicString* dynamic_string, const char* str)
 
     dynamic_string->char_length += str_len;
     dynamic_string->ptr[idx - 1] = '\0';
-    strcpy(&dynamic_string->ptr[idx], str);
+    strncpy(&dynamic_string->ptr[idx], str, str_len);
 
     dynamic_string->count++;
     return idx;

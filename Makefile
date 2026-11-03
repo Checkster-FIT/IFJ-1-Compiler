@@ -130,6 +130,7 @@ $(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJE
 
 # [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
+$(BUILD)/scanner_tests: $(OBJ)/parser.o
 
 TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
 build-test: $(TEST_EXECUTABLES)

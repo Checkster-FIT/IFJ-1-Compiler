@@ -15,7 +15,7 @@ void log_parsed(ParserContext* parser)
     if (parser->accepted.type == NONE)
         return;
 
-    const char* prefix = "  ";
+    const char* prefix;
     const char* color = "\033[1;30m";
 
     // Skipped tokens

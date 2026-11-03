@@ -48,8 +48,10 @@ int init_scanner(ScannerContext* scanner_context)
         return 1;
 
     IndentStack* indent_stack = init_indent_stack();
-    if (!indent_stack)
+    if (!indent_stack) {
+        dispose_scanned_string(scanned_string);
         return 1;
+    }
 
     scanner_context->beginning_of_file = true;
     scanner_context->interpolation = NO_INTERPOLATION;
