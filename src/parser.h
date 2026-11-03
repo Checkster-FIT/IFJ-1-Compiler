@@ -8,6 +8,7 @@
 #ifndef IFJ_1_COMPILER_PARSER_H
 #define IFJ_1_COMPILER_PARSER_H
 
+#include "ast.h"
 #include "scanner.h"
 #include "shared_data.h"
 #include <stdbool.h>
@@ -30,11 +31,12 @@ typedef struct {
     bool debug_prefix_expression;
     int debug_print_remaining;
 
+    AbstractSyntaxTree* ast;
 } ParserContext;
 
 // -----------------------------------------
-void init_parser(ParserContext* parser, SharedData* data);
-int run_parser(SharedData* data);
+void init_parser(ParserContext* parser, AbstractSyntaxTree* ast, SharedData* data);
+int run_parser(AbstractSyntaxTree* ast, SharedData* data);
 int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------

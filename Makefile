@@ -73,10 +73,10 @@ tidy-cpp:
 	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
-	@sh checklist.sh
+	@bash checklist.sh
 
 examples: $(MAIN_EXEC)
-	@sh ./tests/data/compile.sh
+	@bash ./tests/data/compile.sh
 
 # -----------------------------------------------
 .PHONY: test build-test

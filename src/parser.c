@@ -6,6 +6,7 @@
  */
 
 #include "parser.h"
+#include "ast.h"
 #include "debug.h"
 #include "scanner.h"
 #include "shared_data.h"
@@ -16,10 +17,11 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, SharedData* data)
+void init_parser(ParserContext* parser, AbstractSyntaxTree* ast, SharedData* data)
 {
     init_scanner(&parser->scanner_context);
     parser->shared_data = data;
+    parser->ast = ast;
 
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
@@ -51,10 +53,10 @@ int destroy_parser(const ParserContext* parser)
 
 // =======================================================
 
-int run_parser(SharedData* data)
+int run_parser(AbstractSyntaxTree* ast, SharedData* data)
 {
     ParserContext parser;
-    init_parser(&parser, data);
+    init_parser(&parser, ast, data);
 
     const int status = parse_program(&parser);
 
@@ -181,6 +183,8 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
+    char* identifier = get_identifier(parser->shared_data, parser->accepted.attribute_str_idx);
+
     if (!parse_param_group_list(parser))
         return FAILED;
 
@@ -189,6 +193,11 @@ int parse_function(ParserContext* parser)
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
+
+    add_function(parser->ast, identifier);
+
+    if (parser->debug)
+        log_function(parser);
 
     return parse_function_body(parser);
 }

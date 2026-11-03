@@ -73,6 +73,18 @@ void log_remaining(ParserContext* parser)
     fprintf(stderr, "[**] %i more remaining\n", -(parser->debug_print_remaining));
 }
 
+void log_function(const ParserContext* parser)
+{
+    const char* identifier;
+    if (parser->ast == NULL || parser->ast->functions.active == NULL)
+        identifier = "(null)";
+    else
+        identifier = parser->ast->functions.active->identifier;
+
+    static const char* format = "(\033[1;33m+F\033[0m) %-*s%s\n\n";
+    fprintf(stderr, format, ALIGNMENT, "Function", identifier);
+}
+
 // =======================================================
 
 const char* str_token(const Token* token, const TokenStringType mode, const SharedData* data)

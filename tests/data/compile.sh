@@ -23,8 +23,8 @@ for test in "${tests[@]}"; do
     status=$?
 
     if (( status == 0 )); then
-       printf "${GREEN}%-5s${RESET} %s\n" "OK" "$test"
+       printf "${GREEN}%-3s${RESET} %s\n" "OK" "$test"
     else
-       printf "${RED}%-5s${RESET} %s\n" "$status" "$test"
+       printf "${RED}%-3s${RESET} %s\n" "$status" "$test"
     fi
 done

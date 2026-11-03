@@ -13,7 +13,10 @@ int main()
     SharedData data;
     init_shared_data(&data);
 
-    const int exit_code = run_parser(&data);
+    AbstractSyntaxTree ast;
+    init_ast(&ast);
+
+    const int exit_code = run_parser(&ast, &data);
 
     destroy_shared_data(&data);
     return exit_code;
