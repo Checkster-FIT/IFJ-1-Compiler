@@ -21,7 +21,7 @@ typedef enum {
 #define BUFFER_SIZE 32
 
 void log_parsed(ParserContext* parser);
-void log_function(const ParserContext* parser);
+void log_ast_added(const ParserContext* parser);
 void log_remaining(ParserContext* parser);
 
 void print_token(const Token* token, const SharedData* data);

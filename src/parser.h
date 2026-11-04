@@ -31,12 +31,12 @@ typedef struct {
     bool debug_prefix_expression;
     int debug_print_remaining;
 
-    AbstractSyntaxTree* ast;
+    ASTNode* ast;
 } ParserContext;
 
 // -----------------------------------------
-void init_parser(ParserContext* parser, AbstractSyntaxTree* ast, SharedData* data);
-int run_parser(AbstractSyntaxTree* ast, SharedData* data);
+void init_parser(ParserContext* parser, ASTNode* ast, SharedData* data);
+int run_parser(ASTNode* ast, SharedData* data);
 int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------

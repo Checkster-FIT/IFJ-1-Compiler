@@ -17,7 +17,7 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, AbstractSyntaxTree* ast, SharedData* data)
+void init_parser(ParserContext* parser, ASTNode* ast, SharedData* data)
 {
     init_scanner(&parser->scanner_context);
     parser->shared_data = data;
@@ -53,7 +53,7 @@ int destroy_parser(const ParserContext* parser)
 
 // =======================================================
 
-int run_parser(AbstractSyntaxTree* ast, SharedData* data)
+int run_parser(ASTNode* ast, SharedData* data)
 {
     ParserContext parser;
     init_parser(&parser, ast, data);
@@ -194,10 +194,9 @@ int parse_function(ParserContext* parser)
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    add_function(parser->ast, identifier);
-
-    if (parser->debug)
-        log_function(parser);
+    if (add_function(parser->ast, identifier) == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    log_ast_added(parser);
 
     return parse_function_body(parser);
 }
@@ -374,6 +373,8 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
 
+    char* identifier = get_identifier(parser->shared_data, parser->accepted.attribute_str_idx);
+
     if (!parse_type_specifier(parser))
         return FAILED;
 
@@ -382,6 +383,10 @@ int parse_statement_variable_definition(ParserContext* parser)
 
     if (!parse_expression(parser))
         return FAILED;
+
+    if (add_vardef(parser->ast, identifier) == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    log_ast_added(parser);
 
     return CORRECT;
 }

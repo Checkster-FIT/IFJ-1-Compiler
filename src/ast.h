@@ -8,37 +8,78 @@
 #ifndef IFJ_1_COMPILER_AST_H
 #define IFJ_1_COMPILER_AST_H
 
+#include <stdbool.h>
+
+typedef struct ast_node ASTNode;
+
+// ====================================
+
 typedef enum {
-    N_FUNCTION,
-    N_DECLARATION,
-    N_ASSIGNMENT,
-} NodeType;
-
-typedef struct ast_node {
-    NodeType type;
-
-    union {
-        char* identifier;
-        double val_double;
-        int val_int;
-    };
-
-    struct ast_node* next;
-} ASTNode;
+    AST_NONE,
+    AST_PROGRAM,
+    AST_FUNCTION,
+    AST_VAR_DEF,
+    AST_VAR_ASSIGN,
+    AST_VAR,
+} ASTNodeType;
 
 typedef struct {
     ASTNode* first;
+    ASTNode* last;
     ASTNode* active;
-} NodeList;
+} ASTNodeList;
+
+// ====================================
 
 typedef struct {
-    NodeList functions;
-    NodeList extensions;
-} AbstractSyntaxTree;
+    char* identifier;
+    ASTNodeList functions;
+    ASTNode* recent;
+} ASTProgram;
 
-void init_ast(AbstractSyntaxTree* ast);
-void destroy_ast(AbstractSyntaxTree* ast);
+typedef struct {
+    char* identifier;
+    bool is_main;
+    ASTNodeList statements;
+} ASTFunction;
 
-ASTNode* add_function(AbstractSyntaxTree* ast, char* identifier);
+typedef struct {
+    char* identifier;
+    ASTNode* expression;
+} ASTVarDef;
+
+typedef struct {
+    char* identifier;
+} ASTVariable;
+
+typedef struct {
+    ASTNode* target;
+    ASTNode* expression;
+} ASTAssignment;
+
+// ====================================
+
+struct ast_node {
+    ASTNodeType type;
+    ASTNode* next;
+
+    union {
+        ASTProgram program;
+        ASTVarDef vardef;
+        ASTFunction function;
+        ASTVariable variable;
+        ASTAssignment assignment;
+    };
+};
+
+// =====================================
+
+ASTNode create_ast();
+void destroy_ast(ASTNode* ast);
+
+ASTNode* add_function(ASTNode* ast, char* identifier);
+ASTNode* add_vardef(ASTNode* ast, char* identifier);
+
+void ast_list_add(ASTNodeList* list, ASTNode* node);
 
 #endif // IFJ_1_COMPILER_AST_H

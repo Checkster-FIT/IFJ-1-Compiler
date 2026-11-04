@@ -73,16 +73,30 @@ void log_remaining(ParserContext* parser)
     fprintf(stderr, "[**] %i more remaining\n", -(parser->debug_print_remaining));
 }
 
-void log_function(const ParserContext* parser)
+void log_ast_added(const ParserContext* parser)
 {
-    const char* identifier;
-    if (parser->ast == NULL || parser->ast->functions.active == NULL)
-        identifier = "(null)";
-    else
-        identifier = parser->ast->functions.active->identifier;
+    if (parser->debug == false)
+        return;
 
-    static const char* format = "(\033[1;33m+F\033[0m) %-*s%s\n\n";
-    fprintf(stderr, format, ALIGNMENT, "Function", identifier);
+    const ASTNode* node = parser->ast->program.recent;
+    static const char* format = "(\033[1;33m%s\033[0m) %-*s%s\n\n";
+
+    switch (node->type) {
+        case AST_PROGRAM:
+            break;
+        case AST_FUNCTION:
+            fprintf(stderr, format, "F+", ALIGNMENT, "Function", node->function.identifier);
+            break;
+        case AST_VAR_DEF:
+            fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", node->vardef.identifier);
+            break;
+        case AST_VAR:
+            break;
+        case AST_ASSIGNMENT:
+            break;
+        default:
+            break;
+    }
 }
 
 // =======================================================
