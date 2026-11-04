@@ -18,6 +18,7 @@ typedef enum {
     AST_NONE,
     AST_PROGRAM,
     AST_FUNCTION,
+    AST_PARAMETER,
     AST_VAR_DEF,
     AST_VAR_ASSIGN,
     AST_VAR,
@@ -33,13 +34,14 @@ typedef struct {
 
 typedef struct {
     ASTNodeList functions;
-    ASTNode* recent;
+    ASTNode* recent_node;
 } ASTProgram;
 
 typedef struct {
     int identifier_idx;
     bool is_main;
     ASTNodeList statements;
+    ASTNodeList parameters;
 } ASTFunction;
 
 typedef struct {
@@ -50,6 +52,10 @@ typedef struct {
 typedef struct {
     int identifier_idx;
 } ASTVariable;
+
+typedef struct {
+    int identifier_idx;
+} ASTParameter;
 
 typedef struct {
     ASTNode* target;
@@ -66,6 +72,7 @@ struct ast_node {
         ASTProgram program;
         ASTVarDef vardef;
         ASTFunction function;
+        ASTParameter parameter;
         ASTVariable variable;
         ASTAssignment assignment;
     };
@@ -77,6 +84,7 @@ ASTNode create_ast();
 void destroy_ast(ASTNode* ast);
 
 ASTNode* ast_add_function(ASTNode* ast, int identifier_idx, bool main);
+ASTNode* ast_add_parameter(ASTNode* ast, int identifier_idx);
 ASTNode* ast_add_vardef(ASTNode* ast, int identifier_idx);
 
 void ast_list_add(ASTNodeList* list, ASTNode* node);

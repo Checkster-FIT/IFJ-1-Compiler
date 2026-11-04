@@ -94,13 +94,11 @@ void log_ast_added(ParserContext* parser)
 
     parser->debug_ast_active = false;
 
-    const ASTNode* node = parser->ast->program.recent;
+    const ASTNode* node = parser->ast->program.recent_node;
     static const char* format = "[\033[1;32m%s\033[0m] %-*s%s\n\n";
 
     const char* identifier;
     switch (node->type) {
-        case AST_PROGRAM:
-            break;
         case AST_FUNCTION:
             identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
             fprintf(stderr, format, "F+", ALIGNMENT, "Function", identifier);
@@ -109,13 +107,48 @@ void log_ast_added(ParserContext* parser)
             identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
             fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", identifier);
             break;
-        case AST_VAR:
-            break;
-        case AST_VAR_ASSIGN:
+        case AST_PARAMETER:
+            identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
+            fprintf(stderr, format, "P+", ALIGNMENT, "Parameter", identifier);
             break;
         default:
             break;
     }
+}
+
+void print_ast(ASTNode* ast, const SharedData* data)
+{
+    // TODO: Clean up
+
+    ASTNodeList* functions = &ast->program.functions;
+
+    ASTNode* tmp_func = functions->active;
+    functions->active = functions->first;
+
+    fprintf(stderr, "\n");
+    while (functions->active) {
+
+        ASTFunction* function = &functions->active->function;
+        fprintf(stderr, "     %s", get_identifier(data, function->identifier_idx));
+
+        if (function->is_main)
+            fprintf(stderr, " (@main) ");
+
+        fprintf(stderr, "\n");
+
+        ASTNode* tmp_param = function->parameters.active;
+        function->parameters.active = function->parameters.first;
+        while (function->parameters.active) {
+            fprintf(stderr, "         %s\n",
+                get_identifier(data, function->parameters.active->parameter.identifier_idx));
+            function->parameters.active = function->parameters.active->next;
+        }
+        function->parameters.active = tmp_param;
+
+        functions->active = functions->active->next;
+    }
+
+    functions->active = tmp_func;
 }
 
 // =======================================================

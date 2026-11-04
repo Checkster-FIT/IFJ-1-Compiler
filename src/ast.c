@@ -32,28 +32,6 @@ void destroy_ast(ASTNode* ast)
 
 // ========================================
 
-ASTNode* ast_add_vardef(ASTNode* ast, const int identifier_idx)
-{
-    ASTNode* node = malloc(sizeof(ASTNode));
-    ASTFunction* function = &ast->program.functions.last->function;
-
-    if (node == NULL)
-        return NULL;
-
-    *node = (ASTNode) {
-        .type = AST_VAR_DEF,
-        .next = NULL,
-        .vardef = {
-            .identifier_idx = identifier_idx,
-            .expression = NULL,
-        },
-    };
-
-    ast_list_add(&function->statements, node);
-    ast->program.recent = node;
-    return node;
-}
-
 ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool main)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
@@ -72,7 +50,51 @@ ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool mai
     };
 
     ast_list_add(&ast->program.functions, node);
-    ast->program.recent = node;
+    ast->program.recent_node = node;
+    return node;
+}
+
+ASTNode* ast_add_parameter(ASTNode* ast, const int identifier_idx)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+    ASTFunction* function = &ast->program.functions.last->function;
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_PARAMETER,
+        .next = NULL,
+        .parameter = {
+            .identifier_idx = identifier_idx,
+        },
+    };
+
+    ast_list_add(&function->parameters, node);
+    ast->program.recent_node = node;
+    return node;
+}
+
+
+ASTNode* ast_add_vardef(ASTNode* ast, const int identifier_idx)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+    ASTFunction* function = &ast->program.functions.last->function;
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_VAR_DEF,
+        .next = NULL,
+        .vardef = {
+            .identifier_idx = identifier_idx,
+            .expression = NULL,
+        },
+    };
+
+    ast_list_add(&function->statements, node);
+    ast->program.recent_node = node;
     return node;
 }
 

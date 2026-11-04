@@ -121,12 +121,9 @@ int parse_body(ParserContext* parser)
         return parse_extension(parser) && parse_body(parser);
 
     // <body> -> <function> <body>
-    if (check_next_keyword(DEF_KW, parser))
-        return parse_function(parser, false) && parse_body(parser);
-
     // <body> -> @main <function> <body>
-    if (accept_next(MAIN_IDENTIFIER, parser) && check_next_keyword(DEF_KW, parser))
-        return parse_function(parser, true) && parse_body(parser);
+    if (check_next_keyword(DEF_KW, parser) || check_next(MAIN_IDENTIFIER, parser))
+        return parse_function(parser) && parse_body(parser);
 
     const char* invalid = str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data);
     return failed(parser, PARSER_GLOBAL_SCOPE_INVALID, invalid);
@@ -167,17 +164,19 @@ int parse_extension_body(ParserContext* parser)
 
     // <extension_body> -> <function> + <extension_body>
     if (check_next_keyword(DEF_KW, parser))
-        return parse_function(parser, false) && parse_extension_body(parser);
+        return parse_function(parser) && parse_extension_body(parser);
 
     return failed(parser, PARSER_EXT_BLOCK_INVALID);
 }
 
 // -------------
 
-int parse_function(ParserContext* parser, bool main)
+int parse_function(ParserContext* parser)
 {
     // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
     log_ast_start(parser);
+
+    const bool main = accept_next(MAIN_IDENTIFIER, parser);
 
     if (!accept_next_keyword(DEF_KW, parser))
         return FAILED;
@@ -185,7 +184,10 @@ int parse_function(ParserContext* parser, bool main)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    const int identifier_idx = parser->accepted.attribute_str_idx;
+    // AST - Function
+    if (ast_add_function(parser->ast, parser->accepted.attribute_str_idx, main) == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    log_ast_added(parser);
 
     if (!parse_param_group_list(parser))
         return FAILED;
@@ -196,11 +198,6 @@ int parse_function(ParserContext* parser, bool main)
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    // AST - Function
-    if (ast_add_function(parser->ast, identifier_idx, main) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
-
-    log_ast_added(parser);
     return parse_function_body(parser);
 }
 
@@ -272,15 +269,23 @@ int parse_param_list(ParserContext* parser)
 int parse_param(ParserContext* parser)
 {
     // <param> -> [IDENTIFIER] : <type>
+    log_ast_start(parser);
 
     if (!accept_next(IDENTIFIER, parser))
         return FAILED;
+
+    const int identifier_idx = parser->accepted.attribute_str_idx;
 
     if (!accept_next(DECLARATION_SIGN, parser))
         return failed(parser, PARSER_MISSING_PARAM_TYPE);
 
     if (!parse_type(parser))
         return FAILED;
+
+    // AST - Parameter
+    if (ast_add_parameter(parser->ast, identifier_idx) == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    log_ast_added(parser);
 
     return CORRECT;
 }

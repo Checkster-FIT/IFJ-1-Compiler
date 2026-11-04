@@ -58,7 +58,7 @@ int parse_body(ParserContext* parser);
 
 int parse_extension(ParserContext* parser);
 int parse_extension_body(ParserContext* parser);
-int parse_function(ParserContext* parser, bool main);
+int parse_function(ParserContext* parser);
 int parse_function_body(ParserContext* parser);
 
 int parse_statement_list(ParserContext* parser);
