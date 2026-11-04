@@ -32,24 +32,23 @@ typedef struct {
 // ====================================
 
 typedef struct {
-    char* identifier;
     ASTNodeList functions;
     ASTNode* recent;
 } ASTProgram;
 
 typedef struct {
-    char* identifier;
+    int identifier_idx;
     bool is_main;
     ASTNodeList statements;
 } ASTFunction;
 
 typedef struct {
-    char* identifier;
+    int identifier_idx;
     ASTNode* expression;
 } ASTVarDef;
 
 typedef struct {
-    char* identifier;
+    int identifier_idx;
 } ASTVariable;
 
 typedef struct {
@@ -77,8 +76,8 @@ struct ast_node {
 ASTNode create_ast();
 void destroy_ast(ASTNode* ast);
 
-ASTNode* add_function(ASTNode* ast, char* identifier);
-ASTNode* add_vardef(ASTNode* ast, char* identifier);
+ASTNode* ast_add_function(ASTNode* ast, int identifier_idx, bool main);
+ASTNode* ast_add_vardef(ASTNode* ast, int identifier_idx);
 
 void ast_list_add(ASTNodeList* list, ASTNode* node);
 

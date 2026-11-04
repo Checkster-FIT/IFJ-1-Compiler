@@ -22,6 +22,11 @@ void log_parsed(ParserContext* parser)
     if (parser->debug_prefix_skipped) {
         prefix = "--";
     }
+    // Accepted tokens (With AST related data)
+    else if (parser->debug_ast_active) {
+        prefix = "OK";
+        color = "\033[1;32m";
+    }
     // Accepted tokens (Expressions)
     else if (parser->debug_prefix_expression) {
         prefix = "OK";
@@ -30,7 +35,7 @@ void log_parsed(ParserContext* parser)
     // Accepted tokens (Recursive descent)
     else if (parser->exit_code == 0) {
         prefix = "OK";
-        color = "\033[1;32m";
+        color = "\033[1;33m";
     }
     // Invalid token
     else if (parser->debug_prefix_failed) {
@@ -47,7 +52,7 @@ void log_parsed(ParserContext* parser)
         return;
     }
 
-    fprintf(stderr, "[%s%s\033[0m] ", color, prefix);
+    fprintf(stderr, " %s%s\033[0m  ", color, prefix);
     print_token(&parser->accepted, parser->shared_data);
 
     parser->debug_prefix_skipped = false;
@@ -73,26 +78,40 @@ void log_remaining(ParserContext* parser)
     fprintf(stderr, "[**] %i more remaining\n", -(parser->debug_print_remaining));
 }
 
-void log_ast_added(const ParserContext* parser)
+void log_ast_start(ParserContext* parser)
+{
+    if (!parser->debug)
+        return;
+
+    fprintf(stderr, "\n");
+    parser->debug_ast_active = true;
+}
+
+void log_ast_added(ParserContext* parser)
 {
     if (parser->debug == false)
         return;
 
-    const ASTNode* node = parser->ast->program.recent;
-    static const char* format = "(\033[1;33m%s\033[0m) %-*s%s\n\n";
+    parser->debug_ast_active = false;
 
+    const ASTNode* node = parser->ast->program.recent;
+    static const char* format = "[\033[1;32m%s\033[0m] %-*s%s\n\n";
+
+    const char* identifier;
     switch (node->type) {
         case AST_PROGRAM:
             break;
         case AST_FUNCTION:
-            fprintf(stderr, format, "F+", ALIGNMENT, "Function", node->function.identifier);
+            identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
+            fprintf(stderr, format, "F+", ALIGNMENT, "Function", identifier);
             break;
         case AST_VAR_DEF:
-            fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", node->vardef.identifier);
+            identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
+            fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", identifier);
             break;
         case AST_VAR:
             break;
-        case AST_ASSIGNMENT:
+        case AST_VAR_ASSIGN:
             break;
         default:
             break;

@@ -35,6 +35,7 @@ void init_parser(ParserContext* parser, ASTNode* ast, SharedData* data)
     parser->debug_prefix_failed = true;
     parser->debug_prefix_skipped = false;
     parser->debug_prefix_expression = false;
+    parser->debug_ast_active = false;
 
     // How many tokens after failure should be printed
     parser->debug_print_remaining = 7;
@@ -121,11 +122,11 @@ int parse_body(ParserContext* parser)
 
     // <body> -> <function> <body>
     if (check_next_keyword(DEF_KW, parser))
-        return parse_function(parser) && parse_body(parser);
+        return parse_function(parser, false) && parse_body(parser);
 
     // <body> -> @main <function> <body>
     if (accept_next(MAIN_IDENTIFIER, parser) && check_next_keyword(DEF_KW, parser))
-        return parse_function(parser) && parse_body(parser);
+        return parse_function(parser, true) && parse_body(parser);
 
     const char* invalid = str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data);
     return failed(parser, PARSER_GLOBAL_SCOPE_INVALID, invalid);
@@ -166,16 +167,17 @@ int parse_extension_body(ParserContext* parser)
 
     // <extension_body> -> <function> + <extension_body>
     if (check_next_keyword(DEF_KW, parser))
-        return parse_function(parser) && parse_extension_body(parser);
+        return parse_function(parser, false) && parse_extension_body(parser);
 
     return failed(parser, PARSER_EXT_BLOCK_INVALID);
 }
 
 // -------------
 
-int parse_function(ParserContext* parser)
+int parse_function(ParserContext* parser, bool main)
 {
     // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
+    log_ast_start(parser);
 
     if (!accept_next_keyword(DEF_KW, parser))
         return FAILED;
@@ -183,7 +185,7 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    char* identifier = get_identifier(parser->shared_data, parser->accepted.attribute_str_idx);
+    const int identifier_idx = parser->accepted.attribute_str_idx;
 
     if (!parse_param_group_list(parser))
         return FAILED;
@@ -194,10 +196,11 @@ int parse_function(ParserContext* parser)
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    if (add_function(parser->ast, identifier) == NULL)
+    // AST - Function
+    if (ast_add_function(parser->ast, identifier_idx, main) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
-    log_ast_added(parser);
 
+    log_ast_added(parser);
     return parse_function_body(parser);
 }
 
@@ -366,6 +369,7 @@ int parse_statement_variable_definition(ParserContext* parser)
 {
     // <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
     // <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
+    log_ast_start(parser);
 
     if (!accept_next_keyword(VAR_KW, parser) && !accept_next_keyword(VAL_KW, parser))
         return FAILED;
@@ -373,7 +377,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
 
-    char* identifier = get_identifier(parser->shared_data, parser->accepted.attribute_str_idx);
+    const int identifier_idx = parser->accepted.attribute_str_idx;
 
     if (!parse_type_specifier(parser))
         return FAILED;
@@ -384,7 +388,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!parse_expression(parser))
         return FAILED;
 
-    if (add_vardef(parser->ast, identifier) == NULL)
+    if (ast_add_vardef(parser->ast, identifier_idx) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_added(parser);
 

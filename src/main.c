@@ -5,6 +5,7 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
+#include "generator.h"
 #include "parser.h"
 #include "shared_data.h"
 
@@ -15,6 +16,8 @@ int main()
 
     ASTNode ast = create_ast();
     const int exit_code = run_parser(&ast, &data);
+
+    run_generator(&ast, &data);
 
     destroy_shared_data(&data);
     return exit_code;

@@ -32,7 +32,7 @@ void destroy_ast(ASTNode* ast)
 
 // ========================================
 
-ASTNode* add_vardef(ASTNode* ast, char* identifier)
+ASTNode* ast_add_vardef(ASTNode* ast, const int identifier_idx)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
     ASTFunction* function = &ast->program.functions.last->function;
@@ -44,7 +44,7 @@ ASTNode* add_vardef(ASTNode* ast, char* identifier)
         .type = AST_VAR_DEF,
         .next = NULL,
         .vardef = {
-            .identifier = identifier,
+            .identifier_idx = identifier_idx,
             .expression = NULL,
         },
     };
@@ -54,7 +54,7 @@ ASTNode* add_vardef(ASTNode* ast, char* identifier)
     return node;
 }
 
-ASTNode* add_function(ASTNode* ast, char* identifier)
+ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool main)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
 
@@ -65,9 +65,9 @@ ASTNode* add_function(ASTNode* ast, char* identifier)
         .type = AST_FUNCTION,
         .next = NULL,
         .function = {
-            .identifier = identifier,
+            .identifier_idx = identifier_idx,
             .statements = { },
-            .is_main = false,
+            .is_main = main,
         },
     };
 
