@@ -35,6 +35,7 @@ typedef struct {
 
 typedef struct {
     ASTNodeList functions;
+    Symtable* global_symtable;
     ASTNode* recent_node;
 } ASTProgram;
 
@@ -82,7 +83,8 @@ struct ast_node {
 // =====================================
 
 ASTNode* new_ast();
-void destroy_ast(ASTNode* ast);
+void free_ast_nodes(ASTNode* node);
+void free_node_list(ASTNodeList* list);
 
 ASTNode* ast_add_function(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);

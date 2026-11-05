@@ -11,6 +11,6 @@
 #include "ast.h"
 #include "symtable.h"
 
-int run_generator(ASTNode* ast, const Symtable* symtable);
+int run_generator(ASTNode* ast);
 
 #endif // IFJ_1_COMPILER_GENERATOR_H

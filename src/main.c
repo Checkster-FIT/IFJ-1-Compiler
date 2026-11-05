@@ -13,22 +13,21 @@
 int main()
 {
     AllocatedStrings* strings = new_strings();
-    if (strings == NULL)
+    if (strings == NULL) {
         return EXIT_CODE_INTERNAL_ERROR;
-
-    Symtable* symtable = new_symtable();
-    if (symtable == NULL)
-        // TODO: Free identifiers
-        return EXIT_CODE_INTERNAL_ERROR;
+    }
 
     ASTNode* ast = new_ast();
-    if (ast == NULL)
-        // TODO: Free identifiers, symtable
+    if (ast == NULL) {
+        free_strings(strings);
         return EXIT_CODE_INTERNAL_ERROR;
+    }
 
-    const int exit_code_parser = run_parser(ast, symtable, strings);
-    const int exit_code_generator = run_generator(ast, symtable);
+    const int exit_code_parser = run_parser(ast, strings);
+    run_generator(ast);
 
-    (void)exit_code_generator;
+    free_strings(strings);
+    free_ast_nodes(ast);
+
     return exit_code_parser;
 }

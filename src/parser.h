@@ -41,8 +41,8 @@ typedef struct {
 } ParserContext;
 
 // -----------------------------------------
-void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, AllocatedStrings* strings);
-int run_parser(ASTNode* ast, Symtable* symtable, AllocatedStrings* strings);
+void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings);
+int run_parser(ASTNode* ast, AllocatedStrings* strings);
 int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------

@@ -20,6 +20,23 @@ Symtable* new_symtable()
     return ptr;
 }
 
+void free_symtable(const Symtable* symtable)
+{
+    free_allocated_entries(symtable->root);
+    free((RBTree*)symtable);
+}
+
+void free_allocated_entries(const TNode* node)
+{
+    if (node == NULL)
+        return;
+
+    free_allocated_entries(node->left);
+    free_allocated_entries(node->right);
+    free(node->value);
+    free((void*)node);
+}
+
 SymtableEntry* symtable_add(Symtable* symtable, const SymtableEntry function)
 {
     SymtableEntry* data = malloc(sizeof(SymtableEntry));

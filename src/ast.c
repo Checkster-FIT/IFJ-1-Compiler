@@ -6,7 +6,9 @@
  */
 
 #include "ast.h"
+#include "symtable.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 ASTNode* new_ast()
@@ -15,6 +17,13 @@ ASTNode* new_ast()
 
     if (node == NULL)
         return NULL;
+
+    Symtable* symtable = new_symtable();
+
+    if (symtable == NULL) {
+        free(node);
+        return NULL;
+    }
 
     *node = (ASTNode) {
         .type = AST_PROGRAM,
@@ -25,16 +34,55 @@ ASTNode* new_ast()
                 .active = NULL,
                 .last = NULL,
             },
+            .recent_node = NULL,
+            .global_symtable = symtable,
         },
     };
 
     return node;
 }
 
-void destroy_ast(ASTNode* ast)
+void free_ast_nodes(ASTNode* node)
 {
-    // TODO: Add AST destructor
-    ast->type = AST_NONE;
+    if (node == NULL)
+        return;
+
+    switch (node->type) {
+        case AST_NONE:
+            break;
+        case AST_PROGRAM:
+            free_node_list(&node->program.functions);
+            free_symtable(node->program.global_symtable);
+            break;
+        case AST_FUNCTION:
+            free_node_list(&node->function.statements);
+            free_node_list(&node->function.parameters);
+            free_symtable(node->function.symtable);
+            break;
+        case AST_PARAMETER:
+            break;
+        case AST_VAR_DEF:
+            free_ast_nodes(node->vardef.expression);
+            break;
+        case AST_VAR_ASSIGN:
+            free_ast_nodes(node->assignment.target);
+            free_ast_nodes(node->assignment.expression);
+            break;
+        case AST_VAR:
+            break;
+    }
+
+    //fprintf(stderr,"Freed: %i\n", node->type);
+    free(node);
+}
+
+void free_node_list(ASTNodeList* list)
+{
+    while (list->active) {
+        ASTNode* next = list->active->next;
+        free_ast_nodes(list->active);
+        list->active = next;
+    }
 }
 
 // ========================================

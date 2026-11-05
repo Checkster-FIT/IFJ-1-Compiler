@@ -18,14 +18,14 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, AllocatedStrings* strings)
+void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
 {
     init_scanner(&parser->scanner, strings);
 
     // External structures
     parser->ast = ast;
-    parser->global_symtable = symtable;
-    parser->current_symtable = symtable;
+    parser->global_symtable = ast->program.global_symtable;
+    parser->current_symtable = ast->program.global_symtable; // TODO: Symtable stack
 
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
@@ -60,10 +60,10 @@ int destroy_parser(const ParserContext* parser)
 
 // =======================================================
 
-int run_parser(ASTNode* ast, Symtable* symtable, AllocatedStrings* strings)
+int run_parser(ASTNode* ast, AllocatedStrings* strings)
 {
     ParserContext parser;
-    init_parser(&parser, ast, symtable, strings);
+    init_parser(&parser, ast, strings);
 
     const int status = parse_program(&parser);
 

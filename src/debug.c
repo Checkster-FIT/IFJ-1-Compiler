@@ -111,7 +111,7 @@ void log_ast_added(ParserContext* parser)
     }
 }
 
-void print_ast(ASTNode* ast, const Symtable* global_symtable)
+void print_ast(ASTNode* ast)
 {
     // TODO: Clean up
 
@@ -122,7 +122,7 @@ void print_ast(ASTNode* ast, const Symtable* global_symtable)
 
     fprintf(stderr, "\n");
     while (functions->active) {
-        print_ast_function(functions->active, global_symtable);
+        print_ast_function(functions->active, ast->program.global_symtable);
         functions->active = functions->active->next;
     }
 

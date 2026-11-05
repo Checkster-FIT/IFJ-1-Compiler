@@ -25,7 +25,7 @@ void log_remaining(ParserContext* parser);
 void log_ast_start(ParserContext* parser);
 void log_ast_added(ParserContext* parser);
 
-void print_ast(ASTNode* ast, const Symtable* global_symtable);
+void print_ast(ASTNode* ast);
 void print_ast_function(ASTNode* function_node, const Symtable* global_symtable);
 void print_ast_parameter(const ASTNode* parameter_node, const Symtable* local_symtable);
 

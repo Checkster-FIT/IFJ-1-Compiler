@@ -21,6 +21,9 @@ typedef struct {
 typedef RBTree Symtable;
 
 Symtable* new_symtable();
+void free_symtable(const Symtable* symtable);
+void free_allocated_entries(const TNode* node);
+
 SymtableEntry* symtable_add(Symtable* symtable, SymtableEntry function);
 SymtableEntry* symtable_add_var(Symtable* symtable, SymtableEntry var);
 

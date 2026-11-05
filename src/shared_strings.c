@@ -27,20 +27,37 @@ AllocatedStrings* new_strings()
 
 void free_strings(AllocatedStrings* strings)
 {
-    (void)strings;
-    return;
+    free_allocated_strings(strings->tree->root);
+    free(strings->tree);
+    free(strings);
+}
+
+void free_allocated_strings(const TNode* node)
+{
+    if (node == NULL)
+        return;
+
+    free_allocated_strings(node->left);
+    free_allocated_strings(node->right);
+    free(node->value);
+    free((void*)node);
 }
 
 char* add_string(const AllocatedStrings* strings, const char* str)
 {
     const size_t length = strlen(str) + 1;
 
+    const TNode* node = search(strings->tree, str);
+
+    if (node != NULL)
+        return node->value; // String already exists
+
     char* new = malloc(length);
     if (new == NULL)
         return NULL;
 
     strncpy(new, str, length);
-    const TNode* node = tree_insert(strings->tree, new, new);
+    node = tree_insert(strings->tree, new, new);
 
     if (node == NULL) {
         free(new);
