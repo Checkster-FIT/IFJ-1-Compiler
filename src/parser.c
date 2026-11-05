@@ -9,8 +9,8 @@
 #include "ast.h"
 #include "debug.h"
 #include "scanner.h"
-#include "symtable.h"
 #include "shared_strings.h"
+#include "symtable.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -24,7 +24,8 @@ void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, Alloca
 
     // External structures
     parser->ast = ast;
-    parser->symtable = symtable;
+    parser->global_symtable = symtable;
+    parser->current_symtable = symtable;
 
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
@@ -181,7 +182,9 @@ int parse_function(ParserContext* parser)
     // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
     log_ast_start(parser);
 
-    const bool main = accept_next(MAIN_IDENTIFIER, parser);
+    SymtableEntry function = { };
+    function.defined = true;
+    function.main = accept_next(MAIN_IDENTIFIER, parser);
 
     if (!accept_next_keyword(DEF_KW, parser))
         return FAILED;
@@ -189,17 +192,16 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    // Symtable - Function
-    SymtableEntry function = {
-        .defined = true,
-        .identifier = parser->accepted.attribute_string,
-        .type = '?'
-    };
+    function.identifier = parser->accepted.attribute_string;
 
-    // AST - Function
-    if (ast_add_function(parser->ast, parser->accepted.attribute_string, main) == NULL)
+    // AST - New function
+    if (ast_add_function(parser->ast, function.identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
-    log_ast_added(parser);
+
+    // - Create a new local symtable
+    parser->current_symtable = create_local_symtable(parser->ast);
+    if (parser->current_symtable == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
 
     if (!parse_param_group_list(parser))
         return FAILED;
@@ -207,12 +209,13 @@ int parse_function(ParserContext* parser)
     if (!parse_type_specifier(parser))
         return FAILED;
 
-    function.type = parser->last_type;
+    function.data_type = parser->last_type;
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    symtable_add(parser->symtable, function);
+    symtable_add(parser->global_symtable, function);
+    log_ast_added(parser);
     return parse_function_body(parser);
 }
 
@@ -302,10 +305,10 @@ int parse_param(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return FAILED;
 
-    SymtableEntry sym_entry = {
+    SymtableEntry parameter = {
         .defined = true,
         .identifier = parser->accepted.attribute_string,
-        .type = '?'
+        .data_type = '?'
     };
 
     if (!accept_next(DECLARATION_SIGN, parser))
@@ -314,15 +317,15 @@ int parse_param(ParserContext* parser)
     if (!parse_type(parser))
         return FAILED;
 
-    sym_entry.type = parser->last_type;
+    parameter.data_type = parser->last_type;
 
     // AST - Parameter
-    if (ast_add_parameter(parser->ast, sym_entry.identifier) == NULL)
+    if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_added(parser);
 
     // Symtable - Parameter
-    symtable_add(parser->symtable, sym_entry);
+    symtable_add(parser->current_symtable, parameter);
     return CORRECT;
 }
 

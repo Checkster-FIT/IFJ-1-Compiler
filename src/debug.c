@@ -111,7 +111,7 @@ void log_ast_added(ParserContext* parser)
     }
 }
 
-void print_ast(ASTNode* ast, const Symtable* symtable)
+void print_ast(ASTNode* ast, const Symtable* global_symtable)
 {
     // TODO: Clean up
 
@@ -122,35 +122,45 @@ void print_ast(ASTNode* ast, const Symtable* symtable)
 
     fprintf(stderr, "\n");
     while (functions->active) {
-
-        ASTFunction* function = &functions->active->function;
-        const SymtableEntry* symtable_entry = search(symtable, function->identifier)->value;
-
-        fprintf(stderr, "     %s", function->identifier);
-        fprintf(stderr, " : %c", symtable_entry->type);
-
-        if (function->is_main)
-            fprintf(stderr, " : main");
-
-        fprintf(stderr, "\n");
-
-        ASTNode* tmp_param = function->parameters.active;
-        function->parameters.active = function->parameters.first;
-        while (function->parameters.active) {
-            fprintf(stderr, "         %s", function->parameters.active->parameter.identifier);
-
-            const SymtableEntry* symtable_entry_param = (SymtableEntry*)search(symtable, function->parameters.active->parameter.identifier)->value;
-            fprintf(stderr, " : %c", symtable_entry_param->type);
-
-            function->parameters.active = function->parameters.active->next;
-            fprintf(stderr, "\n");
-        }
-        function->parameters.active = tmp_param;
-
+        print_ast_function(functions->active, global_symtable);
         functions->active = functions->active->next;
     }
 
     functions->active = tmp_func;
+}
+
+void print_ast_function(ASTNode* function_node, const Symtable* global_symtable)
+{
+    ASTFunction* function = &function_node->function;
+    const SymtableEntry* entry = search(global_symtable, function->identifier)->value;
+
+    fprintf(stderr, "     ");
+    if (entry->main)
+        fprintf(stderr, "@main ");
+
+    fprintf(stderr, "%s( ", function->identifier);
+
+    ASTNode* tmp_param = function->parameters.active;
+    function->parameters.active = function->parameters.first;
+
+    while (function->parameters.active) {
+        print_ast_parameter(function->parameters.active, function->symtable);
+        function->parameters.active = function->parameters.active->next;
+    }
+
+    function->parameters.active = tmp_param;
+
+    fprintf(stderr, ") : %c", entry->data_type);
+
+    fprintf(stderr, "\n");
+}
+
+void print_ast_parameter(const ASTNode* parameter_node, const Symtable* local_symtable)
+{
+    fprintf(stderr, "%s", parameter_node->parameter.identifier);
+
+    const SymtableEntry* symtable_entry_param = (SymtableEntry*)search(local_symtable, parameter_node->parameter.identifier)->value;
+    fprintf(stderr, ":%c ", symtable_entry_param->data_type);
 }
 
 // =======================================================

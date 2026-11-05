@@ -10,8 +10,8 @@
 
 #include "ast.h"
 #include "scanner.h"
-#include "symtable.h"
 #include "shared_strings.h"
+#include "symtable.h"
 #include <stdbool.h>
 
 #define CORRECT true
@@ -25,7 +25,8 @@ typedef struct {
 
     ScannerContext scanner;
 
-    Symtable* symtable;
+    Symtable* global_symtable; // TODO: Move to program node
+    Symtable* current_symtable; // TODO: Symtable stack
     char last_type;
 
     // Debug information

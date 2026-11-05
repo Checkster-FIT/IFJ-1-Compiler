@@ -8,6 +8,7 @@
 #ifndef IFJ_1_COMPILER_AST_H
 #define IFJ_1_COMPILER_AST_H
 
+#include "symtable.h"
 #include <stdbool.h>
 
 typedef struct ast_node ASTNode;
@@ -39,9 +40,9 @@ typedef struct {
 
 typedef struct {
     const char* identifier;
-    bool is_main;
     ASTNodeList statements;
     ASTNodeList parameters;
+    Symtable* symtable;
 } ASTFunction;
 
 typedef struct {
@@ -83,9 +84,11 @@ struct ast_node {
 ASTNode* new_ast();
 void destroy_ast(ASTNode* ast);
 
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier, bool main);
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
+
+Symtable* create_local_symtable(ASTNode* ast);
 
 void ast_list_add(ASTNodeList* list, ASTNode* node);
 

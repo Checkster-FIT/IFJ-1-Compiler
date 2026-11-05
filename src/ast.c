@@ -39,7 +39,7 @@ void destroy_ast(ASTNode* ast)
 
 // ========================================
 
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier, const bool main)
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
 
@@ -52,7 +52,6 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, const bool main)
         .function = {
             .identifier = identifier,
             .statements = { },
-            .is_main = main,
         },
     };
 
@@ -102,6 +101,12 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
     ast_list_add(&function->statements, node);
     ast->program.recent_node = node;
     return node;
+}
+
+Symtable* create_local_symtable(ASTNode* ast)
+{
+    ast->program.functions.last->function.symtable = new_symtable();
+    return ast->program.functions.last->function.symtable;
 }
 
 // ========================================

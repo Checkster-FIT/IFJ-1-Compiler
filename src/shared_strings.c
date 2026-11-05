@@ -60,5 +60,3 @@ char* add_string(const AllocatedStrings* strings, const char* str)
 //     strncpy(object->ptr, str, length);
 //     return object;
 // }
-
-

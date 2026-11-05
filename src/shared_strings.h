@@ -13,11 +13,9 @@ typedef struct {
     RBTree* tree;
 } AllocatedStrings;
 
-
 AllocatedStrings* new_strings();
 void free_strings(AllocatedStrings* strings);
 
 char* add_string(const AllocatedStrings* strings, const char* str);
-
 
 #endif // IFJ_1_COMPILER_STRINGS_H
