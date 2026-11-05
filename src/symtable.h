@@ -12,14 +12,15 @@
 #include <stdbool.h>
 
 typedef struct {
-    char* parameters;
     bool defined;
     int index;
-} SymtableFunction;
+    char type;
+} SymtableEntry;
 
 typedef RBTree Symtable;
 
 Symtable* create_symtable();
-SymtableFunction* symtable_add_function(Symtable* symtable, SymtableFunction function);
+SymtableEntry* symtable_add(Symtable* symtable, SymtableEntry function);
+SymtableEntry* symtable_add_var(Symtable* symtable, SymtableEntry var);
 
 #endif // IFJ_1_COMPILER_SYMTABLE_H

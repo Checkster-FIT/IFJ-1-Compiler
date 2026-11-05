@@ -34,6 +34,8 @@ void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, Shared
     parser->exit_code = 0;
     parser->token_error = 0;
 
+    parser->last_type = '?';
+
     parser->debug = true; // TODO: Disable debug
     parser->debug_prefix_failed = true;
     parser->debug_prefix_skipped = false;
@@ -188,10 +190,10 @@ int parse_function(ParserContext* parser)
         return failed(parser, PARSER_INVALID_FUNCTION);
 
     // Symtable - Function
-    const SymtableFunction function = {
+    SymtableEntry function = {
         .defined = true,
         .index = parser->accepted.attribute_str_idx,
-        .parameters = ""
+        .type = '?'
     };
 
     // AST - Function
@@ -205,10 +207,12 @@ int parse_function(ParserContext* parser)
     if (!parse_type_specifier(parser))
         return FAILED;
 
+    function.type = parser->last_type;
+
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    symtable_add_function(parser->symtable, function);
+    symtable_add(parser->symtable, function);
     return parse_function_body(parser);
 }
 
@@ -225,13 +229,26 @@ int parse_type_specifier(ParserContext* parser)
 int parse_type(ParserContext* parser)
 {
     // <type> := String, Int, Double, Unit, Boolean
-    if (
-        accept_next_keyword(STRING_KW, parser)
-        || accept_next_keyword(INT_KW, parser)
-        || accept_next_keyword(DOUBLE_KW, parser)
-        || accept_next_keyword(UNIT_KW, parser)
-        || accept_next_keyword(BOOLEAN_KW, parser))
+    if (accept_next_keyword(STRING_KW, parser)) {
+        parser->last_type = 's';
         return CORRECT;
+    }
+    if (accept_next_keyword(INT_KW, parser)) {
+        parser->last_type = 'i';
+        return CORRECT;
+    }
+    if (accept_next_keyword(DOUBLE_KW, parser)) {
+        parser->last_type = 'd';
+        return CORRECT;
+    }
+    if (accept_next_keyword(UNIT_KW, parser)) {
+        parser->last_type = 'u';
+        return CORRECT;
+    }
+    if (accept_next_keyword(BOOLEAN_KW, parser)) {
+        parser->last_type = 'b';
+        return CORRECT;
+    }
 
     const char* invalid = str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data);
     return failed(parser, PARSER_INCORRECT_TYPE, invalid);
@@ -285,7 +302,11 @@ int parse_param(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return FAILED;
 
-    const int identifier_idx = parser->accepted.attribute_str_idx;
+    SymtableEntry sym_entry = {
+        .defined = true,
+        .index = parser->accepted.attribute_str_idx,
+        .type = '?'
+    };
 
     if (!accept_next(DECLARATION_SIGN, parser))
         return failed(parser, PARSER_MISSING_PARAM_TYPE);
@@ -293,11 +314,15 @@ int parse_param(ParserContext* parser)
     if (!parse_type(parser))
         return FAILED;
 
+    sym_entry.type = parser ->last_type;
+
     // AST - Parameter
-    if (ast_add_parameter(parser->ast, identifier_idx) == NULL)
+    if (ast_add_parameter(parser->ast, sym_entry.index) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_added(parser);
 
+    // Symtable - Parameter
+    symtable_add(parser->symtable, sym_entry);
     return CORRECT;
 }
 
@@ -648,7 +673,7 @@ int get_line(const ParserContext* parser)
 
 int failed(ParserContext* parser, const int err, ...)
 {
-    va_list args = { };
+    va_list args = {};
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);
