@@ -16,9 +16,8 @@ extern "C" {
 class scanner : public ::testing::Test {
 protected:
     FILE* tmp_input = nullptr; // Temporary input file for stdin emulation
-    ScannerContext scanner_context = {};
-    SharedData data = {};
-
+    ScannerContext scanner_context = { };
+    AllocatedStrings* strings = { };
     /**
      * @brief Writes a given string to the scanner input stream
      * @param string the input string to be written at the start of the stream
@@ -30,8 +29,11 @@ protected:
         ASSERT_GE(fputs(string, tmp_input), 0);
         rewind(tmp_input);
 
-        init_scanner(&scanner_context);
-        init_shared_data(&data);
+        strings = new_strings();
+        if (strings == nullptr)
+            return;
+
+        init_scanner(&scanner_context, strings);
     }
 
     /**
@@ -47,14 +49,14 @@ protected:
         scanner_input(string);
         for (const auto desired_token : expected_tokens) {
 
-            const Token token = get_token(&scanner_context, &data, tmp_input);
+            const Token token = get_token(&scanner_context, tmp_input);
             // printf("Token type: %d\n", token.type);
 
             EXPECT_EQ(token.type, desired_token.type);
 
             switch (token.type) {
                 case IDENTIFIER:
-                    EXPECT_STREQ(get_identifier(&data, token.attribute_str_idx), desired_token.attribute_str_ptr);
+                    EXPECT_STREQ(token.attribute_string, desired_token.attribute_string);
                     break;
                 case INTEGER:
                     EXPECT_EQ(token.attribute_int, desired_token.attribute_int);
@@ -75,7 +77,6 @@ protected:
         }
 
         destroy_scanner(&scanner_context);
-        destroy_shared_data(&data);
     }
 
     // Token constructors for readability
@@ -85,7 +86,7 @@ protected:
     }
     static Token token(const type_enum type, const char* value)
     {
-        return { .type = type, .attribute_str_ptr = value };
+        return { .type = type, .attribute_string = value };
     }
     static Token token(const type_enum type, const int value)
     {

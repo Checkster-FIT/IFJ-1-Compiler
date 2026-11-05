@@ -9,9 +9,14 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-ASTNode create_ast()
+ASTNode* new_ast()
 {
-    return (ASTNode) {
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
         .type = AST_PROGRAM,
         .next = NULL,
         .program = {
@@ -22,6 +27,8 @@ ASTNode create_ast()
             },
         },
     };
+
+    return node;
 }
 
 void destroy_ast(ASTNode* ast)
@@ -32,7 +39,7 @@ void destroy_ast(ASTNode* ast)
 
 // ========================================
 
-ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool main)
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, const bool main)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
 
@@ -43,8 +50,8 @@ ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool mai
         .type = AST_FUNCTION,
         .next = NULL,
         .function = {
-            .identifier_idx = identifier_idx,
-            .statements = {},
+            .identifier = identifier,
+            .statements = { },
             .is_main = main,
         },
     };
@@ -54,7 +61,7 @@ ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool mai
     return node;
 }
 
-ASTNode* ast_add_parameter(ASTNode* ast, const int identifier_idx)
+ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
     ASTFunction* function = &ast->program.functions.last->function;
@@ -66,7 +73,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const int identifier_idx)
         .type = AST_PARAMETER,
         .next = NULL,
         .parameter = {
-            .identifier_idx = identifier_idx,
+            .identifier = identifier,
         },
     };
 
@@ -75,7 +82,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const int identifier_idx)
     return node;
 }
 
-ASTNode* ast_add_vardef(ASTNode* ast, const int identifier_idx)
+ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
     ASTFunction* function = &ast->program.functions.last->function;
@@ -87,7 +94,7 @@ ASTNode* ast_add_vardef(ASTNode* ast, const int identifier_idx)
         .type = AST_VAR_DEF,
         .next = NULL,
         .vardef = {
-            .identifier_idx = identifier_idx,
+            .identifier = identifier,
             .expression = NULL,
         },
     };

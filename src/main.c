@@ -7,24 +7,28 @@
 
 #include "generator.h"
 #include "parser.h"
-#include "shared_data.h"
+#include "shared_strings.h"
 #include "symtable.h"
 
 int main()
 {
-    SharedData data;
-    init_shared_data(&data);
+    AllocatedStrings* strings = new_strings();
+    if (strings == NULL)
+        return EXIT_CODE_INTERNAL_ERROR;
 
-    Symtable* symtable = create_symtable();
+    Symtable* symtable = new_symtable();
     if (symtable == NULL)
-        return print_error(MEMORY_ALLOCATION_ERROR, 0);
+        // TODO: Free identifiers
+        return EXIT_CODE_INTERNAL_ERROR;
 
-    ASTNode ast = create_ast();
+    ASTNode* ast = new_ast();
+    if (ast == NULL)
+        // TODO: Free identifiers, symtable
+        return EXIT_CODE_INTERNAL_ERROR;
 
-    const int exit_code = run_parser(&ast, symtable, &data);
+    const int exit_code_parser = run_parser(ast, symtable, strings);
+    const int exit_code_generator = run_generator(ast, symtable);
 
-    run_generator(&ast, symtable, &data);
-
-    destroy_shared_data(&data);
-    return exit_code;
+    (void)exit_code_generator;
+    return exit_code_parser;
 }

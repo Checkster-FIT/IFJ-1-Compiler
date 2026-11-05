@@ -10,9 +10,8 @@
 
 #include "ast.h"
 #include "scanner.h"
-#include "shared_data.h"
 #include "symtable.h"
-
+#include "shared_strings.h"
 #include <stdbool.h>
 
 #define CORRECT true
@@ -24,8 +23,7 @@ typedef struct {
     Token next;
     Token accepted;
 
-    ScannerContext scanner_context;
-    SharedData* shared_data;
+    ScannerContext scanner;
 
     Symtable* symtable;
     char last_type;
@@ -42,8 +40,8 @@ typedef struct {
 } ParserContext;
 
 // -----------------------------------------
-void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, SharedData* data);
-int run_parser(ASTNode* ast, Symtable* symtable, SharedData* data);
+void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, AllocatedStrings* strings);
+int run_parser(ASTNode* ast, Symtable* symtable, AllocatedStrings* strings);
 int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------

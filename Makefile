@@ -4,6 +4,7 @@
 # Compiler parameters
 CC = gcc
 CFLAGS = -Wall -Wextra -g -O0
+CXXFLAGS += -std=gnu++17
 STANDARD = 17
 
 # Project directory structure
@@ -90,7 +91,7 @@ TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-TEST_SHARED = error shared_data debug ast
+TEST_SHARED = error strings symtable ast bst debug
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
 

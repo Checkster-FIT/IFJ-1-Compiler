@@ -13,13 +13,13 @@
 
 typedef struct {
     bool defined;
-    int index;
+    const char* identifier;
     char type;
 } SymtableEntry;
 
 typedef RBTree Symtable;
 
-Symtable* create_symtable();
+Symtable* new_symtable();
 SymtableEntry* symtable_add(Symtable* symtable, SymtableEntry function);
 SymtableEntry* symtable_add_var(Symtable* symtable, SymtableEntry var);
 

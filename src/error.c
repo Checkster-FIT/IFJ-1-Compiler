@@ -262,7 +262,7 @@ char* get_error_type_str(const int exit_code)
 
 int print_error(const int error_id, const int line, ...)
 {
-    va_list args = {};
+    va_list args = { };
     va_start(args, line);
 
     const int code = va_print_error(error_id, line, args);

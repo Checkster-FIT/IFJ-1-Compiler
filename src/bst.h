@@ -26,7 +26,7 @@ typedef enum {
  * node and pointers to its left and right children.
  */
 typedef struct tnode_s {
-    void* key; // pointer to the key of this node
+    const void* key; // pointer to the key of this node
     void* value; // pointer to the value of this node
     NodeColor color; // either r or b based on color of the node
 
@@ -39,7 +39,7 @@ typedef struct tnode_s {
  */
 typedef struct rbtree_s {
     TNode* root;
-    int (*cmp)(void* a, void* b);
+    int (*cmp)(const void* a, const void* b);
 } RBTree;
 
 /**
@@ -49,7 +49,7 @@ typedef struct rbtree_s {
  *
  * Used to start the tree
  */
-RBTree* tree_init(int (*cmp)(void*, void*));
+RBTree* tree_init(int (*cmp)(const void*, const void*));
 
 /**
  * @brief Node creation
@@ -58,7 +58,7 @@ RBTree* tree_init(int (*cmp)(void*, void*));
  * @param value Value of the node
  * @return Pointer to new node
  */
-TNode* node_create(void* key, void* value);
+TNode* node_create(const void* key, void* value);
 
 /**
  * @brief Checks if node is Black or Red
@@ -102,7 +102,7 @@ void flip_color(TNode* node);
  *
  * @return Returns pointer to the root of the tree where the node was inserted.
  */
-TNode* tree_insert(RBTree* tree, void* key, void* value);
+TNode* tree_insert(RBTree* tree, const void* key, void* value);
 
 /**
  * @brief Recursively travel the tree and insert the node in its correct place.
@@ -113,7 +113,7 @@ TNode* tree_insert(RBTree* tree, void* key, void* value);
  *
  * @return Pointer to the subtree root
  */
-TNode* recursive_insert(TNode* node, void* key, void* value, int (*cmp)(void*, void*));
+TNode* recursive_insert(TNode* node, const void* key, void* value, int (*cmp)(const void*, const void*));
 
 /**
  * @brief Recursively travel the tree and search for the node with the key.
@@ -123,7 +123,7 @@ TNode* recursive_insert(TNode* node, void* key, void* value, int (*cmp)(void*, v
  *
  * @return Node with the key, or NULL when not found
  */
-TNode* search(const RBTree* tree, void* key);
+TNode* search(const RBTree* tree, const void* key);
 
 /**
  * @brief String compare for this RBTree implementation.
@@ -133,6 +133,6 @@ TNode* search(const RBTree* tree, void* key);
  *
  * @return < 0 if first param is smaller (first alphabetically), > 0 if second param is smaller (first alphabetically) or 0 when they are equal.
  */
-int rb_tree_strcmp(void* a, void* b);
+int rb_tree_strcmp(const void* a, const void* b);
 
 #endif // IFJ_1_COMPILER_BST_H

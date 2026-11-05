@@ -10,7 +10,7 @@
 #include "error.h"
 #include <stdbool.h>
 
-Symtable* create_symtable()
+Symtable* new_symtable()
 {
     Symtable* ptr = tree_init(rb_tree_strcmp);
 
@@ -30,7 +30,7 @@ SymtableEntry* symtable_add(Symtable* symtable, const SymtableEntry function)
     }
 
     *data = function;
-    const TNode* node = tree_insert(symtable, &data->index, data);
+    const TNode* node = tree_insert(symtable, data->identifier, data);
 
     return node->value;
 }

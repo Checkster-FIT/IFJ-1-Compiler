@@ -38,23 +38,23 @@ typedef struct {
 } ASTProgram;
 
 typedef struct {
-    int identifier_idx;
+    const char* identifier;
     bool is_main;
     ASTNodeList statements;
     ASTNodeList parameters;
 } ASTFunction;
 
 typedef struct {
-    int identifier_idx;
+    const char* identifier;
     ASTNode* expression;
 } ASTVarDef;
 
 typedef struct {
-    int identifier_idx;
+    const char* identifier;
 } ASTVariable;
 
 typedef struct {
-    int identifier_idx;
+    const char* identifier;
 } ASTParameter;
 
 typedef struct {
@@ -80,12 +80,12 @@ struct ast_node {
 
 // =====================================
 
-ASTNode create_ast();
+ASTNode* new_ast();
 void destroy_ast(ASTNode* ast);
 
-ASTNode* ast_add_function(ASTNode* ast, int identifier_idx, bool main);
-ASTNode* ast_add_parameter(ASTNode* ast, int identifier_idx);
-ASTNode* ast_add_vardef(ASTNode* ast, int identifier_idx);
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, bool main);
+ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 
 void ast_list_add(ASTNodeList* list, ASTNode* node);
 

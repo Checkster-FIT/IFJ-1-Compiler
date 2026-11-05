@@ -8,20 +8,17 @@
 #include "generator.h"
 #include "ast.h"
 #include "debug.h"
-#include "shared_data.h"
-
 #include <stdio.h>
 
-int run_generator(ASTNode* ast, const Symtable* symtable, const SharedData* data)
+int run_generator(ASTNode* ast, const Symtable* symtable)
 {
-    (void)data;
     (void)symtable;
 
-    int* function_idx = &ast->program.functions.last->function.identifier_idx;
-    const SymtableEntry* function = (SymtableEntry*)search(symtable, function_idx)->value;
+    const char* func_identifier = ast->program.functions.last->function.identifier;
+    const SymtableEntry* function = (SymtableEntry*)search(symtable, func_identifier)->value;
 
     (void)function;
 
-    print_ast(ast, symtable, data);
+    print_ast(ast, symtable);
     return 0;
 }

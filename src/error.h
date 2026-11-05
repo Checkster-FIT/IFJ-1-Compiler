@@ -10,6 +10,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define EXIT_CODE_INTERNAL_ERROR (99)
+
 typedef enum error_enum {
     // Scanner error
     SCANNER_NO_TRANSITION,

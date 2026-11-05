@@ -9,9 +9,8 @@
 #define IFJ_1_COMPILER_GENERATOR_H
 
 #include "ast.h"
-#include "shared_data.h"
 #include "symtable.h"
 
-int run_generator(ASTNode* ast, const Symtable* symtable, const SharedData* data);
+int run_generator(ASTNode* ast, const Symtable* symtable);
 
 #endif // IFJ_1_COMPILER_GENERATOR_H

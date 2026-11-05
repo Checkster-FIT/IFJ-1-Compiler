@@ -10,7 +10,6 @@
 
 #include "parser.h"
 #include "scanner.h"
-#include "shared_data.h"
 
 typedef enum {
     GET_NAME,
@@ -26,10 +25,10 @@ void log_remaining(ParserContext* parser);
 void log_ast_start(ParserContext* parser);
 void log_ast_added(ParserContext* parser);
 
-void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data);
-void print_token(const Token* token, const SharedData* data);
+void print_ast(ASTNode* ast, const Symtable* symtable);
+void print_token(const Token* token);
 
-const char* str_token(const Token* token, TokenStringType mode, const SharedData* data);
+const char* str_token(const Token* token, TokenStringType mode);
 const char* str_keyword(int idx);
 const char* str_operator(int idx);
 const char* str_compare(int idx);

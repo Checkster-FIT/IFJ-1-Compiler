@@ -9,9 +9,8 @@
 #include "ast.h"
 #include "debug.h"
 #include "scanner.h"
-#include "shared_data.h"
 #include "symtable.h"
-
+#include "shared_strings.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -19,12 +18,13 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, SharedData* data)
+void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, AllocatedStrings* strings)
 {
-    init_scanner(&parser->scanner_context);
-    parser->shared_data = data;
-    parser->symtable = symtable;
+    init_scanner(&parser->scanner, strings);
+
+    // External structures
     parser->ast = ast;
+    parser->symtable = symtable;
 
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
@@ -48,7 +48,7 @@ void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, Shared
 
 int destroy_parser(const ParserContext* parser)
 {
-    destroy_scanner(&parser->scanner_context);
+    destroy_scanner(&parser->scanner);
 
     // Return the scanner exit code if it failed
     if (parser->token_error != 0)
@@ -59,10 +59,10 @@ int destroy_parser(const ParserContext* parser)
 
 // =======================================================
 
-int run_parser(ASTNode* ast, Symtable* symtable, SharedData* data)
+int run_parser(ASTNode* ast, Symtable* symtable, AllocatedStrings* strings)
 {
     ParserContext parser;
-    init_parser(&parser, ast, symtable, data);
+    init_parser(&parser, ast, symtable, strings);
 
     const int status = parse_program(&parser);
 
@@ -130,7 +130,7 @@ int parse_body(ParserContext* parser)
     if (check_next_keyword(DEF_KW, parser) || check_next(MAIN_IDENTIFIER, parser))
         return parse_function(parser) && parse_body(parser);
 
-    const char* invalid = str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data);
+    const char* invalid = str_token(&parser->next, GET_ATTRIBUTE);
     return failed(parser, PARSER_GLOBAL_SCOPE_INVALID, invalid);
 }
 
@@ -192,12 +192,12 @@ int parse_function(ParserContext* parser)
     // Symtable - Function
     SymtableEntry function = {
         .defined = true,
-        .index = parser->accepted.attribute_str_idx,
+        .identifier = parser->accepted.attribute_string,
         .type = '?'
     };
 
     // AST - Function
-    if (ast_add_function(parser->ast, parser->accepted.attribute_str_idx, main) == NULL)
+    if (ast_add_function(parser->ast, parser->accepted.attribute_string, main) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_added(parser);
 
@@ -250,7 +250,7 @@ int parse_type(ParserContext* parser)
         return CORRECT;
     }
 
-    const char* invalid = str_token(&parser->next, GET_ATTRIBUTE, parser->shared_data);
+    const char* invalid = str_token(&parser->next, GET_ATTRIBUTE);
     return failed(parser, PARSER_INCORRECT_TYPE, invalid);
 }
 
@@ -304,7 +304,7 @@ int parse_param(ParserContext* parser)
 
     SymtableEntry sym_entry = {
         .defined = true,
-        .index = parser->accepted.attribute_str_idx,
+        .identifier = parser->accepted.attribute_string,
         .type = '?'
     };
 
@@ -314,10 +314,10 @@ int parse_param(ParserContext* parser)
     if (!parse_type(parser))
         return FAILED;
 
-    sym_entry.type = parser ->last_type;
+    sym_entry.type = parser->last_type;
 
     // AST - Parameter
-    if (ast_add_parameter(parser->ast, sym_entry.index) == NULL)
+    if (ast_add_parameter(parser->ast, sym_entry.identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_added(parser);
 
@@ -418,7 +418,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
 
-    const int identifier_idx = parser->accepted.attribute_str_idx;
+    const char* identifier = parser->accepted.attribute_string;
 
     if (!parse_type_specifier(parser))
         return FAILED;
@@ -429,7 +429,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!parse_expression(parser))
         return FAILED;
 
-    if (ast_add_vardef(parser->ast, identifier_idx) == NULL)
+    if (ast_add_vardef(parser->ast, identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_added(parser);
 
@@ -585,7 +585,7 @@ void next(ParserContext* parser)
     if (parser->debug)
         log_parsed(parser);
 
-    parser->next = get_token(&parser->scanner_context, parser->shared_data, stdin);
+    parser->next = get_token(&parser->scanner, stdin);
 
     if (parser->next.type == ERROR)
         parser->token_error = parser->next.attribute_error;
@@ -611,8 +611,7 @@ bool check_next_identifier(const char* name, const ParserContext* parser)
     if (!check_next(IDENTIFIER, parser))
         return false;
 
-    const char* identifier = get_identifier(parser->shared_data, parser->next.attribute_str_idx);
-    return (strcmp(identifier, name) == 0);
+    return (strcmp(parser->next.attribute_string, name) == 0);
 }
 
 bool check_next_operator(const enum attribute_operation_type operation, const ParserContext* parser)
@@ -666,14 +665,14 @@ bool accept_next_operator(const enum attribute_operation_type operation, ParserC
 int get_line(const ParserContext* parser)
 {
     if (parser->next.type == LINE_FEED)
-        return parser->shared_data->line - 1;
+        return parser->scanner.line - 1;
 
-    return parser->shared_data->line;
+    return parser->scanner.line;
 }
 
 int failed(ParserContext* parser, const int err, ...)
 {
-    va_list args = {};
+    va_list args = { };
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);

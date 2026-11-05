@@ -8,7 +8,6 @@
 #include "debug.h"
 #include "parser.h"
 #include "scanner.h"
-#include "shared_data.h"
 
 void log_parsed(ParserContext* parser)
 {
@@ -53,7 +52,7 @@ void log_parsed(ParserContext* parser)
     }
 
     fprintf(stderr, " %s%s\033[0m  ", color, prefix);
-    print_token(&parser->accepted, parser->shared_data);
+    print_token(&parser->accepted);
 
     parser->debug_prefix_skipped = false;
     parser->debug_prefix_expression = false;
@@ -97,26 +96,22 @@ void log_ast_added(ParserContext* parser)
     const ASTNode* node = parser->ast->program.recent_node;
     static const char* format = "[\033[1;32m%s\033[0m] %-*s%s\n\n";
 
-    const char* identifier;
     switch (node->type) {
         case AST_FUNCTION:
-            identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
-            fprintf(stderr, format, "F+", ALIGNMENT, "Function", identifier);
+            fprintf(stderr, format, "F+", ALIGNMENT, "Function", node->function.identifier);
             break;
         case AST_VAR_DEF:
-            identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
-            fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", identifier);
+            fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", node->vardef.identifier);
             break;
         case AST_PARAMETER:
-            identifier = get_identifier(parser->shared_data, node->function.identifier_idx);
-            fprintf(stderr, format, "P+", ALIGNMENT, "Parameter", identifier);
+            fprintf(stderr, format, "P+", ALIGNMENT, "Parameter", node->parameter.identifier);
             break;
         default:
             break;
     }
 }
 
-void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data)
+void print_ast(ASTNode* ast, const Symtable* symtable)
 {
     // TODO: Clean up
 
@@ -129,9 +124,9 @@ void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data)
     while (functions->active) {
 
         ASTFunction* function = &functions->active->function;
-        const SymtableEntry* symtable_entry = (SymtableEntry*)search(symtable, &function->identifier_idx)->value;
+        const SymtableEntry* symtable_entry = search(symtable, function->identifier)->value;
 
-        fprintf(stderr, "     %s", get_identifier(data, function->identifier_idx));
+        fprintf(stderr, "     %s", function->identifier);
         fprintf(stderr, " : %c", symtable_entry->type);
 
         if (function->is_main)
@@ -142,10 +137,9 @@ void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data)
         ASTNode* tmp_param = function->parameters.active;
         function->parameters.active = function->parameters.first;
         while (function->parameters.active) {
-            fprintf(stderr, "         %s",
-                get_identifier(data, function->parameters.active->parameter.identifier_idx));
+            fprintf(stderr, "         %s", function->parameters.active->parameter.identifier);
 
-            const SymtableEntry* symtable_entry_param = (SymtableEntry*)search(symtable, &function->identifier_idx)->value;
+            const SymtableEntry* symtable_entry_param = (SymtableEntry*)search(symtable, function->parameters.active->parameter.identifier)->value;
             fprintf(stderr, " : %c", symtable_entry_param->type);
 
             function->parameters.active = function->parameters.active->next;
@@ -161,7 +155,7 @@ void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data)
 
 // =======================================================
 
-const char* str_token(const Token* token, const TokenStringType mode, const SharedData* data)
+const char* str_token(const Token* token, const TokenStringType mode)
 {
     static const char* name_map[] = {
         [NONE] = "NONE",
@@ -221,14 +215,14 @@ const char* str_token(const Token* token, const TokenStringType mode, const Shar
         [OPERATOR] = str_operator(token->attribute_operation_type),
         [COMPARE] = str_compare(token->attribute_compare_type),
         [BOOLEAN] = (token->attribute_bool ? "true" : "false"),
-        [IDENTIFIER] = get_identifier(data, token->attribute_str_idx),
-        [MAIN_IDENTIFIER] = get_identifier(data, token->attribute_str_idx),
-        [STRING] = get_string(data, token->attribute_str_idx),
-        [STRING_INTERPOLATION] = get_string(data, token->attribute_str_idx),
-        [STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx),
-        [MULTILINE_STRING] = get_string(data, token->attribute_str_idx),
-        [MULTILINE_STRING_INTERPOLATION] = get_string(data, token->attribute_str_idx),
-        [MULTILINE_STRING_INTERPOLATION_END] = get_string(data, token->attribute_str_idx),
+        [IDENTIFIER] = token->attribute_string,
+        [MAIN_IDENTIFIER] = token->attribute_string,
+        [STRING] = token->attribute_string,
+        [STRING_INTERPOLATION] = token->attribute_string,
+        [STRING_INTERPOLATION_END] = token->attribute_string,
+        [MULTILINE_STRING] = token->attribute_string,
+        [MULTILINE_STRING_INTERPOLATION] = token->attribute_string,
+        [MULTILINE_STRING_INTERPOLATION_END] = token->attribute_string,
         [INTEGER] = num_to_str_buffer,
         [DOUBLE] = num_to_str_buffer,
         [ERROR] = num_to_str_buffer
@@ -249,10 +243,10 @@ const char* str_token(const Token* token, const TokenStringType mode, const Shar
 
 // =======================================================
 
-void print_token(const Token* token, const SharedData* data)
+void print_token(const Token* token)
 {
-    const char* name = str_token(token, GET_NAME, data);
-    const char* attribute = str_token(token, GET_ATTRIBUTE, data);
+    const char* name = str_token(token, GET_NAME);
+    const char* attribute = str_token(token, GET_ATTRIBUTE);
 
     fprintf(stderr, "%-*s", ALIGNMENT, name);
     fprintf_escaped(stderr, attribute);

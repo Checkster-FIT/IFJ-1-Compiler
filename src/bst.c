@@ -6,10 +6,9 @@
  */
 
 #include "bst.h"
-
 #include <string.h>
 
-RBTree* tree_init(int (*cmp)(void* a, void* b))
+RBTree* tree_init(int (*cmp)(const void* a, const void* b))
 {
     RBTree* tree = (RBTree*)malloc(sizeof(RBTree));
     if (tree == NULL) {
@@ -20,7 +19,7 @@ RBTree* tree_init(int (*cmp)(void* a, void* b))
     return tree;
 }
 
-TNode* node_create(void* key, void* value)
+TNode* node_create(const void* key, void* value)
 {
     TNode* node = malloc(sizeof(TNode));
     if (node == NULL) {
@@ -85,7 +84,7 @@ void flip_color(TNode* node)
     }
 }
 
-TNode* tree_insert(RBTree* tree, void* key, void* value)
+TNode* tree_insert(RBTree* tree, const void* key, void* value)
 {
     if (tree == NULL) {
         return NULL;
@@ -100,7 +99,7 @@ TNode* tree_insert(RBTree* tree, void* key, void* value)
     return tree->root;
 }
 
-TNode* recursive_insert(TNode* node, void* key, void* value, int (*cmp)(void*, void*))
+TNode* recursive_insert(TNode* node, const void* key, void* value, int (*cmp)(const void*, const void*))
 {
     if (node == NULL) {
         node = node_create(key, value);
@@ -131,7 +130,7 @@ TNode* recursive_insert(TNode* node, void* key, void* value, int (*cmp)(void*, v
     return node;
 }
 
-TNode* search(const RBTree* tree, void* key)
+TNode* search(const RBTree* tree, const void* key)
 {
     if (tree == NULL || tree->root == NULL) {
         return NULL;
@@ -152,7 +151,7 @@ TNode* search(const RBTree* tree, void* key)
     return node;
 }
 
-int rb_tree_strcmp(void* a, void* b)
+int rb_tree_strcmp(const void* a, const void* b)
 {
     return strcmp((char*)a, (char*)b);
 }
