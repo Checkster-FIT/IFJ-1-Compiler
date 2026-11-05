@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "scanner.h"
 #include "shared_data.h"
+#include "symtable.h"
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,10 +19,11 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, ASTNode* ast, SharedData* data)
+void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, SharedData* data)
 {
     init_scanner(&parser->scanner_context);
     parser->shared_data = data;
+    parser->symtable = symtable;
     parser->ast = ast;
 
     parser->next.type = NONE;
@@ -54,10 +57,10 @@ int destroy_parser(const ParserContext* parser)
 
 // =======================================================
 
-int run_parser(ASTNode* ast, SharedData* data)
+int run_parser(ASTNode* ast, Symtable* symtable, SharedData* data)
 {
     ParserContext parser;
-    init_parser(&parser, ast, data);
+    init_parser(&parser, ast, symtable, data);
 
     const int status = parse_program(&parser);
 
@@ -184,6 +187,13 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
+    // Symtable - Function
+    const SymtableFunction function = {
+        .defined = true,
+        .index = parser->accepted.attribute_str_idx,
+        .parameters = ""
+    };
+
     // AST - Function
     if (ast_add_function(parser->ast, parser->accepted.attribute_str_idx, main) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
@@ -198,6 +208,7 @@ int parse_function(ParserContext* parser)
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
+    symtable_add_function(parser->symtable, function);
     return parse_function_body(parser);
 }
 

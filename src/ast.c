@@ -75,7 +75,6 @@ ASTNode* ast_add_parameter(ASTNode* ast, const int identifier_idx)
     return node;
 }
 
-
 ASTNode* ast_add_vardef(ASTNode* ast, const int identifier_idx)
 {
     ASTNode* node = malloc(sizeof(ASTNode));

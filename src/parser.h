@@ -11,6 +11,8 @@
 #include "ast.h"
 #include "scanner.h"
 #include "shared_data.h"
+#include "symtable.h"
+
 #include <stdbool.h>
 
 #define CORRECT true
@@ -21,8 +23,10 @@ typedef struct {
     int token_error;
     Token next;
     Token accepted;
+
     ScannerContext scanner_context;
     SharedData* shared_data;
+    Symtable* symtable;
 
     // Debug information
     bool debug;
@@ -36,8 +40,8 @@ typedef struct {
 } ParserContext;
 
 // -----------------------------------------
-void init_parser(ParserContext* parser, ASTNode* ast, SharedData* data);
-int run_parser(ASTNode* ast, SharedData* data);
+void init_parser(ParserContext* parser, ASTNode* ast, Symtable* symtable, SharedData* data);
+int run_parser(ASTNode* ast, Symtable* symtable, SharedData* data);
 int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------
