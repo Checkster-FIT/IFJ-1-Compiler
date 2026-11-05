@@ -90,10 +90,13 @@ TNode* tree_insert(RBTree* tree, void* key, void* value)
     if (tree == NULL) {
         return NULL;
     }
-    tree->root = recursive_insert(tree->root, key, value, tree->cmp);
-    if (tree->root != NULL) {
-        tree->root->color = BLACK;
+    TNode* null_check = recursive_insert(tree->root, key, value, tree->cmp);
+    if (null_check == NULL) {
+        return NULL;
     }
+    tree->root = null_check;
+
+    tree->root->color = BLACK;
     return tree->root;
 }
 
