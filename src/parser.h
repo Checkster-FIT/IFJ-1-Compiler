@@ -26,7 +26,9 @@ typedef struct {
 
     ScannerContext scanner_context;
     SharedData* shared_data;
+
     Symtable* symtable;
+    char last_type;
 
     // Debug information
     bool debug;

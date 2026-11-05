@@ -17,9 +17,11 @@ int run_generator(ASTNode* ast, const Symtable* symtable, const SharedData* data
     (void)data;
     (void)symtable;
 
-    int* function_idx = &ast->program.functions.active->function.identifier_idx;
-    SymtableFunction* function = (SymtableFunction*)search(symtable, function_idx);
+    int* function_idx = &ast->program.functions.last->function.identifier_idx;
+    const SymtableEntry* function = (SymtableEntry*)search(symtable, function_idx)->value;
 
-    print_ast(ast, data);
+    (void)function;
+
+    print_ast(ast, symtable, data);
     return 0;
 }

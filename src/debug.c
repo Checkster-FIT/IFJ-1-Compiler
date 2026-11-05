@@ -116,7 +116,7 @@ void log_ast_added(ParserContext* parser)
     }
 }
 
-void print_ast(ASTNode* ast, const SharedData* data)
+void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data)
 {
     // TODO: Clean up
 
@@ -129,19 +129,27 @@ void print_ast(ASTNode* ast, const SharedData* data)
     while (functions->active) {
 
         ASTFunction* function = &functions->active->function;
+        const SymtableEntry* symtable_entry = (SymtableEntry*)search(symtable, &function->identifier_idx)->value;
+
         fprintf(stderr, "     %s", get_identifier(data, function->identifier_idx));
+        fprintf(stderr, " : %c", symtable_entry->type);
 
         if (function->is_main)
-            fprintf(stderr, " (@main) ");
+            fprintf(stderr, " : main");
 
         fprintf(stderr, "\n");
 
         ASTNode* tmp_param = function->parameters.active;
         function->parameters.active = function->parameters.first;
         while (function->parameters.active) {
-            fprintf(stderr, "         %s\n",
+            fprintf(stderr, "         %s",
                 get_identifier(data, function->parameters.active->parameter.identifier_idx));
+
+            const SymtableEntry* symtable_entry_param = (SymtableEntry*)search(symtable, &function->identifier_idx)->value;
+            fprintf(stderr, " : %c", symtable_entry_param->type);
+
             function->parameters.active = function->parameters.active->next;
+            fprintf(stderr, "\n");
         }
         function->parameters.active = tmp_param;
 

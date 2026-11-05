@@ -26,7 +26,7 @@ void log_remaining(ParserContext* parser);
 void log_ast_start(ParserContext* parser);
 void log_ast_added(ParserContext* parser);
 
-void print_ast(ASTNode* ast, const SharedData* data);
+void print_ast(ASTNode* ast, const Symtable* symtable, const SharedData* data);
 void print_token(const Token* token, const SharedData* data);
 
 const char* str_token(const Token* token, TokenStringType mode, const SharedData* data);

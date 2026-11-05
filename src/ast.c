@@ -44,7 +44,7 @@ ASTNode* ast_add_function(ASTNode* ast, const int identifier_idx, const bool mai
         .next = NULL,
         .function = {
             .identifier_idx = identifier_idx,
-            .statements = { },
+            .statements = {},
             .is_main = main,
         },
     };

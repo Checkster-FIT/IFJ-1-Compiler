@@ -20,12 +20,14 @@ Symtable* create_symtable()
     return ptr;
 }
 
-SymtableFunction* symtable_add_function(Symtable* symtable, const SymtableFunction function)
+SymtableEntry* symtable_add(Symtable* symtable, const SymtableEntry function)
 {
-    SymtableFunction* data = malloc(sizeof(SymtableFunction));
+    SymtableEntry* data = malloc(sizeof(SymtableEntry));
 
-    if (data == NULL)
+    if (data == NULL) {
         print_error(MEMORY_ALLOCATION_ERROR, -1);
+        return NULL;
+    }
 
     *data = function;
     const TNode* node = tree_insert(symtable, &data->index, data);
