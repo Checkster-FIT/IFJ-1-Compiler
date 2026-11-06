@@ -135,4 +135,11 @@ TNode* Search(RBTree* tree, void* key);
  */
 int RBTreeStrcmp(void* a, void* b);
 
+/**
+ * @brief Deletes the subtree of the node passed.
+ *
+ * @param node Root of the subtree we want to delete.
+ */
+void TreeDelete(TNode* node);
+
 #endif // IFJ_1_COMPILER_BST_H
