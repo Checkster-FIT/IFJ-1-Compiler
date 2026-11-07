@@ -72,7 +72,7 @@ void free_ast_nodes(ASTNode* node)
             break;
     }
 
-    //fprintf(stderr,"Freed: %i\n", node->type);
+    // fprintf(stderr,"Freed: %i\n", node->type);
     free(node);
 }
 
@@ -99,7 +99,7 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier)
         .next = NULL,
         .function = {
             .identifier = identifier,
-            .statements = { },
+            .statements = {},
         },
     };
 

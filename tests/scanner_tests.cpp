@@ -16,8 +16,8 @@ extern "C" {
 class scanner : public ::testing::Test {
 protected:
     FILE* tmp_input = nullptr; // Temporary input file for stdin emulation
-    ScannerContext scanner_context = { };
-    AllocatedStrings* strings = { };
+    ScannerContext scanner_context = {};
+    AllocatedStrings* strings = {};
     /**
      * @brief Writes a given string to the scanner input stream
      * @param string the input string to be written at the start of the stream

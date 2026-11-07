@@ -41,7 +41,6 @@ void generate_program(ASTNode* node)
         generate_function(helper_node);
         helper_node = helper_node->next;
     }
-
 }
 
 void generate_function(ASTNode* node)

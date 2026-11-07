@@ -86,12 +86,12 @@ examples: $(MAIN_EXEC)
 GTEST_FLAGS = -lgtest -pthread -g
 
 # Units to be included in tests and the source files for tests
-TEST_UNITS = scanner parser
+TEST_UNITS = scanner parser generator
 TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-TEST_SHARED = error strings symtable ast bst debug
+TEST_SHARED = error shared_strings symtable ast bst debug
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
 
@@ -132,6 +132,7 @@ $(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJE
 # [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
 $(BUILD)/scanner_tests: $(OBJ)/parser.o
+$(BUILD)/generator_tests: $(OBJ)/parser.o $(OBJ)/scanner.o
 
 TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
 build-test: $(TEST_EXECUTABLES)
@@ -142,6 +143,9 @@ test-parser: $(BUILD)/parser_tests
 	@$^ 2>/dev/null || true
 
 test-scanner: $(BUILD)/scanner_tests
+	@$^ 2>/dev/null || true
+
+test-generator: $(BUILD)/generator_tests
 	@$^ 2>/dev/null || true
 
 # -----------------------------------------------

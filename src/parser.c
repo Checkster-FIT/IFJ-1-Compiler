@@ -182,7 +182,7 @@ int parse_function(ParserContext* parser)
     // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
     log_ast_start(parser);
 
-    SymtableEntry function = { };
+    SymtableEntry function = {};
     function.defined = true;
     function.main = accept_next(MAIN_IDENTIFIER, parser);
 
@@ -675,7 +675,7 @@ int get_line(const ParserContext* parser)
 
 int failed(ParserContext* parser, const int err, ...)
 {
-    va_list args = { };
+    va_list args = {};
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);
