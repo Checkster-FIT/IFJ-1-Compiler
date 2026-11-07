@@ -37,7 +37,7 @@ void free_allocated_entries(const TNode* node)
     free((void*)node);
 }
 
-SymtableEntry* symtable_add(Symtable* symtable, const SymtableEntry function)
+SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry function)
 {
     SymtableEntry* data = malloc(sizeof(SymtableEntry));
 

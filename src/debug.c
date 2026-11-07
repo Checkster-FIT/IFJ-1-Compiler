@@ -86,7 +86,7 @@ void log_ast_start(ParserContext* parser)
     parser->debug_ast_active = true;
 }
 
-void log_ast_added(ParserContext* parser)
+void log_ast_end(ParserContext* parser)
 {
     if (parser->debug == false)
         return;

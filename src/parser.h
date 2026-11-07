@@ -11,6 +11,7 @@
 #include "ast.h"
 #include "scanner.h"
 #include "shared_strings.h"
+#include "stack.h"
 #include "symtable.h"
 #include <stdbool.h>
 
@@ -24,9 +25,7 @@ typedef struct {
     Token accepted;
 
     ScannerContext scanner;
-
-    Symtable* global_symtable; // TODO: Move to program node
-    Symtable* current_symtable; // TODO: Symtable stack
+    Stack* symtable_stack;
     char last_type;
 
     // Debug information
@@ -41,7 +40,7 @@ typedef struct {
 } ParserContext;
 
 // -----------------------------------------
-void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings);
+ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings);
 int run_parser(ASTNode* ast, AllocatedStrings* strings);
 int destroy_parser(const ParserContext* parser);
 

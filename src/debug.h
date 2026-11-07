@@ -23,7 +23,7 @@ void log_parsed(ParserContext* parser);
 void log_remaining(ParserContext* parser);
 
 void log_ast_start(ParserContext* parser);
-void log_ast_added(ParserContext* parser);
+void log_ast_end(ParserContext* parser);
 
 void print_ast(ASTNode* ast);
 void print_ast_function(ASTNode* function_node, const Symtable* global_symtable);

@@ -140,6 +140,6 @@ int rb_tree_strcmp(const void* a, const void* b);
  *
  * @param node Root of the subtree we want to delete.
  */
-void TreeDelete(TNode* node);
+void tree_delete(TNode* node);
 
 #endif // IFJ_1_COMPILER_BST_H

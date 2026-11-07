@@ -18,15 +18,23 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
+ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
 {
-    init_scanner(&parser->scanner, strings);
+    // Scanner initialization
+    if (init_scanner(&parser->scanner, strings) == 1)
+        return NULL;
 
-    // External structures
+    // Symtable stack initialization
+    parser->symtable_stack = init_stack();
+    if (parser->symtable_stack == NULL) {
+        destroy_scanner(&parser->scanner);
+        return NULL;
+    }
+
     parser->ast = ast;
-    parser->global_symtable = ast->program.global_symtable;
-    parser->current_symtable = ast->program.global_symtable; // TODO: Symtable stack
+    push(parser->symtable_stack, ast->program.global_symtable);
 
+    // Scanned tokens
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
     parser->accepted.type = NONE;
@@ -35,16 +43,19 @@ void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
     parser->exit_code = 0;
     parser->token_error = 0;
 
+    // Semantic analysis
     parser->last_type = '?';
 
+    // Debug settings
     parser->debug = true; // TODO: Disable debug
     parser->debug_prefix_failed = true;
     parser->debug_prefix_skipped = false;
     parser->debug_prefix_expression = false;
     parser->debug_ast_active = false;
-
     // How many tokens after failure should be printed
     parser->debug_print_remaining = 7;
+
+    return parser;
 }
 
 int destroy_parser(const ParserContext* parser)
@@ -63,7 +74,8 @@ int destroy_parser(const ParserContext* parser)
 int run_parser(ASTNode* ast, AllocatedStrings* strings)
 {
     ParserContext parser;
-    init_parser(&parser, ast, strings);
+    if (init_parser(&parser, ast, strings) == NULL)
+        return print_error(MEMORY_ALLOCATION_ERROR, 0);
 
     const int status = parse_program(&parser);
 
@@ -179,8 +191,8 @@ int parse_extension_body(ParserContext* parser)
 
 int parse_function(ParserContext* parser)
 {
-    // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
     log_ast_start(parser);
+    // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
 
     SymtableEntry function = { };
     function.defined = true;
@@ -199,8 +211,8 @@ int parse_function(ParserContext* parser)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
 
     // - Create a new local symtable
-    parser->current_symtable = create_local_symtable(parser->ast);
-    if (parser->current_symtable == NULL)
+    push(parser->symtable_stack, create_local_symtable(parser->ast));
+    if (top(parser->symtable_stack) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
 
     if (!parse_param_group_list(parser))
@@ -214,8 +226,11 @@ int parse_function(ParserContext* parser)
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    symtable_add(parser->global_symtable, function);
-    log_ast_added(parser);
+    // Add the function to the symtable and remove it from the top
+    pop(parser->symtable_stack);
+    symtable_add_entry(top(parser->symtable_stack), function);
+
+    log_ast_end(parser);
     return parse_function_body(parser);
 }
 
@@ -322,10 +337,10 @@ int parse_param(ParserContext* parser)
     // AST - Parameter
     if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
-    log_ast_added(parser);
+    log_ast_end(parser);
 
     // Symtable - Parameter
-    symtable_add(parser->current_symtable, parameter);
+    symtable_add_entry(top(parser->symtable_stack), parameter);
     return CORRECT;
 }
 
@@ -434,7 +449,7 @@ int parse_statement_variable_definition(ParserContext* parser)
 
     if (ast_add_vardef(parser->ast, identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
-    log_ast_added(parser);
+    log_ast_end(parser);
 
     return CORRECT;
 }
