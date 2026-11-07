@@ -33,7 +33,8 @@
 #define EMPTY_STACK (-1)
 
 #include "error.h"
-#include "shared_data.h"
+#include "shared_strings.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -81,43 +82,44 @@ enum attribute_compare_type {
     GREATER_EQUAL, // >=
 };
 
+enum type_enum {
+    NONE,
+    ERROR,
+    INTEGER,
+    DOUBLE,
+    OPERATOR,
+    IDENTIFIER,
+    MAIN_IDENTIFIER,
+    KEYWORD,
+    BOOLEAN,
+    STRING_INTERPOLATION,
+    STRING_INTERPOLATION_END,
+    MULTILINE_STRING_INTERPOLATION,
+    MULTILINE_STRING_INTERPOLATION_END,
+    STRING,
+    MULTILINE_STRING,
+    DOT,
+    DECLARATION_SIGN,
+    COMMA,
+    INDENT,
+    DEDENT,
+    LINE_FEED,
+    WHITESPACE,
+    ASSIGNMENT,
+    COMPARE,
+    LEFT_BRACKET,
+    RIGHT_BRACKET,
+    END_OF_FILE,
+    SEMICOLON,
+};
+
 typedef struct token {
-    enum type_enum {
-        NONE,
-        ERROR,
-        INTEGER,
-        DOUBLE,
-        OPERATOR,
-        IDENTIFIER,
-        MAIN_IDENTIFIER,
-        KEYWORD,
-        BOOLEAN,
-        STRING_INTERPOLATION,
-        STRING_INTERPOLATION_END,
-        MULTILINE_STRING_INTERPOLATION,
-        MULTILINE_STRING_INTERPOLATION_END,
-        STRING,
-        MULTILINE_STRING,
-        DOT,
-        DECLARATION_SIGN,
-        COMMA,
-        INDENT,
-        DEDENT,
-        LINE_FEED,
-        WHITESPACE,
-        ASSIGNMENT,
-        COMPARE,
-        LEFT_BRACKET,
-        RIGHT_BRACKET,
-        END_OF_FILE,
-        SEMICOLON,
-    } type;
+    enum type_enum type;
 
     union {
         long attribute_int;
         double attribute_double;
-        int attribute_str_idx;
-        const char* attribute_str_ptr;
+        const char* attribute_string;
         bool attribute_bool;
         void* attribute_none;
 
@@ -251,19 +253,20 @@ typedef struct {
     bool lf_inside_block_comment;
     int block_comment_counter;
     bool scanning_variable_inside_string_interpolation;
-    int line_number; // used for error guidance
     bool pending_eof;
+    int line;
+
+    AllocatedStrings* strings;
 } ScannerContext;
 
 /**
  * @brief FSM reads characters and identifies tokens.
  *
  * @param context Pointer to the scanner context (variables and pointers that the scanner needs to remember between individual tokens).
- * @param data Shared compiler data (variables and pointers used across multiple modules)
  * @param stream Input file stream to read from.
  * @return Token representing current lexeme.
  */
-Token get_token(ScannerContext* context, SharedData* data, FILE* stream);
+Token get_token(ScannerContext* context, FILE* stream);
 
 /**
  * @brief Initializes whole scanner_context.
@@ -273,7 +276,7 @@ Token get_token(ScannerContext* context, SharedData* data, FILE* stream);
  * @param scanner_context Pointer to the scanner context.
  * @return 0 on success, 1 on memory allocation fail.
  */
-int init_scanner(ScannerContext* scanner_context);
+int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings);
 
 /** Destroys and frees the whole scanner_context.
  * @param scanner_context Pointer to the scanner context.

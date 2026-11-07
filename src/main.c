@@ -5,16 +5,29 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
+#include "generator.h"
 #include "parser.h"
-#include "shared_data.h"
+#include "shared_strings.h"
+#include "symtable.h"
 
 int main()
 {
-    SharedData data;
-    init_shared_data(&data);
+    AllocatedStrings* strings = new_strings();
+    if (strings == NULL) {
+        return EXIT_CODE_INTERNAL_ERROR;
+    }
 
-    const int exit_code = run_parser(&data);
+    ASTNode* ast = new_ast();
+    if (ast == NULL) {
+        free_strings(strings);
+        return EXIT_CODE_INTERNAL_ERROR;
+    }
 
-    destroy_shared_data(&data);
-    return exit_code;
+    const int exit_code_parser = run_parser(ast, strings);
+    run_generator(ast);
+
+    free_strings(strings);
+    free_ast_nodes(ast);
+
+    return exit_code_parser;
 }

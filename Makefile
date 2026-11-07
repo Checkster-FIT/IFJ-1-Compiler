@@ -3,7 +3,8 @@
 
 # Compiler parameters
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -g -O0
+CXXFLAGS += -std=gnu++17
 STANDARD = 17
 
 # Project directory structure
@@ -52,7 +53,7 @@ clean:
 	@rm -fv *.pdf
 
 # -----------------------------------------------
-.PHONY: check format tidy tidy-cpp checklist
+.PHONY: check format tidy tidy-cpp checklist examples
 # -----------------------------------------------
 MAKEFLAGS += --no-print-directory
 
@@ -73,7 +74,10 @@ tidy-cpp:
 	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
-	@sh checklist.sh
+	@bash checklist.sh
+
+examples: $(MAIN_EXEC)
+	@bash ./tests/data/compile.sh
 
 # -----------------------------------------------
 .PHONY: test build-test
@@ -87,7 +91,7 @@ TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-TEST_SHARED = error shared_data
+TEST_SHARED = error strings symtable ast bst debug
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
 
@@ -105,12 +109,11 @@ $(OBJ):
 
 
 # Compile each module
-.SECONDARY:
+
 $(OBJ)/%.o: $(SRC_DIR)/%.c | $(BUILD) $(OBJ)
 	@gcc -I$(SRC_DIR) -c $< -o $@ -g -O0
 
 # Compile each test source file
-.SECONDARY:
 $(OBJ)/%_tests.o: $(TEST_DIR)/%_tests.cpp | $(BUILD) $(OBJ)
 	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
 
@@ -128,11 +131,18 @@ $(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJE
 
 # [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
+$(BUILD)/scanner_tests: $(OBJ)/parser.o
 
 TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
 build-test: $(TEST_EXECUTABLES)
 test: $(TEST_EXECUTABLES)
-	$^ 2> /dev/null || true
+	@for test in $^; do echo; $$test 2>/dev/null || true; done
+
+test-parser: $(BUILD)/parser_tests
+	@$^ 2>/dev/null || true
+
+test-scanner: $(BUILD)/scanner_tests
+	@$^ 2>/dev/null || true
 
 # -----------------------------------------------
 .PHONY: database

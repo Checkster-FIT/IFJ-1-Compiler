@@ -5,8 +5,12 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
-#ifndef IFJ_1_COMPILER_SHARED_H
-#define IFJ_1_COMPILER_SHARED_H
+#ifndef IFJ_1_COMPILER_ERROR_H
+#define IFJ_1_COMPILER_ERROR_H
+#include <stdarg.h>
+#include <stdio.h>
+
+#define EXIT_CODE_INTERNAL_ERROR (99)
 
 typedef enum error_enum {
     // Scanner error
@@ -24,6 +28,38 @@ typedef enum error_enum {
     SCANNER_INVALID_INDENTATION_USING_TAB,
 
     // Parser error
+    PARSER_SYNTAX_ERROR,
+    PARSER_GLOBAL_SCOPE_INVALID,
+    PARSER_MISSING_HEADER,
+    PARSER_MISSING_IMPORT,
+    PARSER_INVALID_FUNCTION,
+    PARSER_FUNCTION_MISSING_INDENT,
+    PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED,
+    PARSER_ST_VAR_DEF_MISSING_IDENTIFIER,
+    PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT,
+    PARSER_ST_MISSING_LINE_FEED,
+    PARSER_MISSING_EXT_PARAM,
+    PARSER_MISSING_EXT_PARAM_END,
+    PARSER_EXT_MISSING_NEWLINE,
+    PARSER_EXT_MISSING_INDENT,
+    PARSER_EXT_BLOCK_INVALID,
+    PARSER_MISSING_PARAM_BRACKET,
+    PARSER_MISSING_PARAM_TYPE,
+    PARSER_INCORRECT_TYPE,
+    PARSER_INVALID_PARAM_LIST_END,
+    PARSER_DOUBLE_PARAM_TYPE,
+    PARSER_INVALID_PARAM,
+    PARSER_MISSING_FUNCTION_ASSIGNMENT,
+    PARSER_WHILE_MISSING_DO,
+    PARSER_WHILE_MISSING_LINE_FEED,
+    PARSER_WHILE_MISSING_INDENT,
+    PARSER_IF_MISSING_THEN,
+    PARSER_IF_MISSING_INDENT,
+    PARSER_IF_MISSING_DEDENT,
+    PARSER_COND_STATEMENT_UNCLOSED,
+
+    PARSER_RULE_INCOMPLETE,
+    PARSER_RULE_INCORRECT_CALL,
 
     // Syntax error
     SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL,
@@ -53,11 +89,13 @@ ErrorMessage get_error_by_id(enum error_enum error_id);
 /**
  * @brief Prints and error message to @c stderr
  * @param error_id the error index from the @c error_enum
+ * @param line the program line where the error occured
  * @param ... parameters for the formatted messages in the @c ErrorMessage struct,
  * each message requires different parameters (some error messages do not require any)
  * @return the exit code for the given error message
  */
-int print_error(int error_id, ...);
+int print_error(int error_id, int line, ...);
+int va_print_error(int error_id, int line, va_list args);
 
 /**
  * @brief Checks the range of exit codes and returns the corresponding error type
@@ -66,4 +104,4 @@ int print_error(int error_id, ...);
  */
 char* get_error_type_str(int exit_code);
 
-#endif // IFJ_1_COMPILER_SHARED_H
+#endif // IFJ_1_COMPILER_ERROR_H

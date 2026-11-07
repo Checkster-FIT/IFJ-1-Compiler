@@ -18,7 +18,7 @@ def negate(value: Boolean): Boolean = !value
   print("\neither: ")
   print(either)
   print("\n")
-  if safe then
+  if safe == true then
     print("ready\n")
   else if enabled then
     print("blocked\n")
