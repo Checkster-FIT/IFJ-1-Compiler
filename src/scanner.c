@@ -8,6 +8,7 @@
 #include "scanner.h"
 #include "error.h"
 #include "shared_strings.h"
+#include "stack.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     if (!scanned_string)
         return 1;
 
-    IndentStack* indent_stack = init_indent_stack();
+    Stack* indent_stack = init_stack();
     if (!indent_stack) {
         dispose_scanned_string(scanned_string);
         return 1;
@@ -74,7 +75,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
 void destroy_scanner(const ScannerContext* scanner_context)
 {
     dispose_scanned_string(scanner_context->scanned_string);
-    dispose_indent_stack(scanner_context->indent_stack);
+    dispose_stack(scanner_context->indent_stack);
 }
 
 ScannedString* init_scanned_string()
@@ -173,72 +174,22 @@ int check_identifier_for_kw(ScannedString* string)
     return IS_IDENTIFIER;
 }
 
-IndentStack* init_indent_stack()
-{
-    IndentStack* indent_stack = malloc(sizeof(IndentStack));
-    if (!indent_stack)
-        return NULL;
-
-    indent_stack->top = NULL;
-
-    return indent_stack;
-}
-
-void dispose_indent_stack(IndentStack* stack)
-{
-    while (stack->top != NULL) {
-        pop_indent(stack);
-    }
-
-    free(stack);
-}
-
-int push_indent(IndentStack* stack, int value)
-{
-    IndentEl* indent_el = malloc(sizeof(IndentEl));
-    if (!indent_el)
-        return 1;
-
-    indent_el->value = value;
-    indent_el->next = stack->top;
-    stack->top = indent_el;
-    return 0;
-}
-
-void pop_indent(IndentStack* stack)
-{
-    if (!stack->top)
-        return;
-
-    IndentEl* indent_el = stack->top;
-    stack->top = indent_el->next;
-    free(indent_el);
-}
-
-int top_indent(IndentStack* stack)
-{
-    if (!stack->top)
-        return 0; // on empty stack, return 0 - default indent value
-
-    return stack->top->value;
-}
-
 int check_indentation(ScannerContext* context, int current_indent, bool first_call)
 {
-    int s_top = top_indent(context->indent_stack);
+    int const s_top = (int)(__intptr_t)top(context->indent_stack);
     if (s_top == current_indent && first_call == true)
         return NO_INDENTATION;
     if (s_top == current_indent && first_call == false)
         return DEDENTATION;
     if (s_top < current_indent && first_call == true) {
-        push_indent(context->indent_stack, current_indent);
+        push(context->indent_stack, (void*)(__intptr_t)current_indent);
         return INDENTATION;
     }
     if (s_top < current_indent && first_call == false) {
         return INVALID_INDENTATION;
     }
 
-    pop_indent(context->indent_stack);
+    pop(context->indent_stack);
     context->number_of_pending_dedents += 1;
     return check_indentation(context, current_indent, false);
 }
@@ -1451,7 +1402,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 while (context->indent_stack->top != NULL) {
                     context->number_of_pending_dedents += 1;
-                    pop_indent(context->indent_stack);
+                    pop(context->indent_stack);
                 }
 
                 token.type = LINE_FEED;
