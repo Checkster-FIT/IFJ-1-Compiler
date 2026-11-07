@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "parser.h"
 #include "scanner.h"
+#include "stack.h"
 
 void log_parsed(ParserContext* parser)
 {
@@ -19,32 +20,32 @@ void log_parsed(ParserContext* parser)
 
     // Skipped tokens
     if (parser->debug_prefix_skipped) {
-        prefix = "--";
-    }
-    // Accepted tokens (With AST related data)
-    else if (parser->debug_ast_active) {
-        prefix = "OK";
-        color = "\033[1;32m";
+        prefix = "---";
     }
     // Accepted tokens (Expressions)
     else if (parser->debug_prefix_expression) {
-        prefix = "OK";
+        prefix = "OK*";
         color = "\033[1;34m";
+    }
+    // Accepted tokens (With AST related data)
+    else if (parser->debug_ast_active) {
+        prefix = "OK+";
+        color = "\033[1;32m";
     }
     // Accepted tokens (Recursive descent)
     else if (parser->exit_code == 0) {
-        prefix = "OK";
-        color = "\033[1;33m";
+        prefix = "OK ";
+        color = "\033[1;32m";
     }
     // Invalid token
     else if (parser->debug_prefix_failed) {
-        prefix = "!?";
+        prefix = "ERR";
         color = "\033[1;31m";
         parser->debug_prefix_failed = false;
     }
     // Unprocessed tokens
     else if (parser->debug_print_remaining >= 0) {
-        prefix = "  ";
+        prefix = "   ";
     }
     // Hidden tokens
     else {
@@ -55,7 +56,6 @@ void log_parsed(ParserContext* parser)
     print_token(&parser->accepted);
 
     parser->debug_prefix_skipped = false;
-    parser->debug_prefix_expression = false;
 }
 
 void log_remaining(ParserContext* parser)
@@ -74,8 +74,54 @@ void log_remaining(ParserContext* parser)
     if (parser->debug_print_remaining >= 0)
         return;
 
-    fprintf(stderr, "[**] %i more remaining\n", -(parser->debug_print_remaining));
+    fprintf(stderr, "[***] %i more remaining\n", -(parser->debug_print_remaining));
 }
+
+// =======================================================
+
+void log_precedence_stack_reverse(const StackEl* current)
+{
+    if (current == NULL)
+        return;
+
+    log_precedence_stack_reverse(current->next);
+
+    const PrecedenceElement value = current->value;
+
+    // TODO: Better debug print with token symbols
+    static const char* map[] = {
+        [P_EXPRESSION] = "E",
+        [P_L_BRACKET] = "(",
+        [P_TERM] = "t",
+        [P_R_BRACKET] = ")",
+        [P_UNARY] = "[!+u-u]",
+        [P_MULDIV] = "[*/]",
+        [P_ADDSUB] = "[+-]",
+        [P_COMPARE] = "[<<=>>=]",
+        [P_EQUAL] = "[==!=]",
+        [P_AND] = "[&&]",
+        [P_OR] = "[||]",
+        [P_DELIMITER] = "$",
+        [P_SPECIAL_START] = "<",
+        [P_SPECIAL_END] = ">",
+        [P_SPECIAL_EQUAL] = "=",
+        [P_SPECIAL_INVALID] = "?",
+    };
+
+    fprintf(stderr, "%s", map_str(map, sizeof(map) / sizeof(map[0]), value, "?"));
+}
+
+void log_precedence_stack(const ParserContext* parser)
+{
+    if (parser->debug_stack == false)
+        return;
+
+    fprintf(stderr, "     '");
+    log_precedence_stack_reverse(parser->precedence_stack->top);
+    fprintf(stderr, "'\n");
+}
+
+// =======================================================
 
 void log_ast_start(ParserContext* parser)
 {
@@ -98,13 +144,13 @@ void log_ast_end(ParserContext* parser)
 
     switch (node->type) {
         case AST_FUNCTION:
-            fprintf(stderr, format, "F+", ALIGNMENT, "Function", node->function.identifier);
+            fprintf(stderr, format, "AST", ALIGNMENT, "Function", node->function.identifier);
             break;
         case AST_VAR_DEF:
-            fprintf(stderr, format, "V+", ALIGNMENT, "VarDef", node->vardef.identifier);
+            fprintf(stderr, format, "AST", ALIGNMENT, "VarDef", node->vardef.identifier);
             break;
         case AST_PARAMETER:
-            fprintf(stderr, format, "P+", ALIGNMENT, "Parameter", node->parameter.identifier);
+            fprintf(stderr, format, "AST", ALIGNMENT, "Parameter", node->parameter.identifier);
             break;
         default:
             break;

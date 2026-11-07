@@ -21,6 +21,7 @@
 typedef struct {
     int exit_code;
     int token_error;
+    Token future;
     Token next;
     Token accepted;
 
@@ -28,8 +29,11 @@ typedef struct {
     Stack* symtable_stack;
     char last_type;
 
+    Stack* precedence_stack;
+
     // Debug information
     bool debug;
+    bool debug_stack;
     bool debug_prefix_failed;
     bool debug_prefix_skipped;
     bool debug_prefix_expression;
@@ -39,6 +43,27 @@ typedef struct {
     ASTNode* ast;
 } ParserContext;
 
+typedef enum {
+    P_L_BRACKET,
+    P_TERM,
+    P_R_BRACKET,
+    P_UNARY,
+    P_MULDIV,
+    P_ADDSUB,
+    P_COMPARE,
+    P_EQUAL,
+    P_AND,
+    P_OR,
+    P_DELIMITER,
+    P_TERMINAL_COUNT,
+    P_NONE,
+    P_EXPRESSION,
+    P_SPECIAL_START = '<',
+    P_SPECIAL_END = '>',
+    P_SPECIAL_EQUAL = '=',
+    P_SPECIAL_INVALID = '?'
+} PrecedenceElement;
+
 // -----------------------------------------
 ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings);
 int run_parser(ASTNode* ast, AllocatedStrings* strings);
@@ -46,6 +71,7 @@ int destroy_parser(const ParserContext* parser);
 
 // -----------------------------------------
 void next(ParserContext* parser);
+bool check_future(const enum type_enum type, ParserContext* parser);
 bool check_next(enum type_enum type, const ParserContext* parser);
 bool check_next_keyword(enum attribute_keyword keyword, const ParserContext* parser);
 bool check_next_identifier(const char* name, const ParserContext* parser);
@@ -69,6 +95,7 @@ int parse_statement_list(ParserContext* parser);
 
 int parse_statement(ParserContext* parser);
 int parse_statement_variable_definition(ParserContext* parser);
+int parse_statement_assignment(ParserContext* parser);
 int parse_statement_return(ParserContext* parser);
 
 int parse_construct(ParserContext* parser);
@@ -85,8 +112,12 @@ int parse_param_list_first(ParserContext* parser);
 int parse_param_list(ParserContext* parser);
 int parse_param(ParserContext* parser);
 
+// -----------------------------------------
+PrecedenceElement get_token_precedence(const Token* token);
+PrecedenceElement get_last_terminal(Stack* stack);
+
 int parse_expression(ParserContext* parser);
-int parse_relational_expression(ParserContext* parser);
+int parse_term(ParserContext* parser);
 
 /**
  * Gets the correct line number adjusted for newlines

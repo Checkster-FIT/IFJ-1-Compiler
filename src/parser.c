@@ -31,10 +31,20 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
         return NULL;
     }
 
+    // Symtable stack initialization
+    parser->precedence_stack = init_stack();
+    if (parser->precedence_stack == NULL) {
+        dispose_stack(parser->symtable_stack);
+        destroy_scanner(&parser->scanner);
+        return NULL;
+    }
+
     parser->ast = ast;
     push(parser->symtable_stack, ast->program.global_symtable);
 
     // Scanned tokens
+    parser->future.type = NONE;
+    parser->future.attribute_none = NULL;
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
     parser->accepted.type = NONE;
@@ -48,6 +58,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
 
     // Debug settings
     parser->debug = true; // TODO: Disable debug
+    parser->debug_stack = (parser->debug) && true;
     parser->debug_prefix_failed = true;
     parser->debug_prefix_skipped = false;
     parser->debug_prefix_expression = false;
@@ -61,6 +72,8 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
 int destroy_parser(const ParserContext* parser)
 {
     destroy_scanner(&parser->scanner);
+    dispose_stack(parser->symtable_stack);
+    dispose_stack(parser->precedence_stack);
 
     // Return the scanner exit code if it failed
     if (parser->token_error != 0)
@@ -420,6 +433,13 @@ int parse_statement(ParserContext* parser)
             return FAILED;
         return CORRECT;
     }
+    // <st_assign> -> [IDENTIFIER] = <EXPR>
+    if (check_next(IDENTIFIER, parser) && check_future(ASSIGNMENT, parser)) {
+        if (!parse_statement_assignment(parser))
+            return FAILED;
+        return CORRECT;
+    }
+
     // <statement> -> <EXPR>
     return parse_expression(parser);
 }
@@ -452,6 +472,18 @@ int parse_statement_variable_definition(ParserContext* parser)
     log_ast_end(parser);
 
     return CORRECT;
+}
+
+int parse_statement_assignment(ParserContext* parser)
+{
+    // <st_assign> -> [IDENTIFIER] = <EXPR>
+    if (!accept_next(IDENTIFIER, parser))
+        return FAILED;
+
+    if (!accept_next(ASSIGNMENT, parser))
+        return FAILED;
+
+    return parse_expression(parser);
 }
 
 int parse_statement_return(ParserContext* parser)
@@ -490,7 +522,7 @@ int parse_construct_while(ParserContext* parser)
     if (!accept_next_keyword(WHILE_KW, parser))
         return FAILED;
 
-    if (!parse_relational_expression(parser))
+    if (!parse_expression(parser))
         return FAILED;
 
     if (!accept_next_keyword(DO_KW, parser))
@@ -518,7 +550,7 @@ int parse_construct_if_then(ParserContext* parser)
     if (!accept_next_keyword(IF_KW, parser))
         return FAILED;
 
-    if (!parse_relational_expression(parser))
+    if (!parse_expression(parser))
         return FAILED;
 
     if (!accept_next_keyword(THEN_KW, parser))
@@ -563,37 +595,252 @@ int parse_construct_else(ParserContext* parser)
     return CORRECT;
 }
 
-// =======================================================
-
-int parse_relational_expression(ParserContext* parser)
+int parse_term(ParserContext* parser)
 {
-    while (true) {
-        if (check_next_keyword(DO_KW, parser) || check_next_keyword(THEN_KW, parser))
-            return CORRECT;
+    // TODO: Temporary basic term accepting for now
+    //  Add support for more complex terms
 
-        if (check_next(LINE_FEED, parser) || check_next(END_OF_FILE, parser))
-            return CORRECT;
+    if (accept_next(INTEGER, parser))
+        return CORRECT;
 
-        parser->debug_prefix_skipped = true;
-        next(parser);
+    if (accept_next(STRING, parser))
+        return CORRECT;
+
+    if (accept_next(IDENTIFIER, parser)) {
+        accept_next(LEFT_BRACKET, parser);
+        accept_next(IDENTIFIER, parser);
+        accept_next(INTEGER, parser);
+        accept_next(STRING, parser);
+        accept_next(COMMA, parser);
+        accept_next(IDENTIFIER, parser);
+        accept_next(INTEGER, parser);
+        accept_next(STRING, parser);
+        accept_next(COMMA, parser);
+        accept_next(IDENTIFIER, parser);
+        accept_next(INTEGER, parser);
+        accept_next(STRING, parser);
+        accept_next(COMMA, parser);
+        accept_next(IDENTIFIER, parser);
+        accept_next(INTEGER, parser);
+        accept_next(STRING, parser);
+        accept_next(COMMA, parser);
+        accept_next(RIGHT_BRACKET, parser);
+        return CORRECT;
     }
 
-    return failed(parser, PARSER_RULE_INCOMPLETE, "relational_expression");
+    if (accept_next(DOUBLE, parser))
+        return CORRECT;
+
+    return FAILED;
 }
+
+// =======================================================
 
 int parse_expression(ParserContext* parser)
 {
-    
+    static const char table[P_TERMINAL_COUNT][P_TERMINAL_COUNT] = {
+        //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]
+        /* [(]              */ { '<', '<', '=', '<', '<', '<', '<', '<', '<', '<', '?' },
+        /* [t]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>' },
+        /* [)]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>' },
+        /* [!, +u, -u]      */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>' },
+        /* [*, /]           */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>' },
+        /* [+, -]           */ { '<', '<', '>', '<', '<', '>', '>', '>', '>', '>', '>' },
+        /* [<, <=, >, >=]   */ { '<', '<', '>', '<', '<', '<', '?', '>', '>', '>', '>' },
+        /* [==, !=]         */ { '<', '<', '>', '<', '<', '<', '<', '?', '>', '>', '>' },
+        /* [&&]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '>', '>', '>' },
+        /* [||]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '<', '>', '>' },
+        /* [$]              */ { '<', '<', '?', '<', '<', '<', '<', '<', '<', '<', '?' }
+    };
 
+    while (is_empty_stack(parser->precedence_stack) == false)
+        pop(parser->precedence_stack);
+
+    // TODO: Allocation errors
+    parser->debug_prefix_expression = true;
     while (true) {
-        if (check_next(LINE_FEED, parser) || check_next(END_OF_FILE, parser))
-            return CORRECT;
+        const PrecedenceElement next_elem = get_token_precedence(&parser->next);
+        const PrecedenceElement last_elem = get_last_terminal(parser->precedence_stack);
 
-        parser->debug_prefix_skipped = true;
-        next(parser);
+        if (top_value(parser->precedence_stack) == P_EXPRESSION
+            && stack_size(parser->precedence_stack) == 1
+            && next_elem == P_DELIMITER) {
+            parser->debug_prefix_expression = false;
+            return CORRECT;
+        }
+
+        switch (table[last_elem][next_elem]) {
+            case '<':
+                if (!is_empty_stack(parser->precedence_stack)) {
+                    const PrecedenceElement tmp = top_value(parser->precedence_stack);
+
+                    if (tmp == P_EXPRESSION)
+                        pop(parser->precedence_stack);
+
+                    push_value(parser->precedence_stack, '<');
+
+                    if (tmp == P_EXPRESSION)
+                        push_value(parser->precedence_stack, P_EXPRESSION);
+                } else {
+                    push_value(parser->precedence_stack, '<');
+                }
+
+                push_value(parser->precedence_stack, next_elem);
+                break;
+            case '=':
+                push_value(parser->precedence_stack, next_elem);
+                break;
+            case '>':
+
+                if (top_value(parser->precedence_stack) == P_R_BRACKET) {
+                    pop(parser->precedence_stack);
+
+                    if (top_value(parser->precedence_stack) == P_EXPRESSION)
+                        pop(parser->precedence_stack);
+
+                    if (top_value(parser->precedence_stack) != P_L_BRACKET)
+                        return FAILED;
+                    pop(parser->precedence_stack);
+
+                    if (top_value(parser->precedence_stack) != '<')
+                        return FAILED;
+                    pop(parser->precedence_stack);
+                    push_value(parser->precedence_stack, P_EXPRESSION);
+                } else if (top_value(parser->precedence_stack) == P_EXPRESSION) {
+                    pop(parser->precedence_stack);
+
+                    if (top_value(parser->precedence_stack) == P_MULDIV
+                        || top_value(parser->precedence_stack) == P_ADDSUB
+                        || top_value(parser->precedence_stack) == P_COMPARE
+                        || top_value(parser->precedence_stack) == P_EQUAL
+                        || top_value(parser->precedence_stack) == P_AND
+                        || top_value(parser->precedence_stack) == P_OR) {
+
+                        pop(parser->precedence_stack);
+                        if (top_value(parser->precedence_stack) != P_EXPRESSION)
+                            return FAILED;
+
+                        pop(parser->precedence_stack);
+                        if (top_value(parser->precedence_stack) != '<')
+                            return FAILED;
+
+                        pop(parser->precedence_stack);
+                        push_value(parser->precedence_stack, P_EXPRESSION);
+                    }
+
+                } else if (top_value(parser->precedence_stack) == P_TERM) {
+                    pop(parser->precedence_stack);
+
+                    if (top_value(parser->precedence_stack) != '<')
+                        return FAILED;
+
+                    pop(parser->precedence_stack);
+                    push_value(parser->precedence_stack, P_EXPRESSION);
+                }
+
+                if (parser->debug)
+                    log_precedence_stack(parser);
+
+                continue;
+            default:
+                break;
+        }
+
+        if (parser->debug)
+            log_precedence_stack(parser);
+
+        if (next_elem == P_TERM) {
+            if (parse_term(parser) == FAILED)
+                return FAILED;
+        } else {
+            next(parser);
+        }
     }
 
     return failed(parser, PARSER_RULE_INCOMPLETE, "expression");
+}
+
+PrecedenceElement get_last_terminal(Stack* stack)
+{
+    if (is_empty_stack(stack))
+        return P_DELIMITER;
+
+    if (top_value(stack) != P_EXPRESSION)
+        return top_value(stack);
+
+    const PrecedenceElement nonterminal = top_value(stack);
+    pop(stack);
+
+    const PrecedenceElement terminal = !is_empty_stack(stack) ? top_value(stack) : P_DELIMITER;
+    push_value(stack, nonterminal);
+    return terminal;
+}
+
+PrecedenceElement get_token_precedence(const Token* token)
+{
+    switch (token->type) {
+
+        case INTEGER:
+        case DOUBLE:
+        case IDENTIFIER:
+        case MAIN_IDENTIFIER:
+        case BOOLEAN:
+        case STRING_INTERPOLATION:
+        case STRING_INTERPOLATION_END:
+        case MULTILINE_STRING_INTERPOLATION:
+        case MULTILINE_STRING_INTERPOLATION_END:
+        case STRING:
+        case MULTILINE_STRING:
+        case DOT:
+        case COMMA:
+        case INDENT:
+        case DEDENT:
+        case WHITESPACE:
+        case DECLARATION_SIGN:
+        case ASSIGNMENT:
+            return P_TERM;
+
+        case OPERATOR:
+            switch (token->attribute_operation_type) {
+                case PLUS:
+                case MINUS:
+                    return P_ADDSUB;
+                case MULTIPLY:
+                case DIVIDE:
+                    return P_MULDIV;
+                case AND:
+                    return P_AND;
+                case OR:
+                    return P_OR;
+                case NOT:
+                    return P_UNARY;
+            }
+            break;
+
+        case COMPARE:
+            if (token->attribute_compare_type == EQUAL)
+                return P_EQUAL;
+            if (token->attribute_compare_type == NOT_EQUAL)
+                return P_EQUAL;
+            return P_COMPARE;
+
+        case LEFT_BRACKET:
+            return P_L_BRACKET;
+        case RIGHT_BRACKET:
+            return P_R_BRACKET;
+
+        case LINE_FEED:
+            return P_DELIMITER;
+
+        case NONE:
+        case ERROR:
+        case END_OF_FILE:
+        case KEYWORD:
+        case SEMICOLON:
+            return P_DELIMITER;
+    }
+
+    return P_DELIMITER;
 }
 
 // =======================================================
@@ -605,13 +852,24 @@ void next(ParserContext* parser)
     if (parser->debug)
         log_parsed(parser);
 
-    parser->next = get_token(&parser->scanner, stdin);
+    if (parser->future.type != NONE) {
+        parser->next = parser->future;
+        parser->future.type = NONE;
+    } else {
+        parser->next = get_token(&parser->scanner, stdin);
+    }
 
     if (parser->next.type == ERROR)
         parser->token_error = parser->next.attribute_error;
 }
 
 // -------------------------------------------------------
+
+bool check_future(const enum type_enum type, ParserContext* parser)
+{
+    parser->future = get_token(&parser->scanner, stdin);
+    return parser->future.type == type;
+}
 
 bool check_next(const enum type_enum type, const ParserContext* parser)
 {

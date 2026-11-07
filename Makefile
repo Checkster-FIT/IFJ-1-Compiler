@@ -26,9 +26,10 @@ ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
 DOC_NAME = dokumentace
 
 CODE_EXAMPLE = $(TEST_DATA_DIR)/basic.ifj26
+CODE_CUSTOM_EXAMPLE = $(TEST_DATA_DIR)/custom.ifj26
 
 # -----------------------------------------------
-.PHONY: build all run valgrind clean
+.PHONY: build all run valgrind clean custom
 # -----------------------------------------------
 
 build: $(MAIN_EXEC)
@@ -39,6 +40,9 @@ $(MAIN_EXEC): $(SRC_DIR)/*.c
 
 run: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(CODE_EXAMPLE)
+
+custom: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(CODE_CUSTOM_EXAMPLE)
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)

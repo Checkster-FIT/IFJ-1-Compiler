@@ -47,8 +47,10 @@
 
         <statement> := <st_vardef>, <st_assign>, <st_return>, <EXPR>
 
-            // Implement assignment as EXPR ???
+            // <st_assign> needs to look into the future?
+            // [identifier] that is not followed by '=' is an expression
             <st_assign> ->     [IDENTIFIER]                  = <EXPR>
+
             <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
             <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
             <st_return> -> return <EXPR>
