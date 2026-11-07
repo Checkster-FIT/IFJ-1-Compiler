@@ -211,8 +211,8 @@ int parse_function(ParserContext* parser)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
 
     // - Create a new local symtable
-    push(parser->symtable_stack, create_local_symtable(parser->ast));
-    if (top(parser->symtable_stack) == NULL)
+    Symtable* local_symtable = create_local_symtable(parser->ast);
+    if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
         return failed(parser, MEMORY_ALLOCATION_ERROR);
 
     if (!parse_param_group_list(parser))
@@ -583,6 +583,8 @@ int parse_relational_expression(ParserContext* parser)
 
 int parse_expression(ParserContext* parser)
 {
+    
+
     while (true) {
         if (check_next(LINE_FEED, parser) || check_next(END_OF_FILE, parser))
             return CORRECT;
