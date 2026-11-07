@@ -155,3 +155,12 @@ int rb_tree_strcmp(const void* a, const void* b)
 {
     return strcmp((char*)a, (char*)b);
 }
+
+void TreeDelete(TNode* node)
+{
+    if (node != NULL) {
+        TreeDelete(node->left);
+        TreeDelete(node->right);
+        free(node);
+    }
+}

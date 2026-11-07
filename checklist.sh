@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 find_files() {
     find src tests -type f \
