@@ -11,6 +11,14 @@
 #include "ast.h"
 #include "symtable.h"
 
-int run_generator(ASTNode* ast);
+void generator(ASTNode* root);
+
+void generate_program(ASTNode* root);
+
+void generate_function(ASTNode* root);
+
+void print_call(const char* name);
+
+void print_label(const char* name);
 
 #endif // IFJ_1_COMPILER_GENERATOR_H
