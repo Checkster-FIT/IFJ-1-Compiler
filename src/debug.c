@@ -26,7 +26,7 @@ void log_parsed(ParserContext* parser)
         if (parser->debug_prefix_skipped) {
             prefix = "----";
         }
-        // Accepted tokens (Recursive descent terms inside expressions)
+        // Accepted tokens (Terms inside expressions)
         else if (parser->debug_prefix_term) {
             prefix = "TRM";
             color = "\033[1;34m";
@@ -56,6 +56,10 @@ void log_parsed(ParserContext* parser)
     else {
         return;
     }
+
+    if (parser->debug_prefix_term && parser->debug_indent_terms)
+        for (int i = 1; i < parser->expressions_nested; i++)
+            fprintf(stderr, " \033[1;30m---\033[0m");
 
     fprintf(stderr, " %s%s\033[0m  ", color, prefix);
     print_token(&parser->accepted);
@@ -118,6 +122,10 @@ void log_precedence_stack(const ParserContext* parser, const Stack* stack)
 {
     if (!parser->debug_stack)
         return;
+
+    if (parser->debug_indent_terms)
+        for (int i = 1; i < parser->expressions_nested; i++)
+            fprintf(stderr, "    ");
 
     fprintf(stderr, "      $");
     log_precedence_stack_reverse(stack->top);

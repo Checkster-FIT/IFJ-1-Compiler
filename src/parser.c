@@ -49,6 +49,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->token_error = 0;
 
     parser->parameter_expression = false;
+    parser->expressions_nested = 0;
 
     // Semantic analysis
     parser->last_type = '?';
@@ -57,6 +58,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->debug = true; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && false;
+    parser->debug_indent_terms = (parser->debug) && true;
 
     // Temporary prefix flags
     parser->debug_prefix_failed = true;
@@ -667,10 +669,11 @@ int parse_function_call_parameter_first(ParserContext* parser)
         return CORRECT;
 
     // <fun_call_param_first> -> <EXPR> <fun_call_param_list>
+    const bool tmp_parameter_expression = parser->parameter_expression;
     parser->parameter_expression = true;
     if (!parse_expression(parser))
         return FAILED;
-    parser->parameter_expression = false;
+    parser->parameter_expression = tmp_parameter_expression;
 
     return parse_function_call_parameter_list(parser);
 }
@@ -712,6 +715,7 @@ int parse_expression(ParserContext* parser)
     };
 
     Stack* stack = init_stack();
+    parser->expressions_nested++;
     if (stack == NULL) {
         dispose_stack(stack);
         return print_error(MEMORY_ALLOCATION_ERROR, get_line(parser));
@@ -728,6 +732,7 @@ int parse_expression(ParserContext* parser)
         if (top_value(stack) == P_EXPRESSION && stack_size(stack) == 1) {
             if (next_elem == P_DELIMITER || (parser->parameter_expression && next_elem == P_R_BRACKET)) {
                 parser->debug_prefix_expression = false;
+                parser->expressions_nested--;
                 dispose_stack(stack);
                 return CORRECT;
             }
@@ -820,7 +825,13 @@ int parse_expression(ParserContext* parser)
 
                 continue;
             default:
-                return last_elem == P_R_BRACKET;
+                parser->expressions_nested--;
+
+                if (last_elem == P_R_BRACKET && parser->parameter_expression)
+                    return CORRECT;
+
+                return failed(parser, PARSER_INVALID_EXPRESSION,
+                    str_token(&parser->next, GET_ATTRIBUTE));
         }
 
         if (next_elem == P_TERM) {

@@ -31,11 +31,13 @@ typedef struct {
     Stack* symtable_stack;
 
     bool parameter_expression;
+    int expressions_nested;
     char last_type;
 
     // Debug information
     bool debug;
     bool debug_stack;
+    bool debug_indent_terms;
     bool debug_ast_nodes;
     bool debug_prefix_failed;
     bool debug_prefix_skipped;
