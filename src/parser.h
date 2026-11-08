@@ -31,6 +31,7 @@ typedef struct {
     Stack* symtable_stack;
 
     bool parameter_expression;
+    bool interpolated_expression;
     int expressions_nested;
     char last_type;
 
@@ -82,6 +83,7 @@ bool check_next(enum type_enum type, const ParserContext* parser);
 bool check_next_keyword(enum attribute_keyword keyword, const ParserContext* parser);
 bool check_next_identifier(const char* name, const ParserContext* parser);
 bool check_next_operator(enum attribute_operation_type operation, const ParserContext* parser);
+bool check_next_string_any(const ParserContext* parser);
 bool accept_next(enum type_enum type, ParserContext* parser);
 bool accept_next_keyword(enum attribute_keyword keyword, ParserContext* parser);
 bool accept_next_identifier(const char* name, ParserContext* parser);
@@ -130,6 +132,12 @@ int parse_function_call(ParserContext* parser);
 int parse_function_call_group_list(ParserContext* parser);
 int parse_function_call_parameter_first(ParserContext* parser);
 int parse_function_call_parameter_list(ParserContext* parser);
+
+int parse_string(ParserContext* parser);
+int parse_interpolated_string(ParserContext* parser);
+int parse_multiline_interpolated_string(ParserContext* parser);
+
+// -----------------------------------------
 
 /**
  * Gets the correct line number adjusted for newlines

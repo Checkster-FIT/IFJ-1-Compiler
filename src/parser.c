@@ -49,6 +49,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->token_error = 0;
 
     parser->parameter_expression = false;
+    parser->interpolated_expression = false;
     parser->expressions_nested = 0;
 
     // Semantic analysis
@@ -608,28 +609,90 @@ int parse_term(ParserContext* parser)
     // TODO: Temporary basic term accepting for now
     //  Add support for more complex terms
 
-    // <term> -> [INTEGER]
+    // <term> -> [INTEGER] <dot_call>
     if (accept_next(INTEGER, parser))
         status = parse_dot_call(parser);
 
-    // <term> -> [DOUBLE]
+    // <term> -> [DOUBLE] <dot_call>
     else if (accept_next(DOUBLE, parser))
         status = parse_dot_call(parser);
 
-    // <term> -> [BOOLEAN]
+    // <term> -> [BOOLEAN] <dot_call>
     else if (accept_next(BOOLEAN, parser))
         status = parse_dot_call(parser);
 
-    // <term> -> <string> // TODO
-    else if (accept_next(STRING, parser))
-        status = parse_dot_call(parser);
+    // <term> -> <string> <dot_call>
+    else if (check_next_string_any(parser))
+        status = parse_string(parser) && parse_dot_call(parser);
 
-    // <term> -> <fun_call>
+    // <term> -> <fun_call> <dot_call>
     else if (check_next(IDENTIFIER, parser))
         status = parse_function_call(parser);
 
     parser->debug_prefix_term = tmp_term_debug;
     return status;
+}
+
+int parse_string(ParserContext* parser)
+{
+    // <string> -> [STRING]
+    // <string> -> [MULTILINE_STRING]
+    if (accept_next(STRING, parser) || accept_next(MULTILINE_STRING, parser))
+        return CORRECT;
+
+    // <string> -> <interpolated_string>
+    if (check_next(STRING_INTERPOLATION, parser)
+        || check_next(STRING_INTERPOLATION_END, parser))
+        return parse_interpolated_string(parser);
+
+    // <string> -> <multiline_interpolated_string>
+    if (check_next(MULTILINE_STRING_INTERPOLATION, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+        return parse_multiline_interpolated_string(parser);
+
+    return failed(parser, PARSER_RULE_INCOMPLETE, str_token(&parser->next, GET_NAME));
+}
+
+int parse_interpolated_string(ParserContext* parser)
+{
+    // <interpolated_string> -> [STRING_INTERPOLATION_END]
+    if (accept_next(STRING_INTERPOLATION_END, parser))
+        return CORRECT;
+
+    // <interpolated_string> -> [STRING_INTERPOLATION] <interpolated_string>
+    if (accept_next(STRING_INTERPOLATION, parser))
+        return parse_interpolated_string(parser);
+
+    // <interpolated_string> -> <EXPR> <interpolated_string>
+    const bool tmp = parser->interpolated_expression;
+    parser->interpolated_expression = true;
+
+    if (!parse_expression(parser))
+        return FAILED;
+
+    parser->interpolated_expression = tmp;
+    return parse_interpolated_string(parser);
+}
+
+int parse_multiline_interpolated_string(ParserContext* parser)
+{
+    // <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]
+    if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+        return CORRECT;
+
+    // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
+    if (accept_next(MULTILINE_STRING_INTERPOLATION, parser))
+        return parse_multiline_interpolated_string(parser);
+
+    // <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
+    const bool tmp = parser->interpolated_expression;
+    parser->interpolated_expression = true;
+
+    if (!parse_expression(parser))
+        return FAILED;
+
+    parser->interpolated_expression = tmp;
+    return parse_multiline_interpolated_string(parser);
 }
 
 int parse_dot_call(ParserContext* parser)
@@ -723,8 +786,19 @@ int parse_expression(ParserContext* parser)
 
     // TODO: Allocation errors
     while (true) {
-        const PrecedenceElement next_elem = get_token_precedence(&parser->next);
+        PrecedenceElement next_elem = get_token_precedence(&parser->next);
         const PrecedenceElement last_elem = get_last_terminal(stack);
+
+        if (parser->interpolated_expression) {
+            if (check_next(STRING_INTERPOLATION_END, parser)
+                || check_next(STRING_INTERPOLATION, parser)
+                || check_next(MULTILINE_STRING_INTERPOLATION, parser)
+                || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+                next_elem = P_DELIMITER;
+        }
+        else if (parser->parameter_expression && last_elem == P_R_BRACKET) {
+            next_elem = P_DELIMITER;
+        }
 
         if (next_elem != P_TERM)
             parser->debug_prefix_expression = true;
@@ -825,11 +899,6 @@ int parse_expression(ParserContext* parser)
 
                 continue;
             default:
-                parser->expressions_nested--;
-
-                if (last_elem == P_R_BRACKET && parser->parameter_expression)
-                    return CORRECT;
-
                 return failed(parser, PARSER_INVALID_EXPRESSION,
                     str_token(&parser->next, GET_ATTRIBUTE));
         }
@@ -983,6 +1052,24 @@ bool check_next_keyword(const enum attribute_keyword keyword, const ParserContex
 
     return parser->next.attribute_keyword == keyword;
 }
+
+bool check_next_string_any(const ParserContext* parser)
+{
+    if (check_next(STRING, parser))
+        return true;
+    if (check_next(STRING_INTERPOLATION, parser))
+        return true;
+    if (check_next(STRING_INTERPOLATION_END, parser))
+        return true;
+    if (check_next(MULTILINE_STRING, parser))
+        return true;
+    if (check_next(MULTILINE_STRING_INTERPOLATION, parser))
+        return true;
+    if (check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+        return true;
+    return false;
+}
+
 
 bool check_next_identifier(const char* name, const ParserContext* parser)
 {

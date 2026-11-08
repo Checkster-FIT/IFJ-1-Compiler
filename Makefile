@@ -42,8 +42,8 @@ run: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
 # -----------------------------------------------
-.PHONY: custom strings factorial boolthen control
-.PHONY: extkw funexp interpolateds paramlists valmem
+.PHONY: custom strings factorial boolthen control lambdas algebdt
+.PHONY: extkw funexp interpolateds paramlists valmem lists
 # -----------------------------------------------
 
 custom: $(MAIN_EXEC)
@@ -52,7 +52,7 @@ custom: $(MAIN_EXEC)
 strings factorial: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/core/$@.ifj26
 
-boolthen control extkw funexp interpolateds paramlists valmem: $(MAIN_EXEC)
+boolthen control lambdas algebdt extkw lists funexp interpolateds paramlists valmem: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/extensions/$@.ifj26
 
 

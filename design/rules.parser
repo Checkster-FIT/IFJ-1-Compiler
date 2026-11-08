@@ -88,4 +88,15 @@
                 <fun_call_param_list> -> 3
 
 
-        <string> -> [STRING] // TODO
+        <string> -> [STRING]
+        <string> -> [MULTILINE_STRING]
+
+        <string> -> <interpolated_string>
+            <interpolated_string> -> [STRING_INTERPOLATION] <interpolated_string>
+            <interpolated_string> -> <EXPR> <interpolated_string>
+            <interpolated_string> -> [STRING_INTERPOLATION_END]
+
+        <string> -> <multiline_interpolated_string>
+                <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
+                <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
+                <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]
