@@ -328,8 +328,34 @@ void print_token(const Token* token)
     const char* attribute = str_token(token, GET_ATTRIBUTE);
 
     fprintf(stderr, "%-*s", ALIGNMENT, name);
+
+    if (is_string_token(token))
+        fprintf(stderr, "\"");
+
     fprintf_escaped(stderr, attribute);
+
+    if (is_string_token(token))
+        fprintf(stderr, "\"");
+
     fprintf(stderr, "\n");
+}
+
+// =======================================================
+
+bool is_string_token(const Token* token)
+{
+    switch (token->type) {
+        case STRING:
+        case STRING_INTERPOLATION:
+        case STRING_INTERPOLATION_END:
+        case MULTILINE_STRING:
+        case MULTILINE_STRING_INTERPOLATION:
+        case MULTILINE_STRING_INTERPOLATION_END:
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 // =======================================================
