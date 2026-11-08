@@ -29,11 +29,9 @@
 #define INDENTATION 1
 #define DEDENTATION 2
 
-// indentation stack
-#define EMPTY_STACK (-1)
-
 #include "error.h"
 #include "shared_strings.h"
+#include "stack.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -245,7 +243,7 @@ typedef struct {
     // for return to correct type after processing expression inside the interpolated string
     int master_interpolated_string;
     ScannedString* scanned_string;
-    IndentStack* indent_stack;
+    Stack* indent_stack;
     bool pending_indent;
     int number_of_pending_dedents;
     char scanned_char_buffer;
@@ -342,21 +340,6 @@ void dispose_scanned_string(ScannedString* string);
  * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
  */
 int check_identifier_for_kw(ScannedString* string);
-
-IndentStack* init_indent_stack();
-
-void dispose_indent_stack(IndentStack* stack);
-
-int push_indent(IndentStack* stack, int value);
-
-void pop_indent(IndentStack* stack);
-
-/**
- *
- * @param stack Pointer to stack.
- * @return Value on the top of the stack.
- */
-int top_indent(IndentStack* stack);
 
 /**
  * @brief Compares current indent value with values on stack. And returns corresponding macro.
