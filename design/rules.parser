@@ -11,9 +11,9 @@
 // Parameterless requirement for the main function will be checked in the semantic analysis
 
     // -------------------------------------------------
-    <extension> -> extension + ( + <param> + ) + [LF] + [INDENT] + <extension_body>
+    <extension> -> extension ( <param> ) [LF] [INDENT] <extension_body>
 
-        <extension_body> -> <function> + <extension_body>
+        <extension_body> -> <function> <extension_body>
         <extension_body> -> [DEDENT]
 
     // -------------------------------------------------
@@ -57,12 +57,35 @@
 
         <construct> := <c_while> <c_if_then> <c_for>
 
-            <c_while> -> while <REL_EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
-            <c_if_then> -> if <REL_EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
+            <c_while> -> while <EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
+            <c_if_then> -> if <EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
             <c_else> -> else [LF*] [INDENT*] <statement_list> [DEDENT*]
             <c_for> -> ???
 
     // -------------------------------------------------
 
-    <EXPR> -> ...
-    <REL_EXPR> -> ...
+    <EXPR> -> ... <expr_term> ...
+
+        <term> -> <fun_call>  <dot_call>
+        <term> -> [INTEGER]   <dot_call>
+        <term> -> [DOUBLE]    <dot_call>
+        <term> -> [BOOLEAN]   <dot_call>
+        <term> -> <string>    <dot_call>
+
+        <dot_call> -> 3
+        <dot_call> -> . <fun_call> <dot_call>
+
+        // No way to differentiate parameterless function from identifier using simple rules
+        <fun_call> -> [IDENTIFIER] <fun_call_group_list>
+
+            <fun_call_group_list> -> ( <fun_call_param_first> ) <fun_call_group_list>
+            <fun_call_group_list> -> 3
+
+                <fun_call_param_first> -> <EXPR> <fun_call_param_list>
+                <fun_call_param_first> -> 3
+
+                <fun_call_param_list> -> , <EXPR> <fun_call_param_list>
+                <fun_call_param_list> -> 3
+
+
+        <string> -> [STRING] // TODO

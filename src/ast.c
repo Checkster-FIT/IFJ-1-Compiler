@@ -72,7 +72,7 @@ void free_ast_nodes(ASTNode* node)
             break;
     }
 
-    //fprintf(stderr,"Freed: %i\n", node->type);
+    // fprintf(stderr,"Freed: %i\n", node->type);
     free(node);
 }
 

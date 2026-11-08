@@ -29,7 +29,7 @@ CODE_EXAMPLE = $(TEST_DATA_DIR)/basic.ifj26
 CODE_CUSTOM_EXAMPLE = $(TEST_DATA_DIR)/custom.ifj26
 
 # -----------------------------------------------
-.PHONY: build all run valgrind clean custom
+.PHONY: build all run valgrind clean
 # -----------------------------------------------
 
 build: $(MAIN_EXEC)
@@ -41,8 +41,20 @@ $(MAIN_EXEC): $(SRC_DIR)/*.c
 run: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
+# -----------------------------------------------
+.PHONY: custom strings factorial boolthen control
+.PHONY: extkw funexp interpolateds paramlists valmem
+# -----------------------------------------------
+
 custom: $(MAIN_EXEC)
-	@./$(MAIN_EXEC) < $(CODE_CUSTOM_EXAMPLE)
+	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/$@.ifj26
+
+strings factorial: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/core/$@.ifj26
+
+boolthen control extkw funexp interpolateds paramlists valmem: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/extensions/$@.ifj26
+
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)

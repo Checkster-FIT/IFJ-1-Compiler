@@ -26,18 +26,22 @@ typedef struct {
     Token accepted;
 
     ScannerContext scanner;
+    int prev_line;
+    int future_line;
     Stack* symtable_stack;
-    char last_type;
 
-    Stack* precedence_stack;
+    bool parameter_expression;
+    char last_type;
 
     // Debug information
     bool debug;
     bool debug_stack;
+    bool debug_ast_nodes;
     bool debug_prefix_failed;
     bool debug_prefix_skipped;
     bool debug_prefix_expression;
-    bool debug_ast_active;
+    bool debug_prefix_term;
+    bool debug_prefix_ast;
     int debug_print_remaining;
 
     ASTNode* ast;
@@ -117,7 +121,13 @@ PrecedenceElement get_token_precedence(const Token* token);
 PrecedenceElement get_last_terminal(Stack* stack);
 
 int parse_expression(ParserContext* parser);
+
 int parse_term(ParserContext* parser);
+int parse_dot_call(ParserContext* parser);
+int parse_function_call(ParserContext* parser);
+int parse_function_call_group_list(ParserContext* parser);
+int parse_function_call_parameter_first(ParserContext* parser);
+int parse_function_call_parameter_list(ParserContext* parser);
 
 /**
  * Gets the correct line number adjusted for newlines
