@@ -10,6 +10,7 @@
 #include "shared_strings.h"
 #include "stack.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -176,13 +177,13 @@ int check_identifier_for_kw(ScannedString* string)
 
 int check_indentation(ScannerContext* context, int current_indent, bool first_call)
 {
-    int const s_top = (int)(__intptr_t)top(context->indent_stack);
+    int const s_top = (int)(intptr_t)top(context->indent_stack);
     if (s_top == current_indent && first_call == true)
         return NO_INDENTATION;
     if (s_top == current_indent && first_call == false)
         return DEDENTATION;
     if (s_top < current_indent && first_call == true) {
-        push(context->indent_stack, (void*)(__intptr_t)current_indent);
+        push(context->indent_stack, (void*)(intptr_t)current_indent);
         return INDENTATION;
     }
     if (s_top < current_indent && first_call == false) {
@@ -695,6 +696,13 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c == 'n') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\n');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
                     continue; // ignore 'n'
                 }
 
@@ -702,8 +710,8 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 break;
 
-                // TODO:
-                //   nested interpolation - simple string x multiline string
+            // TODO:
+            //   nested interpolation - simple string x multiline string
 
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
@@ -895,12 +903,21 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 scanned_string_remove_last(context->scanned_string); // remove '\'
 
+                if (c == 'n') {
+                    state = STATE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\n');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue; // ignore 'n'
+                }
+
                 if (c != '\n' && c != EOF)
                     state = STATE_STRING_INTERPOLATION;
-                else if (c == 'n') {
-                    state = STATE_STRING_INTERPOLATION;
-                    continue; // ignore 'n'
-                } else if (c == '\n') {
+                else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
@@ -1268,7 +1285,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                 context->interpolation = context->master_interpolated_string; // restore the type of string interpolation
                 scanned_string_remove_last(context->scanned_string); // remove }
                 state = STATE_START;
-                break;
+
+                context->read_buffer = true; // following character is already consumed and needs to be handled properly
+                continue; // don't write the char into scanned_string
 
             // DECLARATION - COLON, COMMA, AT
             case STATE_COLON:
