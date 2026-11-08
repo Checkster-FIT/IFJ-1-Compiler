@@ -215,6 +215,9 @@ int parse_function(ParserContext* parser)
     function.defined = true;
     function.main = accept_next(MAIN_IDENTIFIER, parser);
 
+    if (function.main)
+        accept_next(LINE_FEED, parser);
+
     if (!accept_next_keyword(DEF_KW, parser))
         return FAILED;
 
@@ -648,7 +651,10 @@ int parse_term(ParserContext* parser)
         status = parse_function_call(parser) && parse_dot_call(parser);
 
     parser->debug_prefix_term = tmp_term_debug;
-    return status;
+    if (status == FAILED)
+        return failed(parser, PARSER_INVALID_EXPRESSION,
+            str_token(&parser->next, GET_NAME));
+    return CORRECT;
 }
 
 int parse_string(ParserContext* parser)

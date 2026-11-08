@@ -7,7 +7,7 @@
 <body> -> [EOF]
 <body> -> <function> <body>
 <body> -> <extension> <body>
-<body> -> @main <function> <body>
+<body> -> @main [LF*] <function> <body>
 
 // Parameterless requirement for the main function will be checked in the semantic analysis
 
@@ -33,6 +33,7 @@
         <param_list_first> -> 3
 
         <param_list> -> , <param> <param_list>
+        <param_list> -> , [LF]  // TODO: ???
         <param_list> -> 3
 
             <param> -> [IDENTIFIER] : <type>
