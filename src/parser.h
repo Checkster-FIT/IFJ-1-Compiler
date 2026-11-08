@@ -35,6 +35,8 @@ typedef struct {
     int expressions_nested;
     char last_type;
 
+    bool inside_extension;
+
     // Debug information
     bool debug;
     bool debug_stack;

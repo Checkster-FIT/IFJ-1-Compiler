@@ -19,6 +19,7 @@ typedef enum {
     AST_NONE,
     AST_PROGRAM,
     AST_FUNCTION,
+    AST_EXTENSION,
     AST_PARAMETER,
     AST_VAR_DEF,
     AST_VAR_ASSIGN,
@@ -35,8 +36,11 @@ typedef struct {
 
 typedef struct {
     ASTNodeList functions;
+    ASTNodeList extensions;
     Symtable* global_symtable;
+
     ASTNode* recent_node;
+    ASTNode* last_function;
 } ASTProgram;
 
 typedef struct {
@@ -45,6 +49,12 @@ typedef struct {
     ASTNodeList parameters;
     Symtable* symtable;
 } ASTFunction;
+
+typedef struct {
+    ASTNodeList functions;
+    ASTNode* parameter;
+    Symtable* symtable;
+} ASTExtension;
 
 typedef struct {
     const char* identifier;
@@ -74,6 +84,7 @@ struct ast_node {
         ASTProgram program;
         ASTVarDef vardef;
         ASTFunction function;
+        ASTExtension extension;
         ASTParameter parameter;
         ASTVariable variable;
         ASTAssignment assignment;
@@ -86,8 +97,13 @@ ASTNode* new_ast();
 void free_ast_nodes(ASTNode* node);
 void free_node_list(ASTNodeList* list);
 
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);
+ASTNode* ast_add_ext_parameter(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable);
+
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable);
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
+
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 
 Symtable* create_local_symtable(ASTNode* ast);

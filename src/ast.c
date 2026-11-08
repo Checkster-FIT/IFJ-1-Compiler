@@ -34,6 +34,11 @@ ASTNode* new_ast()
                 .active = NULL,
                 .last = NULL,
             },
+            .extensions = {
+                .first = NULL,
+                .active = NULL,
+                .last = NULL,
+            },
             .recent_node = NULL,
             .global_symtable = symtable,
         },
@@ -59,6 +64,11 @@ void free_ast_nodes(ASTNode* node)
             free_node_list(&node->function.parameters);
             free_symtable(node->function.symtable);
             break;
+        case AST_EXTENSION:
+            free_node_list(&node->extension.functions);
+            free_ast_nodes(node->extension.parameter);
+            free_symtable(node->extension.symtable);
+            break;
         case AST_PARAMETER:
             break;
         case AST_VAR_DEF:
@@ -70,6 +80,7 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_VAR:
             break;
+
     }
 
     // fprintf(stderr,"Freed: %i\n", node->type);
@@ -87,7 +98,56 @@ void free_node_list(ASTNodeList* list)
 
 // ========================================
 
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier)
+ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_EXTENSION,
+        .next = NULL,
+        .extension = {
+            .functions = {},
+            .parameter = NULL,
+            .symtable = symtable,
+        },
+    };
+
+    ast_list_add(&ast->program.extensions, node);
+    ast->program.recent_node = node;
+    return node;
+}
+
+
+ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable)
+{
+    // TODO: Merge?
+
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_FUNCTION,
+        .next = NULL,
+        .function = {
+            .identifier = identifier,
+            .statements = { },
+            .parameters = { },
+            .symtable = symtable
+        },
+    };
+
+    ast_list_add(&ast->program.extensions.last->extension.functions, node);
+    ast->program.recent_node = node;
+    ast->program.last_function = node;
+    return node;
+}
+
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
 
@@ -100,18 +160,20 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier)
         .function = {
             .identifier = identifier,
             .statements = { },
+            .parameters = { },
+            .symtable = symtable
         },
     };
 
     ast_list_add(&ast->program.functions, node);
     ast->program.recent_node = node;
+    ast->program.last_function = node;
     return node;
 }
 
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
-    ASTFunction* function = &ast->program.functions.last->function;
 
     if (node == NULL)
         return NULL;
@@ -124,7 +186,31 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
         },
     };
 
+    ASTFunction* function = &ast->program.functions.last->function;
     ast_list_add(&function->parameters, node);
+
+    ast->program.recent_node = node;
+    return node;
+}
+
+ASTNode* ast_add_ext_parameter(ASTNode* ast, const char* identifier)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_PARAMETER,
+        .next = NULL,
+        .parameter = {
+            .identifier = identifier,
+        },
+    };
+
+    ASTExtension* extension = &ast->program.extensions.last->extension;
+    extension->parameter = node;
+
     ast->program.recent_node = node;
     return node;
 }
@@ -132,7 +218,6 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
-    ASTFunction* function = &ast->program.functions.last->function;
 
     if (node == NULL)
         return NULL;
@@ -146,13 +231,14 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
         },
     };
 
-    ast_list_add(&function->statements, node);
+    ast_list_add(&ast->program.last_function->function.statements, node);
     ast->program.recent_node = node;
     return node;
 }
 
 Symtable* create_local_symtable(ASTNode* ast)
 {
+    // TODO: Unusued?
     ast->program.functions.last->function.symtable = new_symtable();
     return ast->program.functions.last->function.symtable;
 }

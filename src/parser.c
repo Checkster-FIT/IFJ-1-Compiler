@@ -54,11 +54,12 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
 
     // Semantic analysis
     parser->last_type = '?';
+    parser->inside_extension = false;
 
     // Debug settings
     parser->debug = true; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
-    parser->debug_ast_nodes = (parser->debug) && false;
+    parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
 
     // Temporary prefix flags
@@ -152,8 +153,15 @@ int parse_body(ParserContext* parser)
         return CORRECT;
 
     // <body> -> <extension> <body>
-    if (check_next_keyword(EXTENSION_KW, parser))
-        return parse_extension(parser) && parse_body(parser);
+    if (check_next_keyword(EXTENSION_KW, parser)) {
+        parser->inside_extension = true;
+
+        if (!parse_extension(parser))
+            return FAILED;
+
+        parser->inside_extension = false;
+        return parse_body(parser);
+    }
 
     // <body> -> <function> <body>
     // <body> -> @main <function> <body>
@@ -168,10 +176,21 @@ int parse_body(ParserContext* parser)
 
 int parse_extension(ParserContext* parser)
 {
+    log_ast_start(parser);
     // <extension> -> extension + ( + <param> + ) + [LF] + [INDENT] + <extension_body>
 
     if (!accept_next_keyword(EXTENSION_KW, parser))
         return FAILED;
+
+    // - Create a new local symtable
+    Symtable* local_symtable = new_symtable();
+    if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
+
+    // AST - New extension
+    if (ast_add_extension(parser->ast, local_symtable) == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    log_ast_end(parser);
 
     if (!accept_next(LEFT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM);
@@ -188,6 +207,7 @@ int parse_extension(ParserContext* parser)
     if (!accept_next(INDENT, parser))
         return failed(parser, PARSER_EXT_MISSING_INDENT);
 
+    pop(parser->symtable_stack);
     return parse_extension_body(parser);
 }
 
@@ -226,14 +246,21 @@ int parse_function(ParserContext* parser)
 
     function.identifier = parser->accepted.attribute_string;
 
-    // AST - New function
-    if (ast_add_function(parser->ast, function.identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
-
     // - Create a new local symtable
-    Symtable* local_symtable = create_local_symtable(parser->ast);
+    Symtable* local_symtable = new_symtable();
     if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
         return failed(parser, MEMORY_ALLOCATION_ERROR);
+
+    // AST - New function
+    if (parser->inside_extension) {
+        if (ast_add_ext_function(parser->ast, function.identifier, local_symtable) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR);
+    }
+    else {
+        if (ast_add_function(parser->ast, function.identifier, local_symtable) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR);
+    }
+    log_ast_end(parser);
 
     if (!parse_param_group_list(parser))
         return FAILED;
@@ -249,8 +276,6 @@ int parse_function(ParserContext* parser)
     // Add the function to the symtable and remove it from the top
     pop(parser->symtable_stack);
     symtable_add_entry(top(parser->symtable_stack), function);
-
-    log_ast_end(parser);
     return parse_function_body(parser);
 }
 
@@ -355,8 +380,14 @@ int parse_param(ParserContext* parser)
     parameter.data_type = parser->last_type;
 
     // AST - Parameter
-    if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    if (parser->inside_extension) {
+        if (ast_add_ext_parameter(parser->ast, parameter.identifier) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR);
+    }
+    else {
+        if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR);
+    }
     log_ast_end(parser);
 
     // Symtable - Parameter

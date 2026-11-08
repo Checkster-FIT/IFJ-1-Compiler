@@ -162,12 +162,16 @@ void log_ast_end(ParserContext* parser)
         return;
 
     const ASTNode* node = parser->ast->program.recent_node;
-    static const char* format = "[\033[1;32m%s\033[0m] %-*s%s\n\n";
+    // static const char* format = "[\033[1;35m%s\033[0m] %-*s%s\n";
+    static const char* format = "[\033[1;35m%s\033[0m] %-*s\n";
 
     const char* prefix = "AST";
     switch (node->type) {
         case AST_FUNCTION:
             fprintf(stderr, format, prefix, ALIGNMENT, "Function", node->function.identifier);
+            break;
+        case AST_EXTENSION:
+            fprintf(stderr, format, prefix, ALIGNMENT, "Extension", "");
             break;
         case AST_VAR_DEF:
             fprintf(stderr, format, prefix, ALIGNMENT, "VarDef", node->vardef.identifier);
