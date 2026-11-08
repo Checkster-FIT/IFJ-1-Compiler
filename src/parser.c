@@ -845,6 +845,9 @@ int parse_expression(ParserContext* parser)
                     push_value(stack, '<');
                 }
 
+                if (top_value(stack) != P_EXPRESSION && next_elem == P_ADDSUB)
+                    next_elem = P_UNARY;
+
                 push_value(stack, next_elem);
                 break;
             case '=':
