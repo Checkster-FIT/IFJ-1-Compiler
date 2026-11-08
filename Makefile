@@ -107,7 +107,7 @@ TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-TEST_SHARED = error strings symtable ast bst debug
+TEST_SHARED = error shared_strings symtable ast bst debug stack
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
 

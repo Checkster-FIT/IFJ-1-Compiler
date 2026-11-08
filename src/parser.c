@@ -411,11 +411,29 @@ int parse_statement_list(ParserContext* parser)
     // <statement_list> -> <statement> [LF] <statement_list>
     if (parse_statement(parser)) {
 
-        if (!accept_next(LINE_FEED, parser)) {
-            return failed(parser, PARSER_ST_MISSING_LINE_FEED);
+        if (!parse_separator(parser)) {
+            return failed(parser, PARSER_ST_MISSING_SEPARATOR);
         }
 
         return parse_statement_list(parser);
+    }
+
+    return FAILED;
+}
+
+int parse_separator(ParserContext* parser)
+{
+    // <separator> -> [LF]
+    if (accept_next(LINE_FEED, parser))
+        return CORRECT;
+
+    if (accept_next(SEMICOLON, parser)) {
+
+        // <separator> -> ; [LF]
+        accept_next(LINE_FEED, parser);
+
+        // <separator> -> ;
+        return CORRECT;
     }
 
     return FAILED;
@@ -627,7 +645,7 @@ int parse_term(ParserContext* parser)
 
     // <term> -> <fun_call> <dot_call>
     else if (check_next(IDENTIFIER, parser))
-        status = parse_function_call(parser);
+        status = parse_function_call(parser) && parse_dot_call(parser);
 
     parser->debug_prefix_term = tmp_term_debug;
     return status;
@@ -795,8 +813,7 @@ int parse_expression(ParserContext* parser)
                 || check_next(MULTILINE_STRING_INTERPOLATION, parser)
                 || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
                 next_elem = P_DELIMITER;
-        }
-        else if (parser->parameter_expression && last_elem == P_R_BRACKET) {
+        } else if (parser->parameter_expression && last_elem == P_R_BRACKET) {
             next_elem = P_DELIMITER;
         }
 
@@ -987,6 +1004,7 @@ PrecedenceElement get_token_precedence(const Token* token)
             return P_R_BRACKET;
 
         case LINE_FEED:
+        case SEMICOLON:
             return P_DELIMITER;
 
         case NONE:
@@ -994,7 +1012,6 @@ PrecedenceElement get_token_precedence(const Token* token)
         case COMMA:
         case END_OF_FILE:
         case KEYWORD:
-        case SEMICOLON:
             return P_DELIMITER;
     }
 
@@ -1069,7 +1086,6 @@ bool check_next_string_any(const ParserContext* parser)
         return true;
     return false;
 }
-
 
 bool check_next_identifier(const char* name, const ParserContext* parser)
 {

@@ -100,6 +100,7 @@ int parse_function(ParserContext* parser);
 int parse_function_body(ParserContext* parser);
 
 int parse_statement_list(ParserContext* parser);
+int parse_separator(ParserContext* parser);
 
 int parse_statement(ParserContext* parser);
 int parse_statement_variable_definition(ParserContext* parser);

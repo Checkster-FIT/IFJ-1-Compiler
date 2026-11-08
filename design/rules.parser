@@ -8,6 +8,7 @@
 <body> -> <function> <body>
 <body> -> <extension> <body>
 <body> -> @main <function> <body>
+
 // Parameterless requirement for the main function will be checked in the semantic analysis
 
     // -------------------------------------------------
@@ -41,9 +42,13 @@
     <function_body> -> [LF] [INDENT] <statement_list> [DEDENT]
     <function_body> -> <EXPR> [LF]
 
-    <statement_list> -> <statement> [LF] <statement_list> // Add ';' as a separator
+    <statement_list> -> <statement> <separator> <statement_list> // Add ';' as a separator
     <statement_list> -> <construct> <statement_list>
     <statement_list> -> 3
+
+        <separator> -> [LF]
+        <separator> -> ;
+        <separator> -> ; [LF]
 
         <statement> := <st_vardef>, <st_assign>, <st_return>, <EXPR>
 

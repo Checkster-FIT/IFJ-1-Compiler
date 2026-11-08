@@ -179,8 +179,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Expected '=' after variable declaration";
             error.code = 2;
             break;
-        case PARSER_ST_MISSING_LINE_FEED:
-            error.message = "A statement must be ended with a new line";
+        case PARSER_ST_MISSING_SEPARATOR:
+            error.message = "A statement must be ended with a new or a semicolon ';'";
             error.code = 2;
             break;
         case PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED:
