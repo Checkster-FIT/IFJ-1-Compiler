@@ -67,6 +67,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
     scanner_context->pending_eof = false;
+    scanner_context->block_comment_counter = 0;
 
     scanner_context->strings = strings;
     scanner_context->line = 0;
@@ -1493,6 +1494,8 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_BLOCK_COMMENT_END_WITHOUT_LF:
                 clear_scanned_string(context->scanned_string);
                 state = STATE_START;
+
+                context->read_buffer = true;
                 continue;
 
             case STATE_BLOCK_COMMENT_END_WITH_LF:
