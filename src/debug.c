@@ -90,31 +90,32 @@ void log_remaining(ParserContext* parser)
 
 void log_precedence_stack_reverse(const StackEl* current)
 {
-    if (current == NULL)
+    if (current == NULL || current->data == NULL)
         return;
+
+    const PrecedenceElement* element = current->data;
 
     log_precedence_stack_reverse(current->next);
 
-    static const char* map[] = {
-        [P_EXPRESSION] = " [E] ",
-        [P_L_BRACKET] = "(",
-        [P_TERM] = "t",
-        [P_R_BRACKET] = ")",
-        [P_UNARY] = "[UNARY]",
-        [P_MULDIV] = "[MULDIV]",
-        [P_ADDSUB] = "[ADDSUB]",
-        [P_COMPARE] = "[CMP]",
-        [P_EQUAL] = "[EQ]",
-        [P_AND] = "[AND]",
-        [P_OR] = "[OR]",
-        [P_DELIMITER] = "$",
-        [P_SPECIAL_START] = " <",
-        [P_SPECIAL_END] = ">",
-        [P_SPECIAL_EQUAL] = "=",
+    static const char* groups[] = {
+        [P_EXPRESSION]      = "E",
+        [P_L_BRACKET]       = "(",
+        [P_TERM]            = "t",
+        [P_R_BRACKET]       = ")",
+        [P_DELIMITER]       = "$",
+        [P_SPECIAL_START]   = "<",
+        [P_SPECIAL_END]     = ">",
+        [P_SPECIAL_EQUAL]   = "=",
         [P_SPECIAL_INVALID] = "?",
     };
 
-    const char* str = map_str(map, sizeof(map) / sizeof(map[0]), current->value, "?");
+    const char* str;
+    if (element->operator != OP_NONE)
+        str = str_operation(element->operator);
+    else
+        str = map_str(groups, sizeof(groups) / sizeof(groups[0]),
+                      element->group, "?");
+
     fprintf(stderr, "%s", str);
 }
 
@@ -291,7 +292,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             break;
         case AST_EXPRESSION:
-            fprintf(stderr, "[%sExp%s] \n", color, reset);
+            fprintf(stderr, "[%s%s%s] \n", color, str_operation(node->expression.operation), reset);
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
@@ -302,6 +303,29 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     }
 
     return 0;
+}
+
+const char* str_operation(const Operator op)
+{
+    static const char* map[] = {
+        [OP_NOT]           = "!",
+        [OP_UNARY_PLUS]    = "+",
+        [OP_UNARY_MINUS]   = "-",
+        [OP_MUL]           = "*",
+        [OP_DIV]           = "/",
+        [OP_ADD]           = "+",
+        [OP_SUB]           = "-",
+        [OP_LESS]          = "<",
+        [OP_LESS_EQUAL]    = "<=",
+        [OP_GREATER]       = ">",
+        [OP_GREATER_EQUAL] = ">=",
+        [OP_EQUAL]         = "==",
+        [OP_NOT_EQUAL]     = "!=",
+        [OP_AND]           = "&&",
+        [OP_OR]            = "||",
+    };
+
+    return map_str(map, sizeof(map) / sizeof(map[0]), op, "?");
 }
 
 // =======================================================
@@ -381,7 +405,7 @@ const char* str_token(const Token* token, const TokenStringType mode)
         [LEFT_BRACKET] = "(",
         [RIGHT_BRACKET] = ")",
         [KEYWORD] = str_keyword(token->attribute_keyword),
-        [OPERATOR] = str_operator(token->attribute_operation_type),
+        [OPERATOR] = str_token_operator(token->attribute_operation_type),
         [COMPARE] = str_compare(token->attribute_compare_type),
         [BOOLEAN] = (token->attribute_bool ? "true" : "false"),
         [IDENTIFIER] = token->attribute_string,
@@ -480,7 +504,7 @@ const char* str_keyword(const int idx)
     return map_str(map, sizeof(map) / sizeof(map[0]), idx, "[Unknown keyword]");
 }
 
-const char* str_operator(const int idx)
+const char* str_token_operator(const int idx)
 {
     static const char* map[] = {
         [PLUS] = "+",

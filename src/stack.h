@@ -11,10 +11,7 @@
 #include <stdbool.h>
 
 typedef struct stack_el {
-    union {
-        void* data;
-        int value;
-    };
+    void* data;
     struct stack_el* next;
 } StackEl;
 

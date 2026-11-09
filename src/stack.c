@@ -51,19 +51,6 @@ int push(Stack* stack, void* data)
     return 0;
 }
 
-int push_value(Stack* stack, const int value)
-{
-    StackEl* stack_el = malloc(sizeof(StackEl));
-    if (!stack_el)
-        return 1;
-
-    stack_el->value = value;
-    stack_el->next = stack->top;
-    stack->top = stack_el;
-    stack->size++;
-    return 0;
-}
-
 void pop(Stack* stack)
 {
     if (!stack->top)
@@ -81,14 +68,6 @@ void* top(const Stack* stack)
         return NULL;
 
     return stack->top->data;
-}
-
-int top_value(const Stack* stack)
-{
-    if (stack->top == NULL)
-        return -1;
-
-    return stack->top->value;
 }
 
 int stack_size(const Stack* stack)

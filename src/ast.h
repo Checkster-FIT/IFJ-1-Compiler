@@ -64,6 +64,7 @@ typedef struct {
 typedef struct {
     ASTNode* left;
     ASTNode* right;
+    int operation;
 } ASTExpression;
 
 typedef struct {
@@ -96,6 +97,28 @@ struct ast_node {
         ASTExpression expression;
     };
 };
+
+// =====================================
+
+typedef enum {
+    OP_NONE,
+    OP_NOT,
+    OP_UNARY_PLUS,
+    OP_UNARY_MINUS,
+    OP_MUL,
+    OP_DIV,
+    OP_ADD,
+    OP_SUB,
+    OP_LESS,
+    OP_LESS_EQUAL,
+    OP_GREATER,
+    OP_GREATER_EQUAL,
+    OP_EQUAL,
+    OP_NOT_EQUAL,
+    OP_AND,
+    OP_OR,
+    OP_TERMINAL
+} Operator;
 
 // =====================================
 

@@ -853,10 +853,11 @@ int parse_expression(ParserContext* parser, ASTExpression** expr_target)
     }
 
     while (true) {
-        const PrecedenceElement last_elem = get_last_terminal_precedence(stack);
-        const PrecedenceElement next_elem = get_next_token_precedence(parser, last_elem);
+        const PrecedenceElement last_elem = get_last_precedence_terminal(stack);
+        PrecedenceElement* next_elem = create_next_precedence_terminal(parser, last_elem);
+        const PrecedenceElement* top_elem = top(stack);
 
-        if (precedence_stack_finished(stack, next_elem, parser)) {
+        if (precedence_stack_finished(stack, next_elem->group, parser)) {
             if (expr_target != NULL)
                 *expr_target = top(expression_stack);
             dispose_stack(stack);
@@ -865,20 +866,19 @@ int parse_expression(ParserContext* parser, ASTExpression** expr_target)
             return CORRECT;
         }
 
-        switch (table[last_elem][next_elem]) {
+        switch (table[last_elem.group][next_elem->group]) {
             case '<':
-                if (!stack_push_before_expression(stack, '<'))
+                if (!stack_push_before_expression(stack, (PrecedenceElement){.group = '<'}))
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
-                if (top_value(stack) != P_EXPRESSION && next_elem == P_ADDSUB) {
-                    if (push_value(stack, P_UNARY) == 1)
-                        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
-                } else {
-                    if (push_value(stack, next_elem) == 1)
-                        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
-                }
+
+                if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB)
+                    next_elem->group = P_UNARY;
+
+                if (push(stack, next_elem) == 1)
+                    return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 break;
             case '=':
-                if (push_value(stack, next_elem) == 1)
+                if (push(stack, next_elem) == 1)
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 break;
             case '>':
@@ -890,7 +890,7 @@ int parse_expression(ParserContext* parser, ASTExpression** expr_target)
                     str_token(&parser->next, GET_ATTRIBUTE));
         }
 
-        if (next_elem != P_TERM)
+        if (next_elem->group != P_TERM)
             next(parser);
         else if (parse_term(parser) == FAILED)
             return FAILED;
@@ -906,7 +906,12 @@ int parse_expression(ParserContext* parser, ASTExpression** expr_target)
 
 bool precedence_stack_finished(const Stack* stack, const int next_elem, const ParserContext* parser)
 {
-    if (top_value(stack) != P_EXPRESSION || stack_size(stack) != 1)
+    const PrecedenceElement* top_elem = top(stack);
+
+    if (top_elem == NULL)
+        return false;
+
+    if (top_elem->group != P_EXPRESSION || stack_size(stack) != 1)
         return false;
 
     if (parser->parameter_expression && next_elem == P_R_BRACKET)
@@ -917,15 +922,23 @@ bool precedence_stack_finished(const Stack* stack, const int next_elem, const Pa
 
 int stack_push_before_expression(Stack* stack, const PrecedenceElement element)
 {
-    if (is_empty_stack(stack) || top_value(stack) != P_EXPRESSION)
-        return push_value(stack, element) ? FAILED : CORRECT;
-
-    pop(stack);
-
-    if (push_value(stack, element) == 1)
+    PrecedenceElement* node = malloc(sizeof(PrecedenceElement));
+    if (!node)
         return FAILED;
 
-    return push_value(stack, P_EXPRESSION) ? FAILED : CORRECT;
+    *node = element;
+
+    const PrecedenceElement* top_elem = top(stack);
+    if (is_empty_stack(stack) || top_elem->group != P_EXPRESSION)
+        return push(stack, node) ? FAILED : CORRECT;
+
+    void* tmp = top(stack);
+    pop(stack);
+
+    if (push(stack, node) == 1)
+        return FAILED;
+
+    return push(stack, tmp) ? FAILED : CORRECT;
 }
 
 // =======================================================
@@ -933,10 +946,18 @@ int stack_push_before_expression(Stack* stack, const PrecedenceElement element)
 int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* parser)
 {
     if (parser->debug) {
-        if (push_value(stack, '>') == 1)
+
+        PrecedenceElement* node = malloc(sizeof(PrecedenceElement));
+        if (!node)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+        node->group = '>';
+        node->operator = OP_NONE;
+        if (push(stack, node) == 1)
             return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
 
         log_precedence_stack(parser, stack);
+        free(top(stack));
         pop(stack);
     }
 
@@ -946,7 +967,14 @@ int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* 
     if (!stack_accept_elem(stack, '<'))
         return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
 
-    if (push_value(stack, P_EXPRESSION) == 1)
+    PrecedenceElement* expr_element = malloc(sizeof(PrecedenceElement));
+    expr_element->group = P_EXPRESSION;
+    expr_element->operator = OP_NONE;
+
+    if (!expr_element)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+    if (push(stack, expr_element) == 1)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
 
     if (parser->debug)
@@ -959,7 +987,9 @@ int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* pars
 {
     ASTNode* node = ast_new_expression((ASTExpression) {
         .left = NULL,
-        .right = NULL });
+        .right = NULL,
+        .operation = OP_NONE
+    });
 
     // <E> -> [t]
     if (stack_accept_elem(stack, P_TERM)) {
@@ -988,6 +1018,8 @@ int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* pars
     // Expression is required after this point
     if (!stack_accept_elem(stack, P_EXPRESSION))
         return FAILED;
+
+    node->expression.operation = get_stack_top_operator(stack);
 
     // <E> := +<E>, -<E>, !<E>
     if (stack_accept_elem(stack, P_UNARY)) {
@@ -1027,74 +1059,147 @@ int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* pars
     return FAILED;
 }
 
-int stack_accept_elem(Stack* stack, const int elem)
+int get_stack_top_operator(const Stack* stack)
 {
-    if (top_value(stack) != elem)
+    PrecedenceElement* top_elem = top(stack);
+    if (!top_elem)
+        return OP_NONE;
+
+    return top_elem->operator;
+}
+
+int stack_accept_elem(Stack* stack, const PrecedenceGroup group)
+{
+    if (is_empty_stack(stack))
         return FAILED;
+
+    const PrecedenceElement* top_elem = top(stack);
+    if (top_elem->group != group)
+        return FAILED;
+
+    free(top(stack));
     pop(stack);
     return CORRECT;
 }
 
 // =======================================================
 
-PrecedenceElement get_last_terminal_precedence(Stack* stack)
+PrecedenceElement get_last_precedence_terminal(Stack* stack)
 {
     if (is_empty_stack(stack))
-        return P_DELIMITER;
+        return (PrecedenceElement) {
+            .group = P_DELIMITER,
+            .operator = OP_NONE
+        };
 
-    if (top_value(stack) != P_EXPRESSION)
-        return top_value(stack);
+    PrecedenceElement* top_elem = top(stack);
+    if (top_elem->group != P_EXPRESSION)
+        return *top_elem;
 
-    const PrecedenceElement nonterminal = top_value(stack);
     pop(stack);
 
-    const PrecedenceElement terminal = !is_empty_stack(stack) ? top_value(stack) : P_DELIMITER;
-    push_value(stack, nonterminal);
-    return terminal;
+    if (is_empty_stack(stack)) {
+        push(stack, top_elem);
+        return (PrecedenceElement) {
+            .group = P_DELIMITER,
+            .operator = OP_NONE
+        };
+    }
+
+    const PrecedenceElement* prev_elem = top(stack);
+    push(stack, top_elem);
+    return *prev_elem;
 }
 
-PrecedenceElement get_next_token_precedence(const ParserContext* parser, const int last_elem)
+PrecedenceElement* create_next_precedence_terminal(const ParserContext* parser, PrecedenceElement last_elem)
 {
+    PrecedenceElement* element = malloc(sizeof(PrecedenceElement));
+    if (!element)
+        return NULL;
+    element->operator = OP_NONE;
+
     if (parser->interpolated_expression) {
         if (check_next(STRING_INTERPOLATION_END, parser)
             || check_next(STRING_INTERPOLATION, parser)
             || check_next(MULTILINE_STRING_INTERPOLATION, parser)
-            || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
-            return P_DELIMITER;
+            || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+
+            element->group = P_DELIMITER;
+            return element;
+        }
     }
 
     if (parser->parameter_expression) {
-        if (last_elem == P_R_BRACKET)
-            return P_DELIMITER;
+        if (last_elem.group == P_R_BRACKET) {
+            element->group = P_DELIMITER;
+            return element;
+        }
     }
 
     switch (parser->next.type) {
         case OPERATOR:
             switch (parser->next.attribute_operation_type) {
                 case PLUS:
+                    element->group = P_ADDSUB;
+                    element->operator = OP_ADD;
+                    return element;
                 case MINUS:
-                    return P_ADDSUB;
+                    element->group = P_ADDSUB;
+                    element->operator = OP_SUB;
+                    return element;
                 case MULTIPLY:
+                    element->group = P_MULDIV;
+                    element->operator = OP_MUL;
+                    return element;
                 case DIVIDE:
-                    return P_MULDIV;
+                    element->group = P_MULDIV;
+                    element->operator = OP_DIV;
+                    return element;
                 case AND:
-                    return P_AND;
+                    element->group = P_AND;
+                    element->operator = OP_AND;
+                    return element;
                 case OR:
-                    return P_OR;
+                    element->group = P_OR;
+                    element->operator = OP_OR;
+                    return element;
                 case NOT:
-                    return P_UNARY;
+                    element->group = P_UNARY;
+                    element->operator = OP_NOT;
+                    return element;
             }
             break;
         case COMPARE:
-            if (parser->next.attribute_compare_type == EQUAL)
-                return P_EQUAL;
-            if (parser->next.attribute_compare_type == NOT_EQUAL)
-                return P_EQUAL;
-            return P_COMPARE;
+            element->group = P_COMPARE;
+            switch (parser->next.attribute_compare_type) {
+                case EQUAL:
+                    element->group = P_EQUAL;
+                    element->operator = OP_EQUAL;
+                    return element;
+                case NOT_EQUAL:
+                    element->group = P_EQUAL;
+                    element->operator = OP_NOT_EQUAL;
+                    return element;
+                case LESS:
+                    element->operator = OP_LESS;
+                    return element;
+                case GREATER:
+                    element->operator = OP_GREATER;
+                    return element;
+                case LESS_EQUAL:
+                    element->operator = OP_LESS_EQUAL;
+                    return element;
+                case GREATER_EQUAL:
+                    element->operator = OP_GREATER_EQUAL;
+                    return element;
+            }
+            break;
         case LEFT_BRACKET:
-            return P_L_BRACKET;
+            element->group = P_L_BRACKET;
+            return element;
         case RIGHT_BRACKET:
-            return P_R_BRACKET;
+            element->group = P_R_BRACKET;
+            return element;
         case LINE_FEED:
         case SEMICOLON:
         case NONE:
@@ -1102,12 +1207,14 @@ PrecedenceElement get_next_token_precedence(const ParserContext* parser, const i
         case COMMA:
         case END_OF_FILE:
         case KEYWORD:
-            return P_DELIMITER;
+            element->group = P_DELIMITER;
+            return element;
         default:
-            return P_TERM;
+            element->group = P_TERM;
+            element->operator = OP_NONE;
+            return element;
     }
-
-    return P_TERM;
+    return element;
 }
 
 // =======================================================

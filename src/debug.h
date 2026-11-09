@@ -43,11 +43,12 @@ void print_token(const Token* token);
 void print_line(ParserContext* parser);
 
 bool is_string_token(const Token* token);
+const char* str_operation(const Operator op);
 
 const char* str_type(const char type_char);
 const char* str_token(const Token* token, TokenStringType mode);
 const char* str_keyword(int idx);
-const char* str_operator(int idx);
+const char* str_token_operator(int idx);
 const char* str_compare(int idx);
 
 const char* map_str(const char** map, int size, int idx, const char* fallback);
