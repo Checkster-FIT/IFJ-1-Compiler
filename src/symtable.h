@@ -25,7 +25,7 @@ Symtable* new_symtable();
 void free_symtable(const Symtable* symtable);
 void free_allocated_entries(const TNode* node);
 
-SymtableEntry* symtable_add_entry(Symtable* symtable, SymtableEntry function);
+SymtableEntry* symtable_add_entry(Symtable* symtable, SymtableEntry entry);
 SymtableEntry* symtable_add_var(Symtable* symtable, SymtableEntry var);
 
 #endif // IFJ_1_COMPILER_SYMTABLE_H

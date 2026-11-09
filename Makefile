@@ -46,7 +46,7 @@ run: $(MAIN_EXEC)
 .PHONY: extkw funexp interpolateds paramlists valmem lists
 # -----------------------------------------------
 
-custom: $(MAIN_EXEC)
+custom basic: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/$@.ifj26
 
 strings factorial: $(MAIN_EXEC)

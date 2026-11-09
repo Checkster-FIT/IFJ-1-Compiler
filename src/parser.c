@@ -207,15 +207,16 @@ int parse_extension(ParserContext* parser)
     if (!accept_next(INDENT, parser))
         return failed(parser, PARSER_EXT_MISSING_INDENT);
 
-    pop(parser->symtable_stack);
     return parse_extension_body(parser);
 }
 
 int parse_extension_body(ParserContext* parser)
 {
     // <extension_body> -> [DEDENT]
-    if (accept_next(DEDENT, parser))
+    if (accept_next(DEDENT, parser)) {
+        pop(parser->symtable_stack);
         return CORRECT;
+    }
 
     // <extension_body> -> <function> + <extension_body>
     if (check_next_keyword(DEF_KW, parser))
@@ -231,11 +232,9 @@ int parse_function(ParserContext* parser)
     log_ast_start(parser);
     // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
 
-    SymtableEntry function = { };
-    function.defined = true;
-    function.main = accept_next(MAIN_IDENTIFIER, parser);
+    const bool is_main = accept_next(MAIN_IDENTIFIER, parser);
 
-    if (function.main)
+    if (is_main)
         accept_next(LINE_FEED, parser);
 
     if (!accept_next_keyword(DEF_KW, parser))
@@ -244,7 +243,11 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    function.identifier = parser->accepted.attribute_string;
+    SymtableEntry* function = symtable_add_entry(top(parser->symtable_stack), (SymtableEntry){
+        .defined = true,
+        .main = is_main,
+        .identifier = parser->accepted.attribute_string
+    });
 
     // - Create a new local symtable
     Symtable* local_symtable = new_symtable();
@@ -253,11 +256,11 @@ int parse_function(ParserContext* parser)
 
     // AST - New function
     if (parser->inside_extension) {
-        if (ast_add_ext_function(parser->ast, function.identifier, local_symtable) == NULL)
+        if (ast_add_ext_function(parser->ast, function->identifier, local_symtable) == NULL)
             return failed(parser, MEMORY_ALLOCATION_ERROR);
     }
     else {
-        if (ast_add_function(parser->ast, function.identifier, local_symtable) == NULL)
+        if (ast_add_function(parser->ast, function->identifier, local_symtable) == NULL)
             return failed(parser, MEMORY_ALLOCATION_ERROR);
     }
     log_ast_end(parser);
@@ -273,13 +276,10 @@ int parse_function(ParserContext* parser)
     if (!parse_type_specifier(parser))
         return FAILED;
 
-    function.data_type = parser->last_type;
+    function->data_type = parser->last_type;
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
-
-    // Add the function to the symtable and remove it from the top
-    symtable_add_entry(top(parser->symtable_stack), function);
 
     if (!parse_function_body(parser))
         return FAILED;

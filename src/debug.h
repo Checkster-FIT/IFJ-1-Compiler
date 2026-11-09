@@ -34,7 +34,7 @@ typedef struct Branch {
 
 void print_ast(ASTNode* root);
 void print_ast_indent(const Branch* branch);
-void print_ast_recursively(ASTNode* node, Branch* parent);
+int print_ast_recursively(ASTNode* node, Branch* parent);
 
 void log_precedence_stack(const ParserContext* parser, const Stack* stack);
 
@@ -44,6 +44,7 @@ void print_line(ParserContext* parser);
 
 bool is_string_token(const Token* token);
 
+const char* str_type(const char type_char);
 const char* str_token(const Token* token, TokenStringType mode);
 const char* str_keyword(int idx);
 const char* str_operator(int idx);

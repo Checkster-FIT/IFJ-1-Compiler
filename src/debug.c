@@ -207,16 +207,16 @@ void print_ast_indent(const Branch* branch)
     fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "     " : "  │  ");
 }
 
-void print_ast_recursively(ASTNode* node, Branch* parent)
+int print_ast_recursively(ASTNode* node, Branch* parent)
 {
     if (!node)
-        return;
+        return 0;
 
     parent->last = !node->next && !parent->followed;
 
     if (parent->parent) {
         print_ast_indent(parent->parent);
-        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "  └─ " : "  ├─ ");
+        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "  └──" : "  ├──");
     }
 
     char* color = "\033[1;34m";
@@ -246,8 +246,9 @@ void print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_FUNCTION:
+            entry = search(parent->symtable, node->function.identifier)->value;
             fprintf(stderr, "[%sFun%s] ", color, reset);
-            fprintf(stderr, "%s\n", node->function.identifier);
+            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             this.symtable = node->function.symtable;
 
             this.followed = node->function.statements.first != NULL;
@@ -271,19 +272,20 @@ void print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_PARAMETER:
             entry = search(parent->symtable, node->parameter.identifier)->value;
             fprintf(stderr, "[%sPar%s] ", color, reset);
-            fprintf(stderr, "%s: %c\n", entry->identifier, entry->data_type);
+            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->next, parent);
             break;
 
         case AST_VAR_DEF:
-            entry = search(parent->symtable, node->vardef.identifier)->value;
+            fprintf(stderr, "\033[1;30m%s\033[0m", "─────");
 
+            entry = search(parent->symtable, node->vardef.identifier)->value;
             if (entry->constant)
                 fprintf(stderr, "[%sVal%s] ", color, reset);
             else
                 fprintf(stderr, "[%sVar%s] ", color, reset);
 
-            fprintf(stderr, "%s: %c\n", entry->identifier, entry->data_type);
+            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->next, parent);
             break;
 
@@ -293,9 +295,29 @@ void print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_VAR:
             break;
     }
+
+    return 0;
 }
 
 // =======================================================
+
+const char* str_type(const char type_char)
+{
+    switch (type_char) {
+        case 's':
+            return "String";
+        case 'i':
+            return "Int";
+        case 'd':
+            return "Double";
+        case 'u':
+            return "Unit";
+        case 'b':
+            return "Boolean";
+        default:
+            return "Unknown";
+    }
+}
 
 const char* str_token(const Token* token, const TokenStringType mode)
 {
