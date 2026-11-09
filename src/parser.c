@@ -499,8 +499,14 @@ int parse_statement(ParserContext* parser)
         return CORRECT;
     }
 
+
     // <statement> -> <EXPR>
-    return parse_expression(parser, NULL);
+    ASTNode* expr_node;
+    if (!parse_expression(parser, &expr_node))
+        return FAILED;
+
+    ast_add_expression(parser->ast, expr_node);
+    return CORRECT;
 }
 
 int parse_statement_variable_definition(ParserContext* parser)
@@ -508,32 +514,32 @@ int parse_statement_variable_definition(ParserContext* parser)
     // <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
     // <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
     log_ast_start(parser);
-    SymtableEntry variable = {
+    SymtableEntry vardef = {
         .defined = true,
         .data_type = '?'
     };
 
     if (!accept_next_keyword(VAR_KW, parser) && !accept_next_keyword(VAL_KW, parser))
         return FAILED;
-    variable.constant = parser->accepted.attribute_keyword == VAL_KW;
+    vardef.constant = parser->accepted.attribute_keyword == VAL_KW;
 
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
-    variable.identifier = parser->accepted.attribute_string;
+    vardef.identifier = parser->accepted.attribute_string;
 
     if (!parse_type_specifier(parser))
         return FAILED;
-    variable.data_type = parser->last_type;
-    symtable_add_entry(top(parser->symtable_stack), variable);
+    vardef.data_type = parser->last_type;
+    symtable_add_entry(top(parser->symtable_stack), vardef);
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
 
-    ASTNode* node = ast_add_vardef(parser->ast, variable.identifier);
+    ASTNode* node = ast_add_vardef(parser->ast, vardef.identifier);
     if (node == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
 
-    if (!parse_expression(parser, (ASTExpression**)&(node->vardef.expression)))
+    if (!parse_expression(parser, &(node->vardef.expression)))
         return FAILED;
 
     log_ast_end(parser);
@@ -547,10 +553,16 @@ int parse_statement_assignment(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return FAILED;
 
+    const char* identifier = parser->accepted.attribute_string;
+
     if (!accept_next(ASSIGNMENT, parser))
         return FAILED;
 
-    return parse_expression(parser, NULL);
+    ASTNode* node = ast_add_assignment(parser->ast, identifier);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
+
+    return parse_expression(parser, &(node->assignment.expression));
 }
 
 int parse_statement_return(ParserContext* parser)
@@ -826,7 +838,7 @@ int parse_function_call_parameter_list(ParserContext* parser)
 
 // =======================================================
 
-int parse_expression(ParserContext* parser, ASTExpression** expr_target)
+int parse_expression(ParserContext* parser, ASTNode** expr_target)
 {
     static const char table[P_TERMINAL_COUNT][P_TERMINAL_COUNT] = {
         //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]
@@ -860,6 +872,11 @@ int parse_expression(ParserContext* parser, ASTExpression** expr_target)
         if (precedence_stack_finished(stack, next_elem->group, parser)) {
             if (expr_target != NULL)
                 *expr_target = top(expression_stack);
+            else
+                free_ast_nodes(top(expression_stack));
+
+            free(top(stack));
+            free(next_elem);
             dispose_stack(stack);
             dispose_stack(expression_stack);
             parser->expressions_nested--;
@@ -884,8 +901,14 @@ int parse_expression(ParserContext* parser, ASTExpression** expr_target)
             case '>':
                 if (!apply_expression_rule(stack, expression_stack, parser))
                     return FAILED;
+                free(next_elem);
                 continue;
             default:
+                free_ast_nodes(top(expression_stack));
+                free(top(stack));
+                free(next_elem);
+                dispose_stack(stack);
+                dispose_stack(expression_stack);
                 return failed(parser, PARSER_INVALID_EXPRESSION_USE,
                     str_token(&parser->next, GET_ATTRIBUTE));
         }
@@ -995,8 +1018,10 @@ int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* pars
     if (stack_accept_elem(stack, P_TERM)) {
 
         // TODO: node->expression.left = TERM
-        if (push(expression_stack, node) == 1)
+        if (push(expression_stack, node) == 1) {
+            free(node);
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+        }
 
         return CORRECT;
     }
@@ -1005,29 +1030,35 @@ int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* pars
 
         // <E> -> (<E>)
         if (stack_accept_elem(stack, P_EXPRESSION)) {
+            free(node);
             return stack_accept_elem(stack, P_L_BRACKET);
         }
 
         // <E> -> ()
         else {
             // Unit literal
+            free(node);
             return stack_accept_elem(stack, P_L_BRACKET);
         }
     }
 
     // Expression is required after this point
-    if (!stack_accept_elem(stack, P_EXPRESSION))
+    if (!stack_accept_elem(stack, P_EXPRESSION)) {
+        free(node);
         return FAILED;
+    }
 
     node->expression.operation = get_stack_top_operator(stack);
 
     // <E> := +<E>, -<E>, !<E>
     if (stack_accept_elem(stack, P_UNARY)) {
         node->expression.left = top(expression_stack);
-
         pop(expression_stack);
-        if (push(expression_stack, node) == 1)
+
+        if (push(expression_stack, node) == 1) {
+            free(node);
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+        }
 
         return CORRECT;
     }
@@ -1042,20 +1073,25 @@ int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* pars
         || stack_accept_elem(stack, P_EQUAL)
         || stack_accept_elem(stack, P_AND)
         || stack_accept_elem(stack, P_OR)) {
-        if (!stack_accept_elem(stack, P_EXPRESSION))
+        if (!stack_accept_elem(stack, P_EXPRESSION)) {
+            free(node);
             return FAILED;
+        }
 
         node->expression.right = top(expression_stack);
         pop(expression_stack);
         node->expression.left = top(expression_stack);
         pop(expression_stack);
 
-        if (push(expression_stack, node) == 1)
+        if (push(expression_stack, node) == 1) {
+            free(node);
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+        }
 
         return CORRECT;
     }
 
+    free(node);
     return FAILED;
 }
 

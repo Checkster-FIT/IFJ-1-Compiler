@@ -205,7 +205,7 @@ void print_ast_indent(const Branch* branch)
         return;
 
     print_ast_indent(branch->parent);
-    fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "     " : "  │  ");
+    fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "       " : "   │   ");
 }
 
 int print_ast_recursively(ASTNode* node, Branch* parent)
@@ -217,7 +217,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
     if (parent->parent) {
         print_ast_indent(parent->parent);
-        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "  └──" : "  ├──");
+        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "   └────" : "   ├────");
     }
 
     char* color = "\033[1;34m";
@@ -234,11 +234,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
     switch (node->type) {
         case AST_NONE:
-            fprintf(stderr, "[?]: Unknown node\n");
+            fprintf(stderr, "[???]: Unknown node\n");
             break;
 
         case AST_PROGRAM:
-            fprintf(stderr, "[%sAST%s] \n", color_secondary, reset);
+            fprintf(stderr, " [%sAST%s] \n", color_secondary, reset);
             this.symtable = node->program.global_symtable;
 
             this.followed = node->program.functions.first != NULL;
@@ -280,10 +280,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
         case AST_VAR_DEF:
             entry = search(parent->symtable, node->vardef.identifier)->value;
-            if (entry->constant)
-                fprintf(stderr, "[%sVal%s] ", color, reset);
-            else
+            if (!entry->constant)
                 fprintf(stderr, "[%sVar%s] ", color, reset);
+            else
+                fprintf(stderr, "[%sVal%s] ", color, reset);
 
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
@@ -292,13 +292,23 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             break;
         case AST_EXPRESSION:
-            fprintf(stderr, "[%s%s%s] \n", color, str_operation(node->expression.operation), reset);
+            if (node->expression.operation != OP_NONE)
+                fprintf(stderr, "[%sE%sE%s]\n", color, str_operation(node->expression.operation), reset);
+            else
+                fprintf(stderr, "[%sExp%s]\n", color, reset);
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
             print_ast_recursively(node->expression.right, &this);
+            print_ast_recursively(node->next, parent);
             break;
+
         case AST_VAR_ASSIGN:
+            entry = search(parent->symtable, node->vardef.identifier)->value;
+            fprintf(stderr, "[%sAss%s] ", color, reset);
+            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            print_ast_recursively(node->assignment.expression, &this);
+            print_ast_recursively(node->next, parent);
             break;
     }
 
@@ -325,7 +335,7 @@ const char* str_operation(const Operator op)
         [OP_OR]            = "||",
     };
 
-    return map_str(map, sizeof(map) / sizeof(map[0]), op, "?");
+    return map_str(map, sizeof(map) / sizeof(map[0]), op, "E");
 }
 
 // =======================================================

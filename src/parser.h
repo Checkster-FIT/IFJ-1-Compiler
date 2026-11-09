@@ -132,7 +132,7 @@ int parse_param(ParserContext* parser);
 PrecedenceElement* create_next_precedence_terminal(const ParserContext* parser, PrecedenceElement last_elem);
 PrecedenceElement get_last_precedence_terminal(Stack* stack);
 
-int parse_expression(ParserContext* parser, ASTExpression** expr_target);
+int parse_expression(ParserContext* parser, ASTNode** expr_target);
 int stack_push_before_expression(Stack* stack, const PrecedenceElement element);
 bool precedence_stack_finished(const Stack* stack, int next_elem, const ParserContext* parser);
 int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* parser);

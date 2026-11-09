@@ -76,7 +76,7 @@ typedef struct {
 } ASTParameter;
 
 typedef struct {
-    ASTNode* target;
+    const char* target;
     ASTNode* expression;
 } ASTAssignment;
 
@@ -134,6 +134,9 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
 
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
+
+ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);
 
 Symtable* create_local_symtable(ASTNode* ast);

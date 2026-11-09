@@ -74,8 +74,7 @@ void free_ast_nodes(ASTNode* node)
         case AST_VAR_DEF:
             free_ast_nodes(node->vardef.expression);
             break;
-        case AST_VAR_ASSIGN:
-            free_ast_nodes(node->assignment.target);
+        case AST_VAR_ASSIGN:;
             free_ast_nodes(node->assignment.expression);
             break;
         case AST_EXPRESSION:
@@ -234,6 +233,34 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
     ast_list_add(&ast->program.last_function->function.statements, node);
     ast->program.recent_node = node;
     return node;
+}
+
+ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_VAR_ASSIGN,
+        .next = NULL,
+        .assignment = {
+            .target = identifier,
+            .expression = NULL,
+        },
+    };
+
+    ast_list_add(&ast->program.last_function->function.statements, node);
+    ast->program.recent_node = node;
+    return node;
+}
+
+ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
+{
+    ast_list_add(&ast->program.last_function->function.statements, expression);
+    ast->program.recent_node = expression;
+    return expression;
 }
 
 ASTNode* ast_new_expression(const ASTExpression expression)
