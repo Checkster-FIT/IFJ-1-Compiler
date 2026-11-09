@@ -1020,7 +1020,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_ZERO:
-                if (c == 0)
+                if (c == '0')
                     state = STATE_ZERO;
                 else if (c == '.')
                     state = STATE_DECIMAL_POINT;
