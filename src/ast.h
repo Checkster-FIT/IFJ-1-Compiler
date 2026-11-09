@@ -62,6 +62,11 @@ typedef struct {
 } ASTVarDef;
 
 typedef struct {
+    ASTNode* left;
+    ASTNode* right;
+} ASTExpression;
+
+typedef struct {
     const char* identifier;
 } ASTVariable;
 

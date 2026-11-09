@@ -80,7 +80,6 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_VAR:
             break;
-
     }
 
     // fprintf(stderr,"Freed: %i\n", node->type);
@@ -109,7 +108,7 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .type = AST_EXTENSION,
         .next = NULL,
         .extension = {
-            .functions = {},
+            .functions = { },
             .parameter = NULL,
             .symtable = symtable,
         },
@@ -119,7 +118,6 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
     ast->program.recent_node = node;
     return node;
 }
-
 
 ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable)
 {
@@ -137,8 +135,7 @@ ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* sy
             .identifier = identifier,
             .statements = { },
             .parameters = { },
-            .symtable = symtable
-        },
+            .symtable = symtable },
     };
 
     ast_list_add(&ast->program.extensions.last->extension.functions, node);
@@ -161,8 +158,7 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
             .identifier = identifier,
             .statements = { },
             .parameters = { },
-            .symtable = symtable
-        },
+            .symtable = symtable },
     };
 
     ast_list_add(&ast->program.functions, node);

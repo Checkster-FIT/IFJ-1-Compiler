@@ -44,7 +44,6 @@ typedef struct {
     bool debug_ast_nodes;
     bool debug_prefix_failed;
     bool debug_prefix_skipped;
-    bool debug_prefix_expression;
     bool debug_prefix_term;
     bool debug_prefix_ast;
     int debug_print_remaining;
@@ -124,10 +123,15 @@ int parse_param_list(ParserContext* parser);
 int parse_param(ParserContext* parser);
 
 // -----------------------------------------
-PrecedenceElement get_token_precedence(const Token* token);
-PrecedenceElement get_last_terminal(Stack* stack);
+PrecedenceElement get_next_token_precedence(const ParserContext* parser, int last_elem);
+PrecedenceElement get_last_terminal_precedence(Stack* stack);
 
 int parse_expression(ParserContext* parser);
+int stack_push_before_expression(Stack* stack, const PrecedenceElement element);
+bool precedence_stack_finished(const Stack* stack,  int next_elem, const ParserContext* parser);
+int apply_expression_rule(Stack* stack, ParserContext* parser);
+int stack_accept_rule(Stack* stack);
+int stack_accept_elem(Stack* stack, int elem);
 
 int parse_term(ParserContext* parser);
 int parse_dot_call(ParserContext* parser);

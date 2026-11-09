@@ -32,7 +32,7 @@ void log_parsed(ParserContext* parser)
             color = "\033[1;34m";
         }
         // Accepted tokens (Expressions)
-        else if (parser->debug_prefix_expression) {
+        else if (parser->expressions_nested > 0) {
             prefix = "EXP";
             color = "\033[1;34m";
         }

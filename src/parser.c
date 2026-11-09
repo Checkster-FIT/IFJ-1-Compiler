@@ -65,7 +65,6 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     // Temporary prefix flags
     parser->debug_prefix_failed = true;
     parser->debug_prefix_skipped = false;
-    parser->debug_prefix_expression = false;
     parser->debug_prefix_term = false;
     parser->debug_prefix_ast = false;
 
@@ -93,7 +92,7 @@ int run_parser(ASTNode* ast, AllocatedStrings* strings)
 {
     ParserContext parser;
     if (init_parser(&parser, ast, strings) == NULL)
-        return print_error(MEMORY_ALLOCATION_ERROR, 0);
+        return print_error(MEMORY_ALLOCATION_ERROR, 0, "ParserContext");
 
     const int status = parse_program(&parser);
 
@@ -185,11 +184,11 @@ int parse_extension(ParserContext* parser)
     // - Create a new local symtable
     Symtable* local_symtable = new_symtable();
     if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
 
     // AST - New extension
     if (ast_add_extension(parser->ast, local_symtable) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST extension");
     log_ast_end(parser);
 
     if (!accept_next(LEFT_BRACKET, parser))
@@ -243,25 +242,20 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    SymtableEntry* function = symtable_add_entry(top(parser->symtable_stack), (SymtableEntry){
-        .defined = true,
-        .main = is_main,
-        .identifier = parser->accepted.attribute_string
-    });
+    SymtableEntry* function = symtable_add_entry(top(parser->symtable_stack), (SymtableEntry) { .defined = true, .main = is_main, .identifier = parser->accepted.attribute_string });
 
     // - Create a new local symtable
     Symtable* local_symtable = new_symtable();
     if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
 
     // AST - New function
     if (parser->inside_extension) {
         if (ast_add_ext_function(parser->ast, function->identifier, local_symtable) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR);
-    }
-    else {
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
+    } else {
         if (ast_add_function(parser->ast, function->identifier, local_symtable) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR);
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
     }
     log_ast_end(parser);
 
@@ -392,11 +386,10 @@ int parse_param(ParserContext* parser)
     // AST - Parameter
     if (parser->inside_extension) {
         if (ast_add_ext_parameter(parser->ast, parameter.identifier) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR);
-    }
-    else {
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Parameter");
+    } else {
         if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR);
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Parameter");
     }
     log_ast_end(parser);
 
@@ -540,9 +533,8 @@ int parse_statement_variable_definition(ParserContext* parser)
         return FAILED;
 
     if (ast_add_vardef(parser->ast, variable.identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
     log_ast_end(parser);
-
 
     return CORRECT;
 }
@@ -700,7 +692,7 @@ int parse_term(ParserContext* parser)
 
     parser->debug_prefix_term = tmp_term_debug;
     if (status == FAILED)
-        return failed(parser, PARSER_INVALID_EXPRESSION,
+        return failed(parser, PARSER_INVALID_EXPRESSION_USE,
             str_token(&parser->next, GET_NAME));
     return CORRECT;
 }
@@ -853,138 +845,50 @@ int parse_expression(ParserContext* parser)
     parser->expressions_nested++;
     if (stack == NULL) {
         dispose_stack(stack);
-        return print_error(MEMORY_ALLOCATION_ERROR, get_line(parser));
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
     }
 
-    // TODO: Allocation errors
     while (true) {
-        PrecedenceElement next_elem = get_token_precedence(&parser->next);
-        const PrecedenceElement last_elem = get_last_terminal(stack);
+        const PrecedenceElement last_elem = get_last_terminal_precedence(stack);
+        const PrecedenceElement next_elem = get_next_token_precedence(parser, last_elem);
 
-        if (parser->interpolated_expression) {
-            if (check_next(STRING_INTERPOLATION_END, parser)
-                || check_next(STRING_INTERPOLATION, parser)
-                || check_next(MULTILINE_STRING_INTERPOLATION, parser)
-                || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
-                next_elem = P_DELIMITER;
-        } else if (parser->parameter_expression && last_elem == P_R_BRACKET) {
-            next_elem = P_DELIMITER;
-        }
-
-        if (next_elem != P_TERM)
-            parser->debug_prefix_expression = true;
-
-        if (top_value(stack) == P_EXPRESSION && stack_size(stack) == 1) {
-            if (next_elem == P_DELIMITER || (parser->parameter_expression && next_elem == P_R_BRACKET)) {
-                parser->debug_prefix_expression = false;
-                parser->expressions_nested--;
-                dispose_stack(stack);
-                return CORRECT;
-            }
+        if (precedence_stack_finished(stack, next_elem, parser)) {
+            dispose_stack(stack);
+            parser->expressions_nested--;
+            return CORRECT;
         }
 
         switch (table[last_elem][next_elem]) {
             case '<':
-                if (!is_empty_stack(stack)) {
-                    const PrecedenceElement tmp = top_value(stack);
-
-                    if (tmp == P_EXPRESSION)
-                        pop(stack);
-
-                    push_value(stack, '<');
-
-                    if (tmp == P_EXPRESSION)
-                        push_value(stack, P_EXPRESSION);
-                } else {
-                    push_value(stack, '<');
+                if (!stack_push_before_expression(stack, '<'))
+                    return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                if (top_value(stack) != P_EXPRESSION && next_elem == P_ADDSUB) {
+                    if (push_value(stack, P_UNARY) == 1)
+                        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 }
-
-                if (top_value(stack) != P_EXPRESSION && next_elem == P_ADDSUB)
-                    next_elem = P_UNARY;
-
-                push_value(stack, next_elem);
+                else {
+                    if (push_value(stack, next_elem) == 1)
+                        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                }
                 break;
             case '=':
-                push_value(stack, next_elem);
+                if (push_value(stack, next_elem) == 1)
+                    return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 break;
             case '>':
-                push_value(stack, '>');
-                if (parser->debug)
-                    log_precedence_stack(parser, stack);
-                pop(stack);
-
-                if (top_value(stack) == P_R_BRACKET) {
-                    pop(stack);
-
-                    if (top_value(stack) == P_EXPRESSION)
-                        pop(stack);
-
-                    if (top_value(stack) != P_L_BRACKET)
-                        return FAILED;
-                    pop(stack);
-
-                    if (top_value(stack) != '<')
-                        return FAILED;
-                    pop(stack);
-                    push_value(stack, P_EXPRESSION);
-                } else if (top_value(stack) == P_EXPRESSION) {
-                    pop(stack);
-
-                    if (top_value(stack) == P_UNARY) {
-                        pop(stack);
-                        if (top_value(stack) != '<')
-                            return FAILED;
-
-                        pop(stack);
-                        push_value(stack, P_EXPRESSION);
-                    }
-
-                    if (top_value(stack) == P_MULDIV
-                        || top_value(stack) == P_ADDSUB
-                        || top_value(stack) == P_COMPARE
-                        || top_value(stack) == P_EQUAL
-                        || top_value(stack) == P_AND
-                        || top_value(stack) == P_OR) {
-
-                        pop(stack);
-                        if (top_value(stack) != P_EXPRESSION)
-                            return FAILED;
-
-                        pop(stack);
-                        if (top_value(stack) != '<')
-                            return FAILED;
-
-                        pop(stack);
-                        push_value(stack, P_EXPRESSION);
-                    }
-
-                } else if (top_value(stack) == P_TERM) {
-                    pop(stack);
-
-                    if (top_value(stack) != '<')
-                        return FAILED;
-
-                    pop(stack);
-                    push_value(stack, P_EXPRESSION);
-                }
-
-                if (parser->debug)
-                    log_precedence_stack(parser, stack);
-
+                if (!apply_expression_rule(stack, parser))
+                    return FAILED;
                 continue;
             default:
-                return failed(parser, PARSER_INVALID_EXPRESSION,
+                return failed(parser, PARSER_INVALID_EXPRESSION_USE,
                     str_token(&parser->next, GET_ATTRIBUTE));
         }
 
-        if (next_elem == P_TERM) {
-            if (parse_term(parser) == FAILED)
-                return FAILED;
-        } else {
+        if (next_elem != P_TERM)
             next(parser);
-        }
+        else if (parse_term(parser) == FAILED)
+            return FAILED;
 
-        parser->debug_prefix_expression = true;
         if (parser->debug)
             log_precedence_stack(parser, stack);
     }
@@ -992,7 +896,114 @@ int parse_expression(ParserContext* parser)
     return failed(parser, PARSER_RULE_INCOMPLETE, "expression");
 }
 
-PrecedenceElement get_last_terminal(Stack* stack)
+// =======================================================
+
+bool precedence_stack_finished(const Stack* stack, const int next_elem, const ParserContext* parser)
+{
+    if (top_value(stack) != P_EXPRESSION || stack_size(stack) != 1)
+        return false;
+
+    if (parser->parameter_expression && next_elem == P_R_BRACKET)
+        return true;
+
+    return (next_elem == P_DELIMITER);
+}
+
+int stack_push_before_expression(Stack* stack, const PrecedenceElement element)
+{
+    if (is_empty_stack(stack) || top_value(stack) != P_EXPRESSION)
+        return push_value(stack, element) ? FAILED : CORRECT;
+
+    pop(stack);
+
+    if (push_value(stack, element) == 1)
+        return FAILED;
+
+    return push_value(stack, P_EXPRESSION) ? FAILED : CORRECT;
+}
+
+// =======================================================
+
+int apply_expression_rule(Stack* stack, ParserContext* parser)
+{
+    if (parser->debug) {
+        if (push_value(stack, '>') == 1)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+        log_precedence_stack(parser, stack);
+        pop(stack);
+    }
+
+    if (!stack_accept_rule(stack))
+        return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
+
+    if (!stack_accept_elem(stack, '<'))
+        return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
+
+    if (push_value(stack, P_EXPRESSION) == 1)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+    if (parser->debug)
+        log_precedence_stack(parser, stack);
+
+    return CORRECT;
+}
+
+int stack_accept_rule(Stack* stack)
+{
+    // <E> -> [t]
+    if (stack_accept_elem(stack, P_TERM))
+        return CORRECT;
+
+    if (stack_accept_elem(stack, P_R_BRACKET)) {
+
+        // <E> -> (<E>)
+        if (stack_accept_elem(stack, P_EXPRESSION)) {
+            return stack_accept_elem(stack, P_L_BRACKET);
+        }
+
+        // <E> -> ()
+        else {
+            // Unit literal
+            return stack_accept_elem(stack, P_L_BRACKET);
+        }
+    }
+
+    // Expression is required after this point
+    if (!stack_accept_elem(stack, P_EXPRESSION))
+        return FAILED;
+
+    // <E> := +<E>, -<E>, !<E>
+    if (stack_accept_elem(stack, P_UNARY))
+        return CORRECT;
+
+    // <E> :=
+    // <E>*<E>, <E>/<E>, <E>+<E>, <E>-<E>,
+    // <E><<E>, <E><=<E>, <E>><E>, <E>>=<E>,
+    // <E>==<E>, <E>!=<E>, <E>&&<E>, <E>||<E>
+    if (stack_accept_elem(stack, P_MULDIV)
+        || stack_accept_elem(stack, P_ADDSUB)
+        || stack_accept_elem(stack, P_COMPARE)
+        || stack_accept_elem(stack, P_EQUAL)
+        || stack_accept_elem(stack, P_AND)
+        || stack_accept_elem(stack, P_OR)) {
+        return stack_accept_elem(stack, P_EXPRESSION);
+    }
+
+    return FAILED;
+}
+
+int stack_accept_elem(Stack* stack, const int elem)
+{
+    if (top_value(stack) != elem)
+        return FAILED;
+    pop(stack);
+    return CORRECT;
+}
+
+// =======================================================
+
+PrecedenceElement get_last_terminal_precedence(Stack* stack)
 {
     if (is_empty_stack(stack))
         return P_DELIMITER;
@@ -1008,31 +1019,24 @@ PrecedenceElement get_last_terminal(Stack* stack)
     return terminal;
 }
 
-PrecedenceElement get_token_precedence(const Token* token)
+PrecedenceElement get_next_token_precedence(const ParserContext* parser, const int last_elem)
 {
-    switch (token->type) {
+    if (parser->interpolated_expression) {
+        if (check_next(STRING_INTERPOLATION_END, parser)
+            || check_next(STRING_INTERPOLATION, parser)
+            || check_next(MULTILINE_STRING_INTERPOLATION, parser)
+            || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+            return P_DELIMITER;
+    }
 
-        case INTEGER:
-        case DOUBLE:
-        case IDENTIFIER:
-        case MAIN_IDENTIFIER:
-        case BOOLEAN:
-        case STRING_INTERPOLATION:
-        case STRING_INTERPOLATION_END:
-        case MULTILINE_STRING_INTERPOLATION:
-        case MULTILINE_STRING_INTERPOLATION_END:
-        case STRING:
-        case MULTILINE_STRING:
-        case DOT:
-        case INDENT:
-        case DEDENT:
-        case WHITESPACE:
-        case DECLARATION_SIGN:
-        case ASSIGNMENT:
-            return P_TERM;
+    if (parser->parameter_expression) {
+        if (last_elem == P_R_BRACKET)
+            return P_DELIMITER;
+    }
 
+    switch (parser->next.type) {
         case OPERATOR:
-            switch (token->attribute_operation_type) {
+            switch (parser->next.attribute_operation_type) {
                 case PLUS:
                 case MINUS:
                     return P_ADDSUB;
@@ -1047,32 +1051,29 @@ PrecedenceElement get_token_precedence(const Token* token)
                     return P_UNARY;
             }
             break;
-
         case COMPARE:
-            if (token->attribute_compare_type == EQUAL)
+            if (parser->next.attribute_compare_type == EQUAL)
                 return P_EQUAL;
-            if (token->attribute_compare_type == NOT_EQUAL)
+            if (parser->next.attribute_compare_type == NOT_EQUAL)
                 return P_EQUAL;
             return P_COMPARE;
-
         case LEFT_BRACKET:
             return P_L_BRACKET;
         case RIGHT_BRACKET:
             return P_R_BRACKET;
-
         case LINE_FEED:
         case SEMICOLON:
-            return P_DELIMITER;
-
         case NONE:
         case ERROR:
         case COMMA:
         case END_OF_FILE:
         case KEYWORD:
             return P_DELIMITER;
+        default:
+            return P_TERM;
     }
 
-    return P_DELIMITER;
+    return P_TERM;
 }
 
 // =======================================================

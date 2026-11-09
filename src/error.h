@@ -57,7 +57,8 @@ typedef enum error_enum {
     PARSER_IF_MISSING_INDENT,
     PARSER_IF_MISSING_DEDENT,
     PARSER_COND_STATEMENT_UNCLOSED,
-    PARSER_INVALID_EXPRESSION,
+    PARSER_INVALID_EXPRESSION_USE,
+    PARSER_INVALID_EXPRESSION_FORMAT,
 
     PARSER_RULE_INCOMPLETE,
     PARSER_RULE_INCORRECT_CALL,
@@ -77,6 +78,7 @@ typedef struct {
     char* message;
     char* fix;
     int code;
+    int param_count;
 } ErrorMessage;
 
 /**
