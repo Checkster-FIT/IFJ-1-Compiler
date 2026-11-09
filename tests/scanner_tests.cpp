@@ -67,6 +67,9 @@ protected:
                 case BOOLEAN:
                     EXPECT_EQ(token.attribute_bool, desired_token.attribute_bool);
                     break;
+                case STRING:
+                    EXPECT_STREQ(token.attribute_string, desired_token.attribute_string);
+                    break;
                 default:
                     break;
             }
@@ -227,6 +230,19 @@ TEST_F(scanner, int_zero)
         {
             token(INTEGER, 0),
         });
+    verify_token_sequence("00",
+        {
+            token(INTEGER, 0),
+        });
+}
+TEST_F(scanner, underscore)
+{
+    verify_token_sequence("_", { token(ERROR) });
+}
+
+TEST_F(scanner, int_two_literals)
+{
+    verify_token_sequence("1 2", { token(INTEGER, 1), token(INTEGER, 2) });
 }
 
 // Error handling tests
@@ -244,4 +260,147 @@ TEST_F(scanner, int_err_leading_zero)
         });
 }
 
-// =====================================================
+TEST_F(scanner, zerozeroone)
+{
+    verify_token_sequence("001", { token(ERROR) });
+}
+
+TEST_F(scanner, int_err_trailing_underscore)
+{
+    verify_token_sequence("1_", { token(ERROR) });
+}
+
+// ===================== Doubles =====================
+
+TEST_F(scanner, double_simple)
+{
+    verify_token_sequence("1.5", { token(DOUBLE, 1.5) });
+    verify_token_sequence("0.5", { token(DOUBLE, 0.5) });
+    verify_token_sequence("0.0", { token(DOUBLE, 0.0) });
+}
+
+TEST_F(scanner, double_missing_integer_part)
+{
+    verify_token_sequence(".5", { token(DOUBLE, 0.5) });
+    verify_token_sequence(".5e2", { token(DOUBLE, 50.0) });
+}
+
+TEST_F(scanner, double_exponent)
+{
+    verify_token_sequence("1e3", { token(DOUBLE, 1000.0) });
+    verify_token_sequence("1E3", { token(DOUBLE, 1000.0) });
+    verify_token_sequence("1e+3", { token(DOUBLE, 1000.0) });
+    verify_token_sequence("1e-3", { token(DOUBLE, 0.001) });
+    verify_token_sequence("1.5e3", { token(DOUBLE, 1500.0) });
+}
+
+TEST_F(scanner, double_underscores)
+{
+    verify_token_sequence("1_0.2_5", { token(DOUBLE, 10.25) });
+    verify_token_sequence("1e1_0", { token(DOUBLE, 1e10) });
+}
+
+TEST_F(scanner, double_suffix)
+{
+    verify_token_sequence("1.5d", { token(DOUBLE, 1.5) });
+    verify_token_sequence("1.5D", { token(DOUBLE, 1.5) });
+    verify_token_sequence("1e3d", { token(DOUBLE, 1000.0) });
+    verify_token_sequence(".5d", { token(DOUBLE, 0.5) });
+}
+
+TEST_F(scanner, double_err_incomplete_exponent)
+{
+    verify_token_sequence("1e", { token(ERROR) });
+    verify_token_sequence("1e+", { token(ERROR) });
+    verify_token_sequence("1.5e-", { token(ERROR) });
+}
+
+TEST_F(scanner, double_err_underscore_placement)
+{
+    verify_token_sequence("1_.5", { token(ERROR) });
+    verify_token_sequence("1.5_", { token(ERROR) });
+}
+
+// ===================== Strings =====================
+TEST_F(scanner, string_simple)
+{
+    verify_token_sequence("\"adam zapletal\"", { token(STRING, "adam zapletal") });
+    verify_token_sequence("\"\"", { token(STRING, "") });
+}
+
+TEST_F(scanner, string_special_chars_inside)
+{
+    verify_token_sequence("\"a b # $ ' //x /*y*/\"", { token(STRING, "a b # $ ' //x /*y*/") });
+}
+
+TEST_F(scanner, string_escape_backslash)
+{
+    verify_token_sequence("\"\\\\\"", { token(STRING, "\\") });
+}
+
+TEST_F(scanner, string_escape_quote)
+{
+    verify_token_sequence("\"\\\"\"", { token(STRING, "\"") });
+}
+
+TEST_F(scanner, string_escape_newline)
+{
+    verify_token_sequence("\"\\n\"", { token(STRING, "\n") });
+}
+
+TEST_F(scanner, string_escape_carriage_return)
+{
+    verify_token_sequence("\"\\r\"", { token(STRING, "\r") });
+}
+
+TEST_F(scanner, string_escape_tab)
+{
+    verify_token_sequence("\"\\t\"", { token(STRING, "\t") });
+}
+
+TEST_F(scanner, string_escape_complex_sequence)
+{
+    verify_token_sequence("\"a\\n\\t\\\\\\\"b\"", { token(STRING, "a\n\t\\\"b") });
+}
+
+TEST_F(scanner, string_adjacent)
+{
+    verify_token_sequence("\"a\"\"b\"", { token(STRING, "a"), token(STRING, "b") });
+    verify_token_sequence("\"a\" \"b\"", { token(STRING, "a"), token(STRING, "b") });
+}
+
+TEST_F(scanner, string_err_real_newline)
+{
+    verify_token_sequence("\"abc\ndef\"", { token(ERROR) });
+}
+
+// ===================== Multiline strings =====================
+
+TEST_F(scanner, mstring_simple)
+{
+    verify_token_sequence("\"\"\"abc\"\"\"", { token(MULTILINE_STRING, "abc") });
+    verify_token_sequence("\"\"\"\"\"\"", { token(MULTILINE_STRING, "") });
+}
+
+TEST_F(scanner, mstring_quotes_inside)
+{
+    verify_token_sequence("\"\"\"a\"b\"\"\"", { token(MULTILINE_STRING, "a\"b") });
+    verify_token_sequence("\"\"\"a\"\"b\"\"\"", { token(MULTILINE_STRING, "a\"\"b") });
+}
+// ===================== Identifiers (keyword prefixes)
+TEST_F(scanner, identifier_keyword_lookalikes)
+{
+    verify_token_sequence("iff defx val_ _val Intt whilee int string main Double1",
+        {
+            token(IDENTIFIER, "iff"),
+            token(IDENTIFIER, "defx"),
+            token(IDENTIFIER, "val_"),
+            token(IDENTIFIER, "_val"),
+            token(IDENTIFIER, "Intt"),
+            token(IDENTIFIER, "whilee"),
+            token(IDENTIFIER, "int"),
+            token(IDENTIFIER, "string"),
+            token(IDENTIFIER, "main"),
+            token(IDENTIFIER, "Double1"),
+        });
+}
