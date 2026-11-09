@@ -24,7 +24,16 @@ typedef enum {
     AST_PARAMETER,
     AST_VAR_ASSIGN,
     AST_VAR_DEF,
+    AST_LITERAL
 } ASTNodeType;
+
+typedef enum {
+    AST_INTEGER,
+    AST_DOUBLE,
+    AST_BOOLEAN,
+    AST_UNIT,
+    AST_UNKNOWN_LITERAL
+} ASTLiteralType;
 
 typedef struct {
     ASTNode* first;
@@ -72,6 +81,15 @@ typedef struct {
 } ASTVariable;
 
 typedef struct {
+    ASTLiteralType type;
+    union {
+        int val_integer;
+        double val_double;
+        bool val_bool;
+    };
+} ASTLiteral;
+
+typedef struct {
     const char* identifier;
 } ASTParameter;
 
@@ -95,6 +113,7 @@ struct ast_node {
         ASTVariable variable;
         ASTAssignment assignment;
         ASTExpression expression;
+        ASTLiteral literal;
     };
 };
 
@@ -138,6 +157,7 @@ ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);
+ASTNode* ast_new_literal(const ASTLiteral literal);
 
 Symtable* create_local_symtable(ASTNode* ast);
 

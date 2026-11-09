@@ -77,7 +77,6 @@ typedef struct {
     Operator operator;
 } PrecedenceElement;
 
-
 // -----------------------------------------
 ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings);
 int run_parser(ASTNode* ast, AllocatedStrings* strings);
@@ -135,12 +134,12 @@ PrecedenceElement get_last_precedence_terminal(Stack* stack);
 int parse_expression(ParserContext* parser, ASTNode** expr_target);
 int stack_push_before_expression(Stack* stack, const PrecedenceElement element);
 bool precedence_stack_finished(const Stack* stack, int next_elem, const ParserContext* parser);
-int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* parser);
-int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* parser);
+int apply_expression_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack, ParserContext* parser);
+int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack, ParserContext* parser);
 int stack_accept_elem(Stack* stack, const PrecedenceGroup group);
 int get_stack_top_operator(const Stack* stack);
 
-int parse_term(ParserContext* parser);
+int parse_term(ParserContext* parser, ASTNode** term_target);
 int parse_dot_call(ParserContext* parser);
 int parse_function_call(ParserContext* parser);
 int parse_function_call_group_list(ParserContext* parser);

@@ -81,6 +81,8 @@ void free_ast_nodes(ASTNode* node)
             free_ast_nodes(node->expression.left);
             free_ast_nodes(node->expression.right);
             break;
+        case AST_LITERAL:
+            break;
     }
 
     // fprintf(stderr,"Freed: %i\n", node->type);
@@ -277,6 +279,22 @@ ASTNode* ast_new_expression(const ASTExpression expression)
             .left = expression.left,
             .right = expression.right,
         }
+    };
+
+    return node;
+}
+
+ASTNode* ast_new_literal(const ASTLiteral literal)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_LITERAL,
+        .next = NULL,
+        .literal = literal
     };
 
     return node;

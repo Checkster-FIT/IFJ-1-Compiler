@@ -499,7 +499,6 @@ int parse_statement(ParserContext* parser)
         return CORRECT;
     }
 
-
     // <statement> -> <EXPR>
     ASTNode* expr_node;
     if (!parse_expression(parser, &expr_node))
@@ -674,7 +673,7 @@ int parse_construct_else(ParserContext* parser)
     return CORRECT;
 }
 
-int parse_term(ParserContext* parser)
+int parse_term(ParserContext* parser, ASTNode** term_target)
 {
     int status = FAILED;
 
@@ -685,24 +684,42 @@ int parse_term(ParserContext* parser)
     //  Add support for more complex terms
 
     // <term> -> [INTEGER] <dot_call>
-    if (accept_next(INTEGER, parser))
+    if (accept_next(INTEGER, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_INTEGER,
+            .val_integer = parser->accepted.attribute_int });
         status = parse_dot_call(parser);
+    }
 
     // <term> -> [DOUBLE] <dot_call>
-    else if (accept_next(DOUBLE, parser))
+    else if (accept_next(DOUBLE, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_DOUBLE,
+            .val_double = parser->accepted.attribute_double });
         status = parse_dot_call(parser);
+    }
 
     // <term> -> [BOOLEAN] <dot_call>
-    else if (accept_next(BOOLEAN, parser))
+    else if (accept_next(BOOLEAN, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_BOOLEAN,
+            .val_bool = parser->accepted.attribute_bool });
         status = parse_dot_call(parser);
+    }
 
     // <term> -> <string> <dot_call>
-    else if (check_next_string_any(parser))
+    else if (check_next_string_any(parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_UNKNOWN_LITERAL });
         status = parse_string(parser) && parse_dot_call(parser);
+    }
 
     // <term> -> <fun_call> <dot_call>
-    else if (check_next(IDENTIFIER, parser))
+    else if (check_next(IDENTIFIER, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_UNKNOWN_LITERAL });
         status = parse_function_call(parser) && parse_dot_call(parser);
+    }
 
     parser->debug_prefix_term = tmp_term_debug;
     if (status == FAILED)
@@ -855,6 +872,8 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
         /* [$]              */ { '<', '<', '?', '<', '<', '<', '<', '<', '<', '<', '?' }
     };
 
+    ASTNode* term_node;
+
     Stack* stack = init_stack();
     Stack* expression_stack = init_stack();
     parser->expressions_nested++;
@@ -885,7 +904,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
 
         switch (table[last_elem.group][next_elem->group]) {
             case '<':
-                if (!stack_push_before_expression(stack, (PrecedenceElement){.group = '<'}))
+                if (!stack_push_before_expression(stack, (PrecedenceElement) { .group = '<' }))
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
 
                 if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB)
@@ -899,7 +918,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 break;
             case '>':
-                if (!apply_expression_rule(stack, expression_stack, parser))
+                if (!apply_expression_rule(stack, term_node, expression_stack, parser))
                     return FAILED;
                 free(next_elem);
                 continue;
@@ -915,7 +934,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
 
         if (next_elem->group != P_TERM)
             next(parser);
-        else if (parse_term(parser) == FAILED)
+        else if (parse_term(parser, &term_node) == FAILED)
             return FAILED;
 
         if (parser->debug)
@@ -966,7 +985,7 @@ int stack_push_before_expression(Stack* stack, const PrecedenceElement element)
 
 // =======================================================
 
-int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* parser)
+int apply_expression_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack, ParserContext* parser)
 {
     if (parser->debug) {
 
@@ -984,7 +1003,7 @@ int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* 
         pop(stack);
     }
 
-    if (!stack_accept_rule(stack, expression_stack, parser))
+    if (!stack_accept_rule(stack, term_node, expression_stack, parser))
         return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
 
     if (!stack_accept_elem(stack, '<'))
@@ -1006,25 +1025,23 @@ int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* 
     return CORRECT;
 }
 
-int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* parser)
+int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack, ParserContext* parser)
 {
-    ASTNode* node = ast_new_expression((ASTExpression) {
-        .left = NULL,
-        .right = NULL,
-        .operation = OP_NONE
-    });
-
     // <E> -> [t]
     if (stack_accept_elem(stack, P_TERM)) {
 
         // TODO: node->expression.left = TERM
-        if (push(expression_stack, node) == 1) {
-            free(node);
+        if (push(expression_stack, term_node) == 1) {
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
         }
 
         return CORRECT;
     }
+
+    ASTNode* node = ast_new_expression((ASTExpression) {
+        .left = NULL,
+        .right = NULL,
+        .operation = OP_NONE });
 
     if (stack_accept_elem(stack, P_R_BRACKET)) {
 

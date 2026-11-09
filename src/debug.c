@@ -98,14 +98,14 @@ void log_precedence_stack_reverse(const StackEl* current)
     log_precedence_stack_reverse(current->next);
 
     static const char* groups[] = {
-        [P_EXPRESSION]      = "E",
-        [P_L_BRACKET]       = "(",
-        [P_TERM]            = "t",
-        [P_R_BRACKET]       = ")",
-        [P_DELIMITER]       = "$",
-        [P_SPECIAL_START]   = "<",
-        [P_SPECIAL_END]     = ">",
-        [P_SPECIAL_EQUAL]   = "=",
+        [P_EXPRESSION] = "E",
+        [P_L_BRACKET] = "(",
+        [P_TERM] = "t",
+        [P_R_BRACKET] = ")",
+        [P_DELIMITER] = "$",
+        [P_SPECIAL_START] = "<",
+        [P_SPECIAL_END] = ">",
+        [P_SPECIAL_EQUAL] = "=",
         [P_SPECIAL_INVALID] = "?",
     };
 
@@ -114,7 +114,7 @@ void log_precedence_stack_reverse(const StackEl* current)
         str = str_operation(element->operator);
     else
         str = map_str(groups, sizeof(groups) / sizeof(groups[0]),
-                      element->group, "?");
+            element->group, "?");
 
     fprintf(stderr, "%s", str);
 }
@@ -257,7 +257,6 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_recursively(node->function.parameters.first, &this);
             this.followed = false;
             print_ast_recursively(node->function.statements.first, &this);
-            print_ast_recursively(node->next, parent);
             break;
 
         case AST_EXTENSION:
@@ -268,14 +267,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_recursively(node->extension.parameter, &this);
             this.followed = false;
             print_ast_recursively(node->extension.functions.first, &this);
-            print_ast_recursively(node->next, parent);
             break;
 
         case AST_PARAMETER:
             entry = search(parent->symtable, node->parameter.identifier)->value;
             fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
-            print_ast_recursively(node->next, parent);
             break;
 
         case AST_VAR_DEF:
@@ -287,7 +284,6 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
-            print_ast_recursively(node->next, parent);
             break;
 
             break;
@@ -300,7 +296,31 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
             print_ast_recursively(node->expression.right, &this);
-            print_ast_recursively(node->next, parent);
+            break;
+
+        case AST_LITERAL:
+            switch (node->literal.type) {
+                case AST_INTEGER:
+                    fprintf(stderr, "[%sInt%s]", color_secondary, reset);
+                    fprintf(stderr, ": %i\n", node->literal.val_integer);
+                    break;
+                case AST_DOUBLE:
+                    fprintf(stderr, "[%sDou%s]", color_secondary, reset);
+                    fprintf(stderr, ": %lf\n", node->literal.val_double);
+                    break;
+                case AST_BOOLEAN:
+                    fprintf(stderr, "[%sBoo%s]", color_secondary, reset);
+                    fprintf(stderr, ": %s\n", node->literal.val_bool ? "true" : "false");
+                    break;
+                case AST_UNIT:
+                    fprintf(stderr, "[%sUni%s]", color_secondary, reset);
+                    fprintf(stderr, ": ()\n");
+                    break;
+                case AST_UNKNOWN_LITERAL:
+                    fprintf(stderr, "[%s...%s]", color_secondary, reset);
+                    fprintf(stderr, ": ?\n");
+                    break;
+            }
             break;
 
         case AST_VAR_ASSIGN:
@@ -308,31 +328,31 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             fprintf(stderr, "[%sAss%s] ", color, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
-            print_ast_recursively(node->next, parent);
             break;
     }
 
+    print_ast_recursively(node->next, parent);
     return 0;
 }
 
 const char* str_operation(const Operator op)
 {
     static const char* map[] = {
-        [OP_NOT]           = "!",
-        [OP_UNARY_PLUS]    = "+",
-        [OP_UNARY_MINUS]   = "-",
-        [OP_MUL]           = "*",
-        [OP_DIV]           = "/",
-        [OP_ADD]           = "+",
-        [OP_SUB]           = "-",
-        [OP_LESS]          = "<",
-        [OP_LESS_EQUAL]    = "<=",
-        [OP_GREATER]       = ">",
+        [OP_NOT] = "!",
+        [OP_UNARY_PLUS] = "+",
+        [OP_UNARY_MINUS] = "-",
+        [OP_MUL] = "*",
+        [OP_DIV] = "/",
+        [OP_ADD] = "+",
+        [OP_SUB] = "-",
+        [OP_LESS] = "<",
+        [OP_LESS_EQUAL] = "<=",
+        [OP_GREATER] = ">",
         [OP_GREATER_EQUAL] = ">=",
-        [OP_EQUAL]         = "==",
-        [OP_NOT_EQUAL]     = "!=",
-        [OP_AND]           = "&&",
-        [OP_OR]            = "||",
+        [OP_EQUAL] = "==",
+        [OP_NOT_EQUAL] = "!=",
+        [OP_AND] = "&&",
+        [OP_OR] = "||",
     };
 
     return map_str(map, sizeof(map) / sizeof(map[0]), op, "E");
