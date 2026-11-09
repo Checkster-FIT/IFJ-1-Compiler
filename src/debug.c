@@ -220,6 +220,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     }
 
     char* color = "\033[1;34m";
+    char* color_secondary = "\033[1;32m";
     char* reset = "\033[0m";
     const SymtableEntry* entry;
 
@@ -236,7 +237,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_PROGRAM:
-            fprintf(stderr, "[%sAST%s] \n", color, reset);
+            fprintf(stderr, "[%sAST%s] \n", color_secondary, reset);
             this.symtable = node->program.global_symtable;
 
             this.followed = node->program.functions.first != NULL;
@@ -247,7 +248,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
         case AST_FUNCTION:
             entry = search(parent->symtable, node->function.identifier)->value;
-            fprintf(stderr, "[%sFun%s] ", color, reset);
+            fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             this.symtable = node->function.symtable;
 
@@ -259,7 +260,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_EXTENSION:
-            fprintf(stderr, "[%sExt%s] \n", color, reset);
+            fprintf(stderr, "[%sExt%s] \n", color_secondary, reset);
             this.symtable = node->extension.symtable;
 
             this.followed = node->extension.functions.first != NULL;
@@ -271,14 +272,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
         case AST_PARAMETER:
             entry = search(parent->symtable, node->parameter.identifier)->value;
-            fprintf(stderr, "[%sPar%s] ", color, reset);
+            fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->next, parent);
             break;
 
         case AST_VAR_DEF:
-            fprintf(stderr, "\033[1;30m%s\033[0m", "─────");
-
             entry = search(parent->symtable, node->vardef.identifier)->value;
             if (entry->constant)
                 fprintf(stderr, "[%sVal%s] ", color, reset);
@@ -286,13 +285,19 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                 fprintf(stderr, "[%sVar%s] ", color, reset);
 
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            print_ast_recursively(node->vardef.expression, &this);
             print_ast_recursively(node->next, parent);
             break;
 
             break;
-        case AST_VAR_ASSIGN:
+        case AST_EXPRESSION:
+            fprintf(stderr, "[%sExp%s] \n", color, reset);
+            this.followed = node->expression.right != NULL;
+            print_ast_recursively(node->expression.left, &this);
+            this.followed = false;
+            print_ast_recursively(node->expression.right, &this);
             break;
-        case AST_VAR:
+        case AST_VAR_ASSIGN:
             break;
     }
 

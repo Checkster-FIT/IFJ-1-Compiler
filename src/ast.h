@@ -20,10 +20,10 @@ typedef enum {
     AST_PROGRAM,
     AST_FUNCTION,
     AST_EXTENSION,
+    AST_EXPRESSION,
     AST_PARAMETER,
-    AST_VAR_DEF,
     AST_VAR_ASSIGN,
-    AST_VAR,
+    AST_VAR_DEF,
 } ASTNodeType;
 
 typedef struct {
@@ -93,6 +93,7 @@ struct ast_node {
         ASTParameter parameter;
         ASTVariable variable;
         ASTAssignment assignment;
+        ASTExpression expression;
     };
 };
 
@@ -110,6 +111,7 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
 
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
+ASTNode* ast_new_expression(const ASTExpression expression);
 
 Symtable* create_local_symtable(ASTNode* ast);
 

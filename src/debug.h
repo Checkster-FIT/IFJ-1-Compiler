@@ -25,8 +25,8 @@ void log_remaining(ParserContext* parser);
 void log_ast_start(ParserContext* parser);
 void log_ast_end(ParserContext* parser);
 
-typedef struct Branch {
-    const struct Branch* parent;
+typedef struct branch {
+    const struct branch* parent;
     Symtable* symtable;
     bool followed;
     bool last;

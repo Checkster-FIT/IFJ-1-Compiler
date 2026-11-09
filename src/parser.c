@@ -421,7 +421,7 @@ int parse_function_body(ParserContext* parser)
     }
 
     // <function_body> -> <EXPR> [LF]
-    if (parse_expression(parser)) {
+    if (parse_expression(parser, NULL)) {
         if (!accept_next(LINE_FEED, parser))
             return failed(parser, PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
         return CORRECT;
@@ -500,7 +500,7 @@ int parse_statement(ParserContext* parser)
     }
 
     // <statement> -> <EXPR>
-    return parse_expression(parser);
+    return parse_expression(parser, NULL);
 }
 
 int parse_statement_variable_definition(ParserContext* parser)
@@ -529,11 +529,13 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
 
-    if (!parse_expression(parser))
+    ASTNode* node = ast_add_vardef(parser->ast, variable.identifier);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
+
+    if (!parse_expression(parser, (ASTExpression**)&(node->vardef.expression)))
         return FAILED;
 
-    if (ast_add_vardef(parser->ast, variable.identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
     log_ast_end(parser);
 
     return CORRECT;
@@ -548,13 +550,13 @@ int parse_statement_assignment(ParserContext* parser)
     if (!accept_next(ASSIGNMENT, parser))
         return FAILED;
 
-    return parse_expression(parser);
+    return parse_expression(parser, NULL);
 }
 
 int parse_statement_return(ParserContext* parser)
 {
     // <st_return> -> return <EXPR>
-    return accept_next_keyword(RETURN_KW, parser) && parse_expression(parser);
+    return accept_next_keyword(RETURN_KW, parser) && parse_expression(parser, NULL);
 }
 
 // -------------
@@ -587,7 +589,7 @@ int parse_construct_while(ParserContext* parser)
     if (!accept_next_keyword(WHILE_KW, parser))
         return FAILED;
 
-    if (!parse_expression(parser))
+    if (!parse_expression(parser, NULL))
         return FAILED;
 
     if (!accept_next_keyword(DO_KW, parser))
@@ -615,7 +617,7 @@ int parse_construct_if_then(ParserContext* parser)
     if (!accept_next_keyword(IF_KW, parser))
         return FAILED;
 
-    if (!parse_expression(parser))
+    if (!parse_expression(parser, NULL))
         return FAILED;
 
     if (!accept_next_keyword(THEN_KW, parser))
@@ -731,7 +733,7 @@ int parse_interpolated_string(ParserContext* parser)
     const bool tmp = parser->interpolated_expression;
     parser->interpolated_expression = true;
 
-    if (!parse_expression(parser))
+    if (!parse_expression(parser, NULL))
         return FAILED;
 
     parser->interpolated_expression = tmp;
@@ -752,7 +754,7 @@ int parse_multiline_interpolated_string(ParserContext* parser)
     const bool tmp = parser->interpolated_expression;
     parser->interpolated_expression = true;
 
-    if (!parse_expression(parser))
+    if (!parse_expression(parser, NULL))
         return FAILED;
 
     parser->interpolated_expression = tmp;
@@ -798,7 +800,7 @@ int parse_function_call_parameter_first(ParserContext* parser)
     // <fun_call_param_first> -> <EXPR> <fun_call_param_list>
     const bool tmp_parameter_expression = parser->parameter_expression;
     parser->parameter_expression = true;
-    if (!parse_expression(parser))
+    if (!parse_expression(parser, NULL))
         return FAILED;
     parser->parameter_expression = tmp_parameter_expression;
 
@@ -811,7 +813,7 @@ int parse_function_call_parameter_list(ParserContext* parser)
     if (accept_next(COMMA, parser)) {
 
         parser->parameter_expression = true;
-        if (!parse_expression(parser))
+        if (!parse_expression(parser, NULL))
             return FAILED;
         parser->parameter_expression = false;
 
@@ -824,7 +826,7 @@ int parse_function_call_parameter_list(ParserContext* parser)
 
 // =======================================================
 
-int parse_expression(ParserContext* parser)
+int parse_expression(ParserContext* parser, ASTExpression** expr_target)
 {
     static const char table[P_TERMINAL_COUNT][P_TERMINAL_COUNT] = {
         //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]
@@ -842,10 +844,12 @@ int parse_expression(ParserContext* parser)
     };
 
     Stack* stack = init_stack();
+    Stack* expression_stack = init_stack();
     parser->expressions_nested++;
-    if (stack == NULL) {
+    if (stack == NULL || expression_stack == NULL) {
         dispose_stack(stack);
-        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+        dispose_stack(expression_stack);
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence/expression stack");
     }
 
     while (true) {
@@ -853,7 +857,10 @@ int parse_expression(ParserContext* parser)
         const PrecedenceElement next_elem = get_next_token_precedence(parser, last_elem);
 
         if (precedence_stack_finished(stack, next_elem, parser)) {
+            if (expr_target != NULL)
+                *expr_target = top(expression_stack);
             dispose_stack(stack);
+            dispose_stack(expression_stack);
             parser->expressions_nested--;
             return CORRECT;
         }
@@ -865,8 +872,7 @@ int parse_expression(ParserContext* parser)
                 if (top_value(stack) != P_EXPRESSION && next_elem == P_ADDSUB) {
                     if (push_value(stack, P_UNARY) == 1)
                         return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
-                }
-                else {
+                } else {
                     if (push_value(stack, next_elem) == 1)
                         return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 }
@@ -876,7 +882,7 @@ int parse_expression(ParserContext* parser)
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
                 break;
             case '>':
-                if (!apply_expression_rule(stack, parser))
+                if (!apply_expression_rule(stack, expression_stack, parser))
                     return FAILED;
                 continue;
             default:
@@ -924,7 +930,7 @@ int stack_push_before_expression(Stack* stack, const PrecedenceElement element)
 
 // =======================================================
 
-int apply_expression_rule(Stack* stack, ParserContext* parser)
+int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* parser)
 {
     if (parser->debug) {
         if (push_value(stack, '>') == 1)
@@ -934,7 +940,7 @@ int apply_expression_rule(Stack* stack, ParserContext* parser)
         pop(stack);
     }
 
-    if (!stack_accept_rule(stack))
+    if (!stack_accept_rule(stack, expression_stack, parser))
         return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
 
     if (!stack_accept_elem(stack, '<'))
@@ -949,11 +955,21 @@ int apply_expression_rule(Stack* stack, ParserContext* parser)
     return CORRECT;
 }
 
-int stack_accept_rule(Stack* stack)
+int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* parser)
 {
+    ASTNode* node = ast_new_expression((ASTExpression) {
+        .left = NULL,
+        .right = NULL });
+
     // <E> -> [t]
-    if (stack_accept_elem(stack, P_TERM))
+    if (stack_accept_elem(stack, P_TERM)) {
+
+        // TODO: node->expression.left = TERM
+        if (push(expression_stack, node) == 1)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+
         return CORRECT;
+    }
 
     if (stack_accept_elem(stack, P_R_BRACKET)) {
 
@@ -974,8 +990,15 @@ int stack_accept_rule(Stack* stack)
         return FAILED;
 
     // <E> := +<E>, -<E>, !<E>
-    if (stack_accept_elem(stack, P_UNARY))
+    if (stack_accept_elem(stack, P_UNARY)) {
+        node->expression.left = top(expression_stack);
+
+        pop(expression_stack);
+        if (push(expression_stack, node) == 1)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+
         return CORRECT;
+    }
 
     // <E> :=
     // <E>*<E>, <E>/<E>, <E>+<E>, <E>-<E>,
@@ -987,7 +1010,18 @@ int stack_accept_rule(Stack* stack)
         || stack_accept_elem(stack, P_EQUAL)
         || stack_accept_elem(stack, P_AND)
         || stack_accept_elem(stack, P_OR)) {
-        return stack_accept_elem(stack, P_EXPRESSION);
+        if (!stack_accept_elem(stack, P_EXPRESSION))
+            return FAILED;
+
+        node->expression.right = top(expression_stack);
+        pop(expression_stack);
+        node->expression.left = top(expression_stack);
+        pop(expression_stack);
+
+        if (push(expression_stack, node) == 1)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+
+        return CORRECT;
     }
 
     return FAILED;

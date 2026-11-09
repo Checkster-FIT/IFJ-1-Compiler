@@ -78,7 +78,9 @@ void free_ast_nodes(ASTNode* node)
             free_ast_nodes(node->assignment.target);
             free_ast_nodes(node->assignment.expression);
             break;
-        case AST_VAR:
+        case AST_EXPRESSION:
+            free_ast_nodes(node->expression.left);
+            free_ast_nodes(node->expression.right);
             break;
     }
 
@@ -191,6 +193,8 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
 
 ASTNode* ast_add_ext_parameter(ASTNode* ast, const char* identifier)
 {
+    // TODO: Merge?
+
     ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
@@ -229,6 +233,25 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
 
     ast_list_add(&ast->program.last_function->function.statements, node);
     ast->program.recent_node = node;
+    return node;
+}
+
+ASTNode* ast_new_expression(const ASTExpression expression)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_EXPRESSION,
+        .next = NULL,
+        .expression = {
+            .left = expression.left,
+            .right = expression.right,
+        }
+    };
+
     return node;
 }
 

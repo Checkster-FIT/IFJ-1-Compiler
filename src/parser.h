@@ -126,11 +126,11 @@ int parse_param(ParserContext* parser);
 PrecedenceElement get_next_token_precedence(const ParserContext* parser, int last_elem);
 PrecedenceElement get_last_terminal_precedence(Stack* stack);
 
-int parse_expression(ParserContext* parser);
+int parse_expression(ParserContext* parser, ASTExpression** expr_target);
 int stack_push_before_expression(Stack* stack, const PrecedenceElement element);
-bool precedence_stack_finished(const Stack* stack,  int next_elem, const ParserContext* parser);
-int apply_expression_rule(Stack* stack, ParserContext* parser);
-int stack_accept_rule(Stack* stack);
+bool precedence_stack_finished(const Stack* stack, int next_elem, const ParserContext* parser);
+int apply_expression_rule(Stack* stack, Stack* expression_stack, ParserContext* parser);
+int stack_accept_rule(Stack* stack, Stack* expression_stack, ParserContext* parser);
 int stack_accept_elem(Stack* stack, int elem);
 
 int parse_term(ParserContext* parser);
