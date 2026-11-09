@@ -186,7 +186,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
         },
     };
 
-    ASTFunction* function = &ast->program.functions.last->function;
+    ASTFunction* function = &ast->program.last_function->function;
     ast_list_add(&function->parameters, node);
 
     ast->program.recent_node = node;

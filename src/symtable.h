@@ -16,6 +16,7 @@ typedef struct {
     bool main;
     const char* identifier;
     char data_type;
+    bool constant;
 } SymtableEntry;
 
 typedef RBTree Symtable;

@@ -262,8 +262,13 @@ int parse_function(ParserContext* parser)
     }
     log_ast_end(parser);
 
+    const bool tmp = parser->inside_extension;
+    parser->inside_extension = false;
+
     if (!parse_param_group_list(parser))
         return FAILED;
+
+    parser->inside_extension = tmp;
 
     if (!parse_type_specifier(parser))
         return FAILED;
@@ -274,9 +279,13 @@ int parse_function(ParserContext* parser)
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
     // Add the function to the symtable and remove it from the top
-    pop(parser->symtable_stack);
     symtable_add_entry(top(parser->symtable_stack), function);
-    return parse_function_body(parser);
+
+    if (!parse_function_body(parser))
+        return FAILED;
+
+    pop(parser->symtable_stack);
+    return CORRECT;
 }
 
 int parse_type_specifier(ParserContext* parser)
@@ -286,6 +295,7 @@ int parse_type_specifier(ParserContext* parser)
         return accept_next(DECLARATION_SIGN, parser) && parse_type(parser);
 
     // <type_specifier> -> 3
+    parser->last_type = '?';
     return CORRECT;
 }
 
@@ -505,17 +515,23 @@ int parse_statement_variable_definition(ParserContext* parser)
     // <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
     // <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
     log_ast_start(parser);
+    SymtableEntry variable = {
+        .defined = true,
+        .data_type = '?'
+    };
 
     if (!accept_next_keyword(VAR_KW, parser) && !accept_next_keyword(VAL_KW, parser))
         return FAILED;
+    variable.constant = parser->accepted.attribute_keyword == VAL_KW;
 
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
-
-    const char* identifier = parser->accepted.attribute_string;
+    variable.identifier = parser->accepted.attribute_string;
 
     if (!parse_type_specifier(parser))
         return FAILED;
+    variable.data_type = parser->last_type;
+    symtable_add_entry(top(parser->symtable_stack), variable);
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
@@ -523,9 +539,10 @@ int parse_statement_variable_definition(ParserContext* parser)
     if (!parse_expression(parser))
         return FAILED;
 
-    if (ast_add_vardef(parser->ast, identifier) == NULL)
+    if (ast_add_vardef(parser->ast, variable.identifier) == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR);
     log_ast_end(parser);
+
 
     return CORRECT;
 }

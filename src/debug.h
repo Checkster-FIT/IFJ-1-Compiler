@@ -25,9 +25,16 @@ void log_remaining(ParserContext* parser);
 void log_ast_start(ParserContext* parser);
 void log_ast_end(ParserContext* parser);
 
-void print_ast(ASTNode* ast);
-void print_ast_function(ASTNode* function_node, const Symtable* global_symtable);
-void print_ast_parameter(const ASTNode* parameter_node, const Symtable* local_symtable);
+typedef struct Branch {
+    const struct Branch* parent;
+    Symtable* symtable;
+    bool followed;
+    bool last;
+} Branch;
+
+void print_ast(ASTNode* root);
+void print_ast_indent(const Branch* branch);
+void print_ast_recursively(ASTNode* node, Branch* parent);
 
 void log_precedence_stack(const ParserContext* parser, const Stack* stack);
 

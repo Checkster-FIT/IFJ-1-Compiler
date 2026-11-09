@@ -184,56 +184,115 @@ void log_ast_end(ParserContext* parser)
     }
 }
 
-void print_ast(ASTNode* ast)
+// =======================================================
+
+void print_ast(ASTNode* root)
 {
-    // TODO: Clean up
+    Branch branch = {
+        .parent = NULL,
+        .symtable = root->program.global_symtable,
+        .followed = false,
+        .last = true
+    };
 
-    ASTNodeList* functions = &ast->program.functions;
-
-    ASTNode* tmp_func = functions->active;
-    functions->active = functions->first;
-
-    fprintf(stderr, "\n");
-    while (functions->active) {
-        print_ast_function(functions->active, ast->program.global_symtable);
-        functions->active = functions->active->next;
-    }
-
-    functions->active = tmp_func;
+    print_ast_recursively(root, &branch);
 }
 
-void print_ast_function(ASTNode* function_node, const Symtable* global_symtable)
+void print_ast_indent(const Branch* branch)
 {
-    ASTFunction* function = &function_node->function;
-    const SymtableEntry* entry = search(global_symtable, function->identifier)->value;
+    if (!branch->parent)
+        return;
 
-    fprintf(stderr, "     ");
-    if (entry->main)
-        fprintf(stderr, "@main ");
-
-    fprintf(stderr, "%s( ", function->identifier);
-
-    ASTNode* tmp_param = function->parameters.active;
-    function->parameters.active = function->parameters.first;
-
-    while (function->parameters.active) {
-        print_ast_parameter(function->parameters.active, function->symtable);
-        function->parameters.active = function->parameters.active->next;
-    }
-
-    function->parameters.active = tmp_param;
-
-    fprintf(stderr, ") : %c", entry->data_type);
-
-    fprintf(stderr, "\n");
+    print_ast_indent(branch->parent);
+    fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "     " : "  │  ");
 }
 
-void print_ast_parameter(const ASTNode* parameter_node, const Symtable* local_symtable)
+void print_ast_recursively(ASTNode* node, Branch* parent)
 {
-    fprintf(stderr, "%s", parameter_node->parameter.identifier);
+    if (!node)
+        return;
 
-    const SymtableEntry* symtable_entry_param = (SymtableEntry*)search(local_symtable, parameter_node->parameter.identifier)->value;
-    fprintf(stderr, ":%c ", symtable_entry_param->data_type);
+    parent->last = !node->next && !parent->followed;
+
+    if (parent->parent) {
+        print_ast_indent(parent->parent);
+        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "  └─ " : "  ├─ ");
+    }
+
+    char* color = "\033[1;34m";
+    char* reset = "\033[0m";
+    const SymtableEntry* entry;
+
+    Branch this = {
+        .parent = parent,
+        .symtable = NULL,
+        .followed = false,
+        .last = true
+    };
+
+    switch (node->type) {
+        case AST_NONE:
+            fprintf(stderr, "[?]: Unknown node\n");
+            break;
+
+        case AST_PROGRAM:
+            fprintf(stderr, "[%sAST%s] \n", color, reset);
+            this.symtable = node->program.global_symtable;
+
+            this.followed = node->program.functions.first != NULL;
+            print_ast_recursively(node->program.extensions.first, &this);
+            this.followed = false;
+            print_ast_recursively(node->program.functions.first, &this);
+            break;
+
+        case AST_FUNCTION:
+            fprintf(stderr, "[%sFun%s] ", color, reset);
+            fprintf(stderr, "%s\n", node->function.identifier);
+            this.symtable = node->function.symtable;
+
+            this.followed = node->function.statements.first != NULL;
+            print_ast_recursively(node->function.parameters.first, &this);
+            this.followed = false;
+            print_ast_recursively(node->function.statements.first, &this);
+            print_ast_recursively(node->next, parent);
+            break;
+
+        case AST_EXTENSION:
+            fprintf(stderr, "[%sExt%s] \n", color, reset);
+            this.symtable = node->extension.symtable;
+
+            this.followed = node->extension.functions.first != NULL;
+            print_ast_recursively(node->extension.parameter, &this);
+            this.followed = false;
+            print_ast_recursively(node->extension.functions.first, &this);
+            print_ast_recursively(node->next, parent);
+            break;
+
+        case AST_PARAMETER:
+            entry = search(parent->symtable, node->parameter.identifier)->value;
+            fprintf(stderr, "[%sPar%s] ", color, reset);
+            fprintf(stderr, "%s: %c\n", entry->identifier, entry->data_type);
+            print_ast_recursively(node->next, parent);
+            break;
+
+        case AST_VAR_DEF:
+            entry = search(parent->symtable, node->vardef.identifier)->value;
+
+            if (entry->constant)
+                fprintf(stderr, "[%sVal%s] ", color, reset);
+            else
+                fprintf(stderr, "[%sVar%s] ", color, reset);
+
+            fprintf(stderr, "%s: %c\n", entry->identifier, entry->data_type);
+            print_ast_recursively(node->next, parent);
+            break;
+
+            break;
+        case AST_VAR_ASSIGN:
+            break;
+        case AST_VAR:
+            break;
+    }
 }
 
 // =======================================================
