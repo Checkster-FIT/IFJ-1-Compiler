@@ -422,13 +422,15 @@ int parse_function_body(ParserContext* parser)
     }
 
     // <function_body> -> <EXPR> [LF]
-    if (parse_expression(parser, NULL)) {
-        if (!accept_next(LINE_FEED, parser))
-            return failed(parser, PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
-        return CORRECT;
-    }
+    ASTNode* expr_node;
+    if (!parse_expression(parser, &expr_node))
+        return FAILED;
+    ast_add_expression(parser->ast, expr_node);
 
-    return FAILED;
+    if (!accept_next(LINE_FEED, parser))
+        return failed(parser, PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
+
+    return CORRECT;
 }
 
 int parse_statement_list(ParserContext* parser)
@@ -709,7 +711,7 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_INTEGER,
             .val_integer = parser->accepted.attribute_int });
-        status = parse_dot_call(parser);
+        status = CORRECT;
     }
 
     // <term> -> [DOUBLE] <dot_call>
@@ -717,7 +719,7 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_DOUBLE,
             .val_double = parser->accepted.attribute_double });
-        status = parse_dot_call(parser);
+        status = CORRECT;
     }
 
     // <term> -> [BOOLEAN] <dot_call>
@@ -725,21 +727,21 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_BOOLEAN,
             .val_bool = parser->accepted.attribute_bool });
-        status = parse_dot_call(parser);
+        status = CORRECT;
     }
 
     // <term> -> <string> <dot_call>
     else if (check_next_string_any(parser)) {
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_UNKNOWN_LITERAL });
-        status = parse_string(parser) && parse_dot_call(parser);
+        status = parse_string(parser);
     }
 
     // <term> -> <fun_call> <dot_call>
     else if (check_next(IDENTIFIER, parser)) {
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_UNKNOWN_LITERAL });
-        status = parse_function_call(parser) && parse_dot_call(parser);
+        status = parse_function_call(parser);
     }
 
     parser->debug_prefix_term = tmp_term_debug;
@@ -811,13 +813,6 @@ int parse_multiline_interpolated_string(ParserContext* parser)
     return parse_multiline_interpolated_string(parser);
 }
 
-int parse_dot_call(ParserContext* parser)
-{
-    if (accept_next(DOT, parser))
-        return parse_function_call(parser) && parse_dot_call(parser);
-    return CORRECT;
-}
-
 int parse_function_call(ParserContext* parser)
 {
     return accept_next(IDENTIFIER, parser) && parse_function_call_group_list(parser);
@@ -880,18 +875,19 @@ int parse_function_call_parameter_list(ParserContext* parser)
 int parse_expression(ParserContext* parser, ASTNode** expr_target)
 {
     static const char table[P_TERMINAL_COUNT][P_TERMINAL_COUNT] = {
-        //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]
-        /* [(]              */ { '<', '<', '=', '<', '<', '<', '<', '<', '<', '<', '?' },
-        /* [t]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>' },
-        /* [)]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>' },
-        /* [!, +u, -u]      */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>' },
-        /* [*, /]           */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>' },
-        /* [+, -]           */ { '<', '<', '>', '<', '<', '>', '>', '>', '>', '>', '>' },
-        /* [<, <=, >, >=]   */ { '<', '<', '>', '<', '<', '<', '?', '>', '>', '>', '>' },
-        /* [==, !=]         */ { '<', '<', '>', '<', '<', '<', '<', '?', '>', '>', '>' },
-        /* [&&]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '>', '>', '>' },
-        /* [||]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '<', '>', '>' },
-        /* [$]              */ { '<', '<', '?', '<', '<', '<', '<', '<', '<', '<', '?' }
+        //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]  [.]
+        /* [(]              */ { '<', '<', '=', '<', '<', '<', '<', '<', '<', '<', '?', '<' },
+        /* [t]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' },
+        /* [)]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' },
+        /* [!, +u, -u]      */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<' },
+        /* [*, /]           */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<' },
+        /* [+, -]           */ { '<', '<', '>', '<', '<', '>', '>', '>', '>', '>', '>', '<' },
+        /* [<, <=, >, >=]   */ { '<', '<', '>', '<', '<', '<', '?', '>', '>', '>', '>', '<' },
+        /* [==, !=]         */ { '<', '<', '>', '<', '<', '<', '<', '?', '>', '>', '>', '<' },
+        /* [&&]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '>', '>', '>', '<' },
+        /* [||]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '<', '>', '>', '<' },
+        /* [$]              */ { '<', '<', '?', '<', '<', '<', '<', '<', '<', '<', '?', '<' },
+        /* [.]              */ { '?', '<', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' }
     };
 
     ASTNode* term_node;
@@ -929,8 +925,11 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                 if (!stack_push_before_expression(stack, (PrecedenceElement) { .group = '<' }))
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
 
-                if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB)
+                if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB) {
                     next_elem->group = P_UNARY;
+                    next_elem->operator = next_elem->operator == OP_ADD ? OP_UNARY_PLUS : next_elem->operator;
+                    next_elem->operator = next_elem->operator == OP_SUB ? OP_UNARY_MINUS : next_elem->operator;
+                }
 
                 if (push(stack, next_elem) == 1)
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
@@ -1109,6 +1108,7 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
     }
 
     // <E> :=
+    // <E>.<E>
     // <E>*<E>, <E>/<E>, <E>+<E>, <E>-<E>,
     // <E><<E>, <E><=<E>, <E>><E>, <E>>=<E>,
     // <E>==<E>, <E>!=<E>, <E>&&<E>, <E>||<E>
@@ -1117,7 +1117,8 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
         || stack_accept_elem(stack, P_COMPARE)
         || stack_accept_elem(stack, P_EQUAL)
         || stack_accept_elem(stack, P_AND)
-        || stack_accept_elem(stack, P_OR)) {
+        || stack_accept_elem(stack, P_OR)
+        || stack_accept_elem(stack, P_DOT)) {
         if (!stack_accept_elem(stack, P_EXPRESSION)) {
             free(node);
             return FAILED;
@@ -1280,6 +1281,10 @@ PrecedenceElement* create_next_precedence_terminal(const ParserContext* parser, 
             return element;
         case RIGHT_BRACKET:
             element->group = P_R_BRACKET;
+            return element;
+        case DOT:
+            element->group = P_DOT;
+            element->operator = OP_DOT;
             return element;
         case LINE_FEED:
         case SEMICOLON:

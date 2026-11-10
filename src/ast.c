@@ -65,6 +65,7 @@ void free_ast_nodes(ASTNode* node)
         case AST_PROGRAM:
             free_node_list(&node->program.functions);
             free_symtable(node->program.global_symtable);
+            dispose_stack(node->program.block_stack);
             break;
         case AST_FUNCTION:
             free_node_list(&node->function.statements);
@@ -83,6 +84,9 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_VAR_ASSIGN:;
             free_ast_nodes(node->assignment.expression);
+            break;
+        case AST_RETURN:;
+            free_ast_nodes(node->return_st.expression);
             break;
         case AST_EXPRESSION:
             free_ast_nodes(node->expression.left);

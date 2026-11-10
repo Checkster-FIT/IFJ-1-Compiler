@@ -70,16 +70,9 @@
 
     // -------------------------------------------------
 
-    <EXPR> -> ... <expr_term> ...
+    <EXPR> -> ... <term> ...
 
-        <term> -> <fun_call>  <dot_call>
-        <term> -> [INTEGER]   <dot_call>
-        <term> -> [DOUBLE]    <dot_call>
-        <term> -> [BOOLEAN]   <dot_call>
-        <term> -> <string>    <dot_call>
-
-        <dot_call> -> 3
-        <dot_call> -> . <fun_call> <dot_call>
+        <term> := <fun_call>, [INTEGER], [DOUBLE] , [BOOLEAN], [UNIT], <string>
 
         // No way to differentiate parameterless function from identifier using simple rules
         <fun_call> -> [IDENTIFIER] <fun_call_group_list>

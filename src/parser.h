@@ -63,6 +63,7 @@ typedef enum {
     P_AND,
     P_OR,
     P_DELIMITER,
+    P_DOT,
     P_TERMINAL_COUNT,
     P_NONE,
     P_EXPRESSION,
@@ -140,7 +141,6 @@ int stack_accept_elem(Stack* stack, const PrecedenceGroup group);
 int get_stack_top_operator(const Stack* stack);
 
 int parse_term(ParserContext* parser, ASTNode** term_target);
-int parse_dot_call(ParserContext* parser);
 int parse_function_call(ParserContext* parser);
 int parse_function_call_group_list(ParserContext* parser);
 int parse_function_call_parameter_first(ParserContext* parser);

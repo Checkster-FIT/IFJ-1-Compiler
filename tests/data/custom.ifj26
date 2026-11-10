@@ -38,7 +38,7 @@ def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     return ()
 
 def todo() =
-    print("\n")
+    (5).toString
 
     var xyz = if abc == 1 then "One" else "Not one"
 

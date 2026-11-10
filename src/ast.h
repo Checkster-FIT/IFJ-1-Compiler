@@ -137,6 +137,7 @@ struct ast_node {
 
 typedef enum {
     OP_NONE,
+    OP_DOT,
     OP_NOT,
     OP_UNARY_PLUS,
     OP_UNARY_MINUS,
