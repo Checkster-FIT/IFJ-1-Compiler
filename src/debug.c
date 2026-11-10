@@ -110,8 +110,8 @@ void log_precedence_stack_reverse(const StackEl* current)
     };
 
     const char* str;
-    if (element->operator != OP_NONE)
-        str = str_operation(element->operator);
+    if (element->operation != OP_NONE)
+        str = str_operation(element->operation);
     else
         str = map_str(groups, sizeof(groups) / sizeof(groups[0]),
             element->group, "?");
@@ -290,7 +290,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_EXPRESSION:
             if (node->expression.operation == OP_UNARY_MINUS
                 || node->expression.operation == OP_UNARY_PLUS
-                || node->expression.operation == OP_NOT )
+                || node->expression.operation == OP_NOT)
                 fprintf(stderr, "[%s%sE%s]\n", color, str_operation(node->expression.operation), reset);
             else if (node->expression.operation != OP_NONE)
                 fprintf(stderr, "[%sE%sE%s]\n", color, str_operation(node->expression.operation), reset);

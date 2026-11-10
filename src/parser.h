@@ -75,7 +75,7 @@ typedef enum {
 
 typedef struct {
     PrecedenceGroup group;
-    Operator operator;
+    Operator operation;
 } PrecedenceElement;
 
 // -----------------------------------------

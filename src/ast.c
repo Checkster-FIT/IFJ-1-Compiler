@@ -41,7 +41,7 @@ ASTNode* new_ast()
             },
             .recent_node = NULL,
             .global_symtable = symtable,
-            .block_stack = init_stack()
+            .block_stack = init_stack(),
         },
     };
 
@@ -127,7 +127,7 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .type = AST_EXTENSION,
         .next = NULL,
         .extension = {
-            .functions = { },
+            .functions = {},
             .parameter = NULL,
             .symtable = symtable,
         },
@@ -152,8 +152,8 @@ ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* sy
         .next = NULL,
         .function = {
             .identifier = identifier,
-            .statements = { },
-            .parameters = { },
+            .statements = {},
+            .parameters = {},
             .symtable = symtable },
     };
 
@@ -176,8 +176,8 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
         .next = NULL,
         .function = {
             .identifier = identifier,
-            .statements = { },
-            .parameters = { },
+            .statements = {},
+            .parameters = {},
             .symtable = symtable },
     };
 
@@ -311,9 +311,8 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
         .next = NULL,
         .while_do = {
             .condition = NULL,
-            .statements = { },
-            .symtable = symtable
-        },
+            .statements = {},
+            .symtable = symtable },
     };
 
     ASTNodeList* statements = top(ast->program.block_stack);
