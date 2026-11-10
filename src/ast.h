@@ -27,6 +27,7 @@ typedef enum {
     AST_VAR_DEF,
     AST_LITERAL,
     AST_WHILE_DO,
+    AST_RETURN,
 } ASTNodeType;
 
 typedef enum {
@@ -80,6 +81,10 @@ typedef struct {
 } ASTVarDef;
 
 typedef struct {
+    ASTNode* expression;
+} ASTReturn;
+
+typedef struct {
     ASTNode* left;
     ASTNode* right;
     int operation;
@@ -124,6 +129,7 @@ struct ast_node {
         ASTExpression expression;
         ASTLiteral literal;
         ASTWhileDo while_do;
+        ASTReturn return_st;
     };
 };
 
@@ -164,6 +170,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
 
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_return(ASTNode* ast);
 
 ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
 

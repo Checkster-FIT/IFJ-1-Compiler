@@ -274,6 +274,27 @@ ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
     return node;
 }
 
+ASTNode* ast_add_return(ASTNode* ast)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_RETURN,
+        .next = NULL,
+        .return_st = {
+            .expression = NULL,
+        },
+    };
+
+    ASTNodeList* statements = top(ast->program.block_stack);
+    ast_list_add(statements, node);
+    ast->program.recent_node = node;
+    return node;
+}
+
 ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
 {
     ASTNode* node = malloc(sizeof(ASTNode));

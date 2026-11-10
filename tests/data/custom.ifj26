@@ -30,6 +30,15 @@ def pi_string() =
 def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     var abc = 1; val _def = 65;
 
+    while abc < 5 do
+        abc = abc + abc;
+    ()
+
+    return ()
+
+def todo() =
+    print("\n")
+
     var xyz = if abc == 1 then "One" else "Not one"
 
     abc = (
@@ -37,7 +46,7 @@ def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
         5 +
     )
 
-    while abc < 5 do
-        abc = abc + abc;
-
-    ()
+    if i < 0 || i > 50 then
+        return 0;
+    else if (i + n) == -9 then
+        return 5

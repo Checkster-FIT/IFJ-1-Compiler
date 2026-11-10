@@ -338,6 +338,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             this.followed = false;
             print_ast_recursively(node->function.statements.first, &this);
             break;
+
+        case AST_RETURN:
+            fprintf(stderr, "[%sRet%s] \n", color, reset);
+            print_ast_recursively(node->return_st.expression, &this);
+            break;
     }
 
     print_ast_recursively(node->next, parent);
