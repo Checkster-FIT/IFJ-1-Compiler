@@ -26,6 +26,7 @@ ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
 DOC_NAME = dokumentace
 
 CODE_EXAMPLE = $(TEST_DATA_DIR)/basic.ifj26
+CODE_CUSTOM_EXAMPLE = $(TEST_DATA_DIR)/custom.ifj26
 
 # -----------------------------------------------
 .PHONY: build all run valgrind clean
@@ -39,6 +40,21 @@ $(MAIN_EXEC): $(SRC_DIR)/*.c
 
 run: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(CODE_EXAMPLE)
+
+# -----------------------------------------------
+.PHONY: custom strings factorial boolthen control lambdas algebdt
+.PHONY: extkw funexp interpolateds paramlists valmem lists
+# -----------------------------------------------
+
+custom basic: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/$@.ifj26
+
+strings factorial: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/core/$@.ifj26
+
+boolthen control lambdas algebdt extkw lists funexp interpolateds paramlists valmem: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/extensions/$@.ifj26
+
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)

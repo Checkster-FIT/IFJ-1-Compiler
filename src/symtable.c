@@ -40,7 +40,7 @@ void free_allocated_entries(const TNode* node)
     free((void*)node);
 }
 
-SymtableEntry* symtable_add(Symtable* symtable, const SymtableEntry function)
+SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
 {
     SymtableEntry* data = malloc(sizeof(SymtableEntry));
 
@@ -49,9 +49,12 @@ SymtableEntry* symtable_add(Symtable* symtable, const SymtableEntry function)
         return NULL;
     }
 
-    *data = function;
-    const TNode* node = tree_insert(symtable, data->identifier, data);
+    *data = entry;
 
+    if (tree_insert(symtable, entry.identifier, data) == NULL)
+        return NULL;
+
+    const TNode* node = search(symtable, entry.identifier);
     return node->value;
 }
 

@@ -18,15 +18,28 @@
 
 // =======================================================
 
-void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
+ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
 {
-    init_scanner(&parser->scanner, strings);
+    // Scanner initialization
+    if (init_scanner(&parser->scanner, strings) == 1)
+        return NULL;
 
-    // External structures
+    parser->prev_line = -1;
+    parser->future_line = -1;
+
+    // Symtable stack initialization
+    parser->symtable_stack = init_stack();
+    if (parser->symtable_stack == NULL) {
+        destroy_scanner(&parser->scanner);
+        return NULL;
+    }
+
     parser->ast = ast;
-    parser->global_symtable = ast->program.global_symtable;
-    parser->current_symtable = ast->program.global_symtable; // TODO: Symtable stack
+    push(parser->symtable_stack, ast->program.global_symtable);
 
+    // Scanned tokens
+    parser->future.type = NONE;
+    parser->future.attribute_none = NULL;
     parser->next.type = NONE;
     parser->next.attribute_none = NULL;
     parser->accepted.type = NONE;
@@ -35,21 +48,36 @@ void init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings)
     parser->exit_code = 0;
     parser->token_error = 0;
 
-    parser->last_type = '?';
+    parser->parameter_expression = false;
+    parser->interpolated_expression = false;
+    parser->expressions_nested = 0;
 
+    // Semantic analysis
+    parser->last_type = '?';
+    parser->inside_extension = false;
+
+    // Debug settings
     parser->debug = true; // TODO: Disable debug
+    parser->debug_stack = (parser->debug) && true;
+    parser->debug_ast_nodes = (parser->debug) && true;
+    parser->debug_indent_terms = (parser->debug) && true;
+
+    // Temporary prefix flags
     parser->debug_prefix_failed = true;
     parser->debug_prefix_skipped = false;
-    parser->debug_prefix_expression = false;
-    parser->debug_ast_active = false;
+    parser->debug_prefix_term = false;
+    parser->debug_prefix_ast = false;
 
     // How many tokens after failure should be printed
     parser->debug_print_remaining = 7;
+
+    return parser;
 }
 
 int destroy_parser(const ParserContext* parser)
 {
     destroy_scanner(&parser->scanner);
+    dispose_stack(parser->symtable_stack);
 
     // Return the scanner exit code if it failed
     if (parser->token_error != 0)
@@ -63,7 +91,8 @@ int destroy_parser(const ParserContext* parser)
 int run_parser(ASTNode* ast, AllocatedStrings* strings)
 {
     ParserContext parser;
-    init_parser(&parser, ast, strings);
+    if (init_parser(&parser, ast, strings) == NULL)
+        return print_error(MEMORY_ALLOCATION_ERROR, 0, "ParserContext");
 
     const int status = parse_program(&parser);
 
@@ -123,8 +152,15 @@ int parse_body(ParserContext* parser)
         return CORRECT;
 
     // <body> -> <extension> <body>
-    if (check_next_keyword(EXTENSION_KW, parser))
-        return parse_extension(parser) && parse_body(parser);
+    if (check_next_keyword(EXTENSION_KW, parser)) {
+        parser->inside_extension = true;
+
+        if (!parse_extension(parser))
+            return FAILED;
+
+        parser->inside_extension = false;
+        return parse_body(parser);
+    }
 
     // <body> -> <function> <body>
     // <body> -> @main <function> <body>
@@ -139,10 +175,21 @@ int parse_body(ParserContext* parser)
 
 int parse_extension(ParserContext* parser)
 {
+    log_ast_start(parser);
     // <extension> -> extension + ( + <param> + ) + [LF] + [INDENT] + <extension_body>
 
     if (!accept_next_keyword(EXTENSION_KW, parser))
         return FAILED;
+
+    // - Create a new local symtable
+    Symtable* local_symtable = new_symtable();
+    if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
+
+    // AST - New extension
+    if (ast_add_extension(parser->ast, local_symtable) == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST extension");
+    log_ast_end(parser);
 
     if (!accept_next(LEFT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM);
@@ -165,8 +212,10 @@ int parse_extension(ParserContext* parser)
 int parse_extension_body(ParserContext* parser)
 {
     // <extension_body> -> [DEDENT]
-    if (accept_next(DEDENT, parser))
+    if (accept_next(DEDENT, parser)) {
+        pop(parser->symtable_stack);
         return CORRECT;
+    }
 
     // <extension_body> -> <function> + <extension_body>
     if (check_next_keyword(DEF_KW, parser))
@@ -179,12 +228,13 @@ int parse_extension_body(ParserContext* parser)
 
 int parse_function(ParserContext* parser)
 {
-    // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
     log_ast_start(parser);
+    // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
 
-    SymtableEntry function = {};
-    function.defined = true;
-    function.main = accept_next(MAIN_IDENTIFIER, parser);
+    const bool is_main = accept_next(MAIN_IDENTIFIER, parser);
+
+    if (is_main)
+        accept_next(LINE_FEED, parser);
 
     if (!accept_next_keyword(DEF_KW, parser))
         return FAILED;
@@ -192,31 +242,45 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    function.identifier = parser->accepted.attribute_string;
-
-    // AST - New function
-    if (ast_add_function(parser->ast, function.identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    SymtableEntry* function = symtable_add_entry(top(parser->symtable_stack), (SymtableEntry) { .defined = true, .main = is_main, .identifier = parser->accepted.attribute_string });
 
     // - Create a new local symtable
-    parser->current_symtable = create_local_symtable(parser->ast);
-    if (parser->current_symtable == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
+    Symtable* local_symtable = new_symtable();
+    if (local_symtable == NULL || push(parser->symtable_stack, local_symtable))
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
+
+    // AST - New function
+    if (parser->inside_extension) {
+        if (ast_add_ext_function(parser->ast, function->identifier, local_symtable) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
+    } else {
+        if (ast_add_function(parser->ast, function->identifier, local_symtable) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
+    }
+    log_ast_end(parser);
+
+    const bool tmp = parser->inside_extension;
+    parser->inside_extension = false;
 
     if (!parse_param_group_list(parser))
         return FAILED;
 
+    parser->inside_extension = tmp;
+
     if (!parse_type_specifier(parser))
         return FAILED;
 
-    function.data_type = parser->last_type;
+    function->data_type = parser->last_type;
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_MISSING_FUNCTION_ASSIGNMENT);
 
-    symtable_add(parser->global_symtable, function);
-    log_ast_added(parser);
-    return parse_function_body(parser);
+    if (!parse_function_body(parser))
+        return FAILED;
+
+    pop(parser->ast->program.block_stack);
+    pop(parser->symtable_stack);
+    return CORRECT;
 }
 
 int parse_type_specifier(ParserContext* parser)
@@ -226,6 +290,7 @@ int parse_type_specifier(ParserContext* parser)
         return accept_next(DECLARATION_SIGN, parser) && parse_type(parser);
 
     // <type_specifier> -> 3
+    parser->last_type = '?';
     return CORRECT;
 }
 
@@ -320,12 +385,17 @@ int parse_param(ParserContext* parser)
     parameter.data_type = parser->last_type;
 
     // AST - Parameter
-    if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
-    log_ast_added(parser);
+    if (parser->inside_extension) {
+        if (ast_add_ext_parameter(parser->ast, parameter.identifier) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Parameter");
+    } else {
+        if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Parameter");
+    }
+    log_ast_end(parser);
 
     // Symtable - Parameter
-    symtable_add(parser->current_symtable, parameter);
+    symtable_add_entry(top(parser->symtable_stack), parameter);
     return CORRECT;
 }
 
@@ -352,13 +422,15 @@ int parse_function_body(ParserContext* parser)
     }
 
     // <function_body> -> <EXPR> [LF]
-    if (parse_expression(parser)) {
-        if (!accept_next(LINE_FEED, parser))
-            return failed(parser, PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
-        return CORRECT;
-    }
+    ASTNode* expr_node;
+    if (!parse_expression(parser, &expr_node))
+        return FAILED;
+    ast_add_expression(parser->ast, expr_node);
 
-    return FAILED;
+    if (!accept_next(LINE_FEED, parser))
+        return failed(parser, PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
+
+    return CORRECT;
 }
 
 int parse_statement_list(ParserContext* parser)
@@ -379,11 +451,29 @@ int parse_statement_list(ParserContext* parser)
     // <statement_list> -> <statement> [LF] <statement_list>
     if (parse_statement(parser)) {
 
-        if (!accept_next(LINE_FEED, parser)) {
-            return failed(parser, PARSER_ST_MISSING_LINE_FEED);
+        if (!parse_separator(parser)) {
+            return failed(parser, PARSER_ST_MISSING_SEPARATOR);
         }
 
         return parse_statement_list(parser);
+    }
+
+    return FAILED;
+}
+
+int parse_separator(ParserContext* parser)
+{
+    // <separator> -> [LF]
+    if (accept_next(LINE_FEED, parser))
+        return CORRECT;
+
+    if (accept_next(SEMICOLON, parser)) {
+
+        // <separator> -> ; [LF]
+        accept_next(LINE_FEED, parser);
+
+        // <separator> -> ;
+        return CORRECT;
     }
 
     return FAILED;
@@ -405,8 +495,20 @@ int parse_statement(ParserContext* parser)
             return FAILED;
         return CORRECT;
     }
+    // <st_assign> -> [IDENTIFIER] = <EXPR>
+    if (check_next(IDENTIFIER, parser) && check_future(ASSIGNMENT, parser)) {
+        if (!parse_statement_assignment(parser))
+            return FAILED;
+        return CORRECT;
+    }
+
     // <statement> -> <EXPR>
-    return parse_expression(parser);
+    ASTNode* expr_node;
+    if (!parse_expression(parser, &expr_node))
+        return FAILED;
+
+    ast_add_expression(parser->ast, expr_node);
+    return CORRECT;
 }
 
 int parse_statement_variable_definition(ParserContext* parser)
@@ -414,35 +516,71 @@ int parse_statement_variable_definition(ParserContext* parser)
     // <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
     // <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
     log_ast_start(parser);
+    SymtableEntry vardef = {
+        .defined = true,
+        .data_type = '?'
+    };
 
     if (!accept_next_keyword(VAR_KW, parser) && !accept_next_keyword(VAL_KW, parser))
         return FAILED;
+    vardef.constant = parser->accepted.attribute_keyword == VAL_KW;
 
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_IDENTIFIER);
-
-    const char* identifier = parser->accepted.attribute_string;
+    vardef.identifier = parser->accepted.attribute_string;
 
     if (!parse_type_specifier(parser))
         return FAILED;
+    vardef.data_type = parser->last_type;
+    symtable_add_entry(top(parser->symtable_stack), vardef);
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
 
-    if (!parse_expression(parser))
+    ASTNode* node = ast_add_vardef(parser->ast, vardef.identifier);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
+
+    if (!parse_expression(parser, &(node->vardef.expression)))
         return FAILED;
 
-    if (ast_add_vardef(parser->ast, identifier) == NULL)
-        return failed(parser, MEMORY_ALLOCATION_ERROR);
-    log_ast_added(parser);
+    log_ast_end(parser);
 
     return CORRECT;
+}
+
+int parse_statement_assignment(ParserContext* parser)
+{
+    // <st_assign> -> [IDENTIFIER] = <EXPR>
+    if (!accept_next(IDENTIFIER, parser))
+        return FAILED;
+
+    const char* identifier = parser->accepted.attribute_string;
+
+    if (!accept_next(ASSIGNMENT, parser))
+        return FAILED;
+
+    ASTNode* node = ast_add_assignment(parser->ast, identifier);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
+
+    return parse_expression(parser, &(node->assignment.expression));
 }
 
 int parse_statement_return(ParserContext* parser)
 {
     // <st_return> -> return <EXPR>
-    return accept_next_keyword(RETURN_KW, parser) && parse_expression(parser);
+    if (!accept_next_keyword(RETURN_KW, parser))
+        return FAILED;
+
+    ASTNode* node = ast_add_return(parser->ast);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
+
+    if (!parse_expression(parser, &(node->return_st.expression)))
+        return FAILED;
+
+    return CORRECT;
 }
 
 // -------------
@@ -475,7 +613,15 @@ int parse_construct_while(ParserContext* parser)
     if (!accept_next_keyword(WHILE_KW, parser))
         return FAILED;
 
-    if (!parse_relational_expression(parser))
+    Symtable* symtable = new_symtable();
+    if (symtable == NULL || push(parser->symtable_stack, symtable))
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
+
+    ASTNode* node = ast_add_while_do(parser->ast, symtable);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST While do");
+
+    if (!parse_expression(parser, &(node->while_do.condition)))
         return FAILED;
 
     if (!accept_next_keyword(DO_KW, parser))
@@ -493,6 +639,8 @@ int parse_construct_while(ParserContext* parser)
     if (!accept_next(DEDENT, parser))
         return FAILED;
 
+    pop(parser->ast->program.block_stack);
+    pop(parser->symtable_stack);
     return CORRECT;
 }
 
@@ -503,7 +651,7 @@ int parse_construct_if_then(ParserContext* parser)
     if (!accept_next_keyword(IF_KW, parser))
         return FAILED;
 
-    if (!parse_relational_expression(parser))
+    if (!parse_expression(parser, NULL))
         return FAILED;
 
     if (!accept_next_keyword(THEN_KW, parser))
@@ -548,32 +696,270 @@ int parse_construct_else(ParserContext* parser)
     return CORRECT;
 }
 
-// =======================================================
-
-int parse_relational_expression(ParserContext* parser)
+int parse_term(ParserContext* parser, ASTNode** term_target)
 {
-    while (true) {
-        if (check_next_keyword(DO_KW, parser) || check_next_keyword(THEN_KW, parser))
-            return CORRECT;
+    int status = FAILED;
 
-        if (check_next(LINE_FEED, parser) || check_next(END_OF_FILE, parser))
-            return CORRECT;
+    const bool tmp_term_debug = parser->debug_prefix_term;
+    parser->debug_prefix_term = true;
 
-        parser->debug_prefix_skipped = true;
-        next(parser);
+    // TODO: Temporary basic term accepting for now
+    //  Add support for more complex terms
+
+    // <term> -> [INTEGER] <dot_call>
+    if (accept_next(INTEGER, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_INTEGER,
+            .val_integer = parser->accepted.attribute_int });
+        status = CORRECT;
     }
 
-    return failed(parser, PARSER_RULE_INCOMPLETE, "relational_expression");
+    // <term> -> [DOUBLE] <dot_call>
+    else if (accept_next(DOUBLE, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_DOUBLE,
+            .val_double = parser->accepted.attribute_double });
+        status = CORRECT;
+    }
+
+    // <term> -> [BOOLEAN] <dot_call>
+    else if (accept_next(BOOLEAN, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_BOOLEAN,
+            .val_bool = parser->accepted.attribute_bool });
+        status = CORRECT;
+    }
+
+    // <term> -> <string> <dot_call>
+    else if (check_next_string_any(parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_UNKNOWN_LITERAL });
+        status = parse_string(parser);
+    }
+
+    // <term> -> <fun_call> <dot_call>
+    else if (check_next(IDENTIFIER, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_UNKNOWN_LITERAL });
+        status = parse_function_call(parser);
+    }
+
+    parser->debug_prefix_term = tmp_term_debug;
+    if (status == FAILED)
+        return failed(parser, PARSER_INVALID_EXPRESSION_USE,
+            str_token(&parser->next, GET_NAME));
+    return CORRECT;
 }
 
-int parse_expression(ParserContext* parser)
+int parse_string(ParserContext* parser)
 {
-    while (true) {
-        if (check_next(LINE_FEED, parser) || check_next(END_OF_FILE, parser))
-            return CORRECT;
+    // <string> -> [STRING]
+    // <string> -> [MULTILINE_STRING]
+    if (accept_next(STRING, parser) || accept_next(MULTILINE_STRING, parser))
+        return CORRECT;
 
-        parser->debug_prefix_skipped = true;
-        next(parser);
+    // <string> -> <interpolated_string>
+    if (check_next(STRING_INTERPOLATION, parser)
+        || check_next(STRING_INTERPOLATION_END, parser))
+        return parse_interpolated_string(parser);
+
+    // <string> -> <multiline_interpolated_string>
+    if (check_next(MULTILINE_STRING_INTERPOLATION, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+        return parse_multiline_interpolated_string(parser);
+
+    return failed(parser, PARSER_RULE_INCOMPLETE, str_token(&parser->next, GET_NAME));
+}
+
+int parse_interpolated_string(ParserContext* parser)
+{
+    // <interpolated_string> -> [STRING_INTERPOLATION_END]
+    if (accept_next(STRING_INTERPOLATION_END, parser))
+        return CORRECT;
+
+    // <interpolated_string> -> [STRING_INTERPOLATION] <interpolated_string>
+    if (accept_next(STRING_INTERPOLATION, parser))
+        return parse_interpolated_string(parser);
+
+    // <interpolated_string> -> <EXPR> <interpolated_string>
+    const bool tmp = parser->interpolated_expression;
+    parser->interpolated_expression = true;
+
+    if (!parse_expression(parser, NULL))
+        return FAILED;
+
+    parser->interpolated_expression = tmp;
+    return parse_interpolated_string(parser);
+}
+
+int parse_multiline_interpolated_string(ParserContext* parser)
+{
+    // <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]
+    if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+        return CORRECT;
+
+    // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
+    if (accept_next(MULTILINE_STRING_INTERPOLATION, parser))
+        return parse_multiline_interpolated_string(parser);
+
+    // <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
+    const bool tmp = parser->interpolated_expression;
+    parser->interpolated_expression = true;
+
+    if (!parse_expression(parser, NULL))
+        return FAILED;
+
+    parser->interpolated_expression = tmp;
+    return parse_multiline_interpolated_string(parser);
+}
+
+int parse_function_call(ParserContext* parser)
+{
+    return accept_next(IDENTIFIER, parser) && parse_function_call_group_list(parser);
+}
+
+int parse_function_call_group_list(ParserContext* parser)
+{
+    // <fun_call_group_list> -> ( <fun_call_param_first> ) <fun_call_group_list>
+    if (accept_next(LEFT_BRACKET, parser)) {
+
+        if (!parse_function_call_parameter_first(parser))
+            return FAILED;
+
+        if (!accept_next(RIGHT_BRACKET, parser))
+            return FAILED;
+
+        return parse_function_call_group_list(parser);
+    }
+
+    // <fun_call_group_list> -> 3
+    return CORRECT;
+}
+
+int parse_function_call_parameter_first(ParserContext* parser)
+{
+    // <fun_call_param_first> -> 3
+    if (check_next(RIGHT_BRACKET, parser))
+        return CORRECT;
+
+    // <fun_call_param_first> -> <EXPR> <fun_call_param_list>
+    const bool tmp_parameter_expression = parser->parameter_expression;
+    parser->parameter_expression = true;
+    if (!parse_expression(parser, NULL))
+        return FAILED;
+    parser->parameter_expression = tmp_parameter_expression;
+
+    return parse_function_call_parameter_list(parser);
+}
+
+int parse_function_call_parameter_list(ParserContext* parser)
+{
+    // <fun_call_param_list> -> , <EXPR> <fun_call_param_list>
+    if (accept_next(COMMA, parser)) {
+
+        const bool tmp_parameter_expression = parser->parameter_expression;
+        parser->parameter_expression = true;
+        if (!parse_expression(parser, NULL))
+            return FAILED;
+        parser->parameter_expression = tmp_parameter_expression;
+
+        return parse_function_call_parameter_list(parser);
+    }
+
+    // <fun_call_param_list> -> 3
+    return CORRECT;
+}
+
+// =======================================================
+
+int parse_expression(ParserContext* parser, ASTNode** expr_target)
+{
+    static const char table[P_TERMINAL_COUNT][P_TERMINAL_COUNT] = {
+        //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]  [.]
+        /* [(]              */ { '<', '<', '=', '<', '<', '<', '<', '<', '<', '<', '?', '<' },
+        /* [t]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' },
+        /* [)]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' },
+        /* [!, +u, -u]      */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<' },
+        /* [*, /]           */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<' },
+        /* [+, -]           */ { '<', '<', '>', '<', '<', '>', '>', '>', '>', '>', '>', '<' },
+        /* [<, <=, >, >=]   */ { '<', '<', '>', '<', '<', '<', '?', '>', '>', '>', '>', '<' },
+        /* [==, !=]         */ { '<', '<', '>', '<', '<', '<', '<', '?', '>', '>', '>', '<' },
+        /* [&&]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '>', '>', '>', '<' },
+        /* [||]             */ { '<', '<', '>', '<', '<', '<', '<', '<', '<', '>', '>', '<' },
+        /* [$]              */ { '<', '<', '?', '<', '<', '<', '<', '<', '<', '<', '?', '<' },
+        /* [.]              */ { '?', '<', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' }
+    };
+
+    ASTNode* term_node;
+
+    Stack* stack = init_stack();
+    Stack* expression_stack = init_stack();
+    parser->expressions_nested++;
+    if (stack == NULL || expression_stack == NULL) {
+        dispose_stack(stack);
+        dispose_stack(expression_stack);
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence/expression stack");
+    }
+
+    while (true) {
+        const PrecedenceElement last_elem = get_last_precedence_terminal(stack);
+        PrecedenceElement* next_elem = create_next_precedence_terminal(parser, last_elem);
+        const PrecedenceElement* top_elem = top(stack);
+
+        if (precedence_stack_finished(stack, next_elem->group, parser)) {
+            if (expr_target != NULL)
+                *expr_target = top(expression_stack);
+            else
+                free_ast_nodes(top(expression_stack));
+
+            free(top(stack));
+            free(next_elem);
+            dispose_stack(stack);
+            dispose_stack(expression_stack);
+            parser->expressions_nested--;
+            return CORRECT;
+        }
+
+        switch (table[last_elem.group][next_elem->group]) {
+            case '<':
+                if (!stack_push_before_expression(stack, (PrecedenceElement) { .group = '<' }))
+                    return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+                if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB) {
+                    next_elem->group = P_UNARY;
+                    next_elem->operation = next_elem->operation == OP_ADD ? OP_UNARY_PLUS : next_elem->operation;
+                    next_elem->operation = next_elem->operation == OP_SUB ? OP_UNARY_MINUS : next_elem->operation;
+                }
+
+                if (push(stack, next_elem) == 1)
+                    return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                break;
+            case '=':
+                if (push(stack, next_elem) == 1)
+                    return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                break;
+            case '>':
+                if (!apply_expression_rule(stack, term_node, expression_stack, parser))
+                    return FAILED;
+                free(next_elem);
+                continue;
+            default:
+                free_ast_nodes(top(expression_stack));
+                free(top(stack));
+                free(next_elem);
+                dispose_stack(stack);
+                dispose_stack(expression_stack);
+                return failed(parser, PARSER_INVALID_EXPRESSION_USE,
+                    str_token(&parser->next, GET_ATTRIBUTE));
+        }
+
+        if (next_elem->group != P_TERM)
+            next(parser);
+        else if (parse_term(parser, &term_node) == FAILED)
+            return FAILED;
+
+        if (parser->debug)
+            log_precedence_stack(parser, stack);
     }
 
     return failed(parser, PARSER_RULE_INCOMPLETE, "expression");
@@ -581,20 +967,380 @@ int parse_expression(ParserContext* parser)
 
 // =======================================================
 
+bool precedence_stack_finished(const Stack* stack, const int next_elem, const ParserContext* parser)
+{
+    const PrecedenceElement* top_elem = top(stack);
+
+    if (top_elem == NULL)
+        return false;
+
+    if (top_elem->group != P_EXPRESSION || stack_size(stack) != 1)
+        return false;
+
+    if (parser->parameter_expression && next_elem == P_R_BRACKET)
+        return true;
+
+    return (next_elem == P_DELIMITER);
+}
+
+int stack_push_before_expression(Stack* stack, const PrecedenceElement element)
+{
+    PrecedenceElement* node = malloc(sizeof(PrecedenceElement));
+    if (!node)
+        return FAILED;
+
+    *node = element;
+
+    const PrecedenceElement* top_elem = top(stack);
+    if (is_empty_stack(stack) || top_elem->group != P_EXPRESSION)
+        return push(stack, node) ? FAILED : CORRECT;
+
+    void* tmp = top(stack);
+    pop(stack);
+
+    if (push(stack, node) == 1)
+        return FAILED;
+
+    return push(stack, tmp) ? FAILED : CORRECT;
+}
+
+// =======================================================
+
+int apply_expression_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack, ParserContext* parser)
+{
+    if (parser->debug) {
+
+        PrecedenceElement* node = malloc(sizeof(PrecedenceElement));
+        if (!node)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+        node->group = '>';
+        node->operation = OP_NONE;
+        if (push(stack, node) == 1)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+        log_precedence_stack(parser, stack);
+        free(top(stack));
+        pop(stack);
+    }
+
+    if (!stack_accept_rule(stack, term_node, expression_stack, parser))
+        return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
+
+    if (!stack_accept_elem(stack, '<'))
+        return failed(parser, PARSER_INVALID_EXPRESSION_FORMAT);
+
+    PrecedenceElement* expr_element = malloc(sizeof(PrecedenceElement));
+    expr_element->group = P_EXPRESSION;
+    expr_element->operation = OP_NONE;
+
+    if (!expr_element)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+    if (push(stack, expr_element) == 1)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+
+    if (parser->debug)
+        log_precedence_stack(parser, stack);
+
+    return CORRECT;
+}
+
+int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack, ParserContext* parser)
+{
+    // <E> -> [t]
+    if (stack_accept_elem(stack, P_TERM)) {
+
+        // TODO: node->expression.left = TERM
+        if (push(expression_stack, term_node) == 1) {
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+        }
+
+        return CORRECT;
+    }
+
+    ASTNode* node = ast_new_expression((ASTExpression) {
+        .left = NULL,
+        .right = NULL,
+        .operation = OP_NONE });
+
+    if (stack_accept_elem(stack, P_R_BRACKET)) {
+
+        // <E> -> (<E>)
+        if (stack_accept_elem(stack, P_EXPRESSION)) {
+            free(node);
+            return stack_accept_elem(stack, P_L_BRACKET);
+        }
+
+        // <E> -> ()
+        else {
+
+            ASTNode* unit_literal = ast_new_literal((ASTLiteral) { .type = AST_UNIT });
+
+            if (!unit_literal || push(expression_stack, unit_literal) == 1) {
+                return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+            }
+
+            free(node);
+            return stack_accept_elem(stack, P_L_BRACKET);
+        }
+    }
+
+    // Expression is required after this point
+    if (!stack_accept_elem(stack, P_EXPRESSION)) {
+        free(node);
+        return FAILED;
+    }
+
+    node->expression.operation = get_stack_top_operator(stack);
+
+    // <E> := +<E>, -<E>, !<E>
+    if (stack_accept_elem(stack, P_UNARY)) {
+        node->expression.left = top(expression_stack);
+        pop(expression_stack);
+
+        if (push(expression_stack, node) == 1) {
+            free(node);
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+        }
+
+        return CORRECT;
+    }
+
+    // <E> :=
+    // <E>.<E>
+    // <E>*<E>, <E>/<E>, <E>+<E>, <E>-<E>,
+    // <E><<E>, <E><=<E>, <E>><E>, <E>>=<E>,
+    // <E>==<E>, <E>!=<E>, <E>&&<E>, <E>||<E>
+    if (stack_accept_elem(stack, P_MULDIV)
+        || stack_accept_elem(stack, P_ADDSUB)
+        || stack_accept_elem(stack, P_COMPARE)
+        || stack_accept_elem(stack, P_EQUAL)
+        || stack_accept_elem(stack, P_AND)
+        || stack_accept_elem(stack, P_OR)
+        || stack_accept_elem(stack, P_DOT)) {
+        if (!stack_accept_elem(stack, P_EXPRESSION)) {
+            free(node);
+            return FAILED;
+        }
+
+        node->expression.right = top(expression_stack);
+        pop(expression_stack);
+        node->expression.left = top(expression_stack);
+        pop(expression_stack);
+
+        if (push(expression_stack, node) == 1) {
+            free(node);
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+        }
+
+        return CORRECT;
+    }
+
+    free(node);
+    return FAILED;
+}
+
+int get_stack_top_operator(const Stack* stack)
+{
+    PrecedenceElement* top_elem = top(stack);
+    if (!top_elem)
+        return OP_NONE;
+
+    return top_elem->operation;
+}
+
+int stack_accept_elem(Stack* stack, const PrecedenceGroup group)
+{
+    if (is_empty_stack(stack))
+        return FAILED;
+
+    const PrecedenceElement* top_elem = top(stack);
+    if (top_elem->group != group)
+        return FAILED;
+
+    free(top(stack));
+    pop(stack);
+    return CORRECT;
+}
+
+// =======================================================
+
+PrecedenceElement get_last_precedence_terminal(Stack* stack)
+{
+    if (is_empty_stack(stack))
+        return (PrecedenceElement) {
+            .group = P_DELIMITER,
+            .operation = OP_NONE
+        };
+
+    PrecedenceElement* top_elem = top(stack);
+    if (top_elem->group != P_EXPRESSION)
+        return *top_elem;
+
+    pop(stack);
+
+    if (is_empty_stack(stack)) {
+        push(stack, top_elem);
+        return (PrecedenceElement) {
+            .group = P_DELIMITER,
+            .operation = OP_NONE
+        };
+    }
+
+    const PrecedenceElement* prev_elem = top(stack);
+    push(stack, top_elem);
+    return *prev_elem;
+}
+
+PrecedenceElement* create_next_precedence_terminal(const ParserContext* parser, PrecedenceElement last_elem)
+{
+    PrecedenceElement* element = malloc(sizeof(PrecedenceElement));
+    if (!element)
+        return NULL;
+    element->operation = OP_NONE;
+
+    if (parser->interpolated_expression) {
+        if (check_next(STRING_INTERPOLATION_END, parser)
+            || check_next(STRING_INTERPOLATION, parser)
+            || check_next(MULTILINE_STRING_INTERPOLATION, parser)
+            || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+
+            element->group = P_DELIMITER;
+            return element;
+        }
+    }
+
+    if (parser->parameter_expression) {
+        if (last_elem.group == P_R_BRACKET) {
+            element->group = P_DELIMITER;
+            return element;
+        }
+    }
+
+    switch (parser->next.type) {
+        case OPERATOR:
+            switch (parser->next.attribute_operation_type) {
+                case PLUS:
+                    element->group = P_ADDSUB;
+                    element->operation = OP_ADD;
+                    return element;
+                case MINUS:
+                    element->group = P_ADDSUB;
+                    element->operation = OP_SUB;
+                    return element;
+                case MULTIPLY:
+                    element->group = P_MULDIV;
+                    element->operation = OP_MUL;
+                    return element;
+                case DIVIDE:
+                    element->group = P_MULDIV;
+                    element->operation = OP_DIV;
+                    return element;
+                case AND:
+                    element->group = P_AND;
+                    element->operation = OP_AND;
+                    return element;
+                case OR:
+                    element->group = P_OR;
+                    element->operation = OP_OR;
+                    return element;
+                case NOT:
+                    element->group = P_UNARY;
+                    element->operation = OP_NOT;
+                    return element;
+            }
+            break;
+        case COMPARE:
+            element->group = P_COMPARE;
+            switch (parser->next.attribute_compare_type) {
+                case EQUAL:
+                    element->group = P_EQUAL;
+                    element->operation = OP_EQUAL;
+                    return element;
+                case NOT_EQUAL:
+                    element->group = P_EQUAL;
+                    element->operation = OP_NOT_EQUAL;
+                    return element;
+                case LESS:
+                    element->operation = OP_LESS;
+                    return element;
+                case GREATER:
+                    element->operation = OP_GREATER;
+                    return element;
+                case LESS_EQUAL:
+                    element->operation = OP_LESS_EQUAL;
+                    return element;
+                case GREATER_EQUAL:
+                    element->operation = OP_GREATER_EQUAL;
+                    return element;
+            }
+            break;
+        case LEFT_BRACKET:
+            element->group = P_L_BRACKET;
+            return element;
+        case RIGHT_BRACKET:
+            element->group = P_R_BRACKET;
+            return element;
+        case DOT:
+            element->group = P_DOT;
+            element->operation = OP_DOT;
+            return element;
+        case LINE_FEED:
+        case SEMICOLON:
+        case NONE:
+        case ERROR:
+        case COMMA:
+        case END_OF_FILE:
+        case KEYWORD:
+            element->group = P_DELIMITER;
+            return element;
+        default:
+            element->group = P_TERM;
+            element->operation = OP_NONE;
+            return element;
+    }
+    return element;
+}
+
+// =======================================================
+
 void next(ParserContext* parser)
 {
+    if (get_line(parser) != parser->prev_line) {
+
+        parser->prev_line = get_line(parser);
+
+        if (parser->debug)
+            print_line(parser);
+    }
+
     parser->accepted = parser->next;
 
     if (parser->debug)
         log_parsed(parser);
 
-    parser->next = get_token(&parser->scanner, stdin);
+    if (parser->future.type != NONE) {
+        parser->next = parser->future;
+
+        parser->future.type = NONE;
+        parser->future_line = -1;
+    } else {
+        parser->next = get_token(&parser->scanner, stdin);
+    }
 
     if (parser->next.type == ERROR)
         parser->token_error = parser->next.attribute_error;
 }
 
 // -------------------------------------------------------
+
+bool check_future(const enum type_enum type, ParserContext* parser)
+{
+    parser->future_line = parser->scanner.line;
+    parser->future = get_token(&parser->scanner, stdin);
+    return parser->future.type == type;
+}
 
 bool check_next(const enum type_enum type, const ParserContext* parser)
 {
@@ -607,6 +1353,23 @@ bool check_next_keyword(const enum attribute_keyword keyword, const ParserContex
         return false;
 
     return parser->next.attribute_keyword == keyword;
+}
+
+bool check_next_string_any(const ParserContext* parser)
+{
+    if (check_next(STRING, parser))
+        return true;
+    if (check_next(STRING_INTERPOLATION, parser))
+        return true;
+    if (check_next(STRING_INTERPOLATION_END, parser))
+        return true;
+    if (check_next(MULTILINE_STRING, parser))
+        return true;
+    if (check_next(MULTILINE_STRING_INTERPOLATION, parser))
+        return true;
+    if (check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+        return true;
+    return false;
 }
 
 bool check_next_identifier(const char* name, const ParserContext* parser)
@@ -667,8 +1430,11 @@ bool accept_next_operator(const enum attribute_operation_type operation, ParserC
 
 int get_line(const ParserContext* parser)
 {
-    if (parser->next.type == LINE_FEED)
-        return parser->scanner.line - 1;
+    if (check_next(LINE_FEED, parser))
+        return parser->prev_line;
+
+    if (parser->future_line != -1)
+        return parser->future_line;
 
     return parser->scanner.line;
 }

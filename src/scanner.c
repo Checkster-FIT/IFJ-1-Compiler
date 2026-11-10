@@ -70,7 +70,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->block_comment_counter = 0;
 
     scanner_context->strings = strings;
-    scanner_context->line = 0;
+    scanner_context->line = 1;
     return 0;
 }
 

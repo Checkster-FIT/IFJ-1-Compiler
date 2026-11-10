@@ -7,13 +7,14 @@
 <body> -> [EOF]
 <body> -> <function> <body>
 <body> -> <extension> <body>
-<body> -> @main <function> <body>
+<body> -> @main [LF*] <function> <body>
+
 // Parameterless requirement for the main function will be checked in the semantic analysis
 
     // -------------------------------------------------
-    <extension> -> extension + ( + <param> + ) + [LF] + [INDENT] + <extension_body>
+    <extension> -> extension ( <param> ) [LF] [INDENT] <extension_body>
 
-        <extension_body> -> <function> + <extension_body>
+        <extension_body> -> <function> <extension_body>
         <extension_body> -> [DEDENT]
 
     // -------------------------------------------------
@@ -32,6 +33,7 @@
         <param_list_first> -> 3
 
         <param_list> -> , <param> <param_list>
+        <param_list> -> , [LF]  // TODO: ???
         <param_list> -> 3
 
             <param> -> [IDENTIFIER] : <type>
@@ -41,26 +43,59 @@
     <function_body> -> [LF] [INDENT] <statement_list> [DEDENT]
     <function_body> -> <EXPR> [LF]
 
-    <statement_list> -> <statement> [LF] <statement_list> // Add ';' as a separator
+    <statement_list> -> <statement> <separator> <statement_list> // Add ';' as a separator
     <statement_list> -> <construct> <statement_list>
     <statement_list> -> 3
 
+        <separator> -> [LF]
+        <separator> -> ;
+        <separator> -> ; [LF]
+
         <statement> := <st_vardef>, <st_assign>, <st_return>, <EXPR>
 
-            // Implement assignment as EXPR ???
+            // <st_assign> needs to look into the future?
+            // [identifier] that is not followed by '=' is an expression
             <st_assign> ->     [IDENTIFIER]                  = <EXPR>
+
             <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
             <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
             <st_return> -> return <EXPR>
 
         <construct> := <c_while> <c_if_then> <c_for>
 
-            <c_while> -> while <REL_EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
-            <c_if_then> -> if <REL_EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
+            <c_while> -> while <EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
+            <c_if_then> -> if <EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
             <c_else> -> else [LF*] [INDENT*] <statement_list> [DEDENT*]
             <c_for> -> ???
 
     // -------------------------------------------------
 
-    <EXPR> -> ...
-    <REL_EXPR> -> ...
+    <EXPR> -> ... <term> ...
+
+        <term> := <fun_call>, [INTEGER], [DOUBLE] , [BOOLEAN], [UNIT], <string>
+
+        // No way to differentiate parameterless function from identifier using simple rules
+        <fun_call> -> [IDENTIFIER] <fun_call_group_list>
+
+            <fun_call_group_list> -> ( <fun_call_param_first> ) <fun_call_group_list>
+            <fun_call_group_list> -> 3
+
+                <fun_call_param_first> -> <EXPR> <fun_call_param_list>
+                <fun_call_param_first> -> 3
+
+                <fun_call_param_list> -> , <EXPR> <fun_call_param_list>
+                <fun_call_param_list> -> 3
+
+
+        <string> -> [STRING]
+        <string> -> [MULTILINE_STRING]
+
+        <string> -> <interpolated_string>
+            <interpolated_string> -> [STRING_INTERPOLATION] <interpolated_string>
+            <interpolated_string> -> <EXPR> <interpolated_string>
+            <interpolated_string> -> [STRING_INTERPOLATION_END]
+
+        <string> -> <multiline_interpolated_string>
+                <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
+                <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
+                <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]

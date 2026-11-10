@@ -17,6 +17,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
     ErrorMessage error;
     error.id = error_id;
     error.fix = "";
+    error.param_count = 0;
 
     // [!] Add more error messages here
     // - Error messages should include a brief explanation of the error (.message)
@@ -29,214 +30,275 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         case SCANNER_INT_LEADING_ZERO:
             error.message = "Non-zero integers cannot contain leading zeros: '%s'";
             error.fix = "Integer literal can be replaced with a valid '%i' equivalent";
+            error.param_count = 2;
             error.code = 1;
             break;
         case SCANNER_NUM_INVALID_UNDERSCORE:
             error.message = "Underscore(s) inside an integer can only be used between two numbers: '%s' is incorrect";
             error.fix = "Remove underscore(s) or put numbers around them";
+            error.param_count = 1;
             error.code = 1;
             break;
         case SCANNER_DOUBLE_INVALID_DECIMAL_POINT:
             error.message = "Decimal point must be followed by a number: '%s'";
             error.fix = "Add a number right after the decimal point";
+            error.param_count = 1;
             error.code = 1;
             break;
         case SCANNER_DOUBLE_MISSING_EXPONENT:
             error.message = "Missing exponent of Double: '%s'; e/E (may be followed by a sign) must be followed by a number";
             error.fix = "Remove the e/E or add an exponent";
+            error.param_count = 1;
             error.code = 1;
             break;
         case SCANNER_UNKNOWN_OPERATOR:
             error.message = "An unknown operator '%s' was found";
             error.fix = "Did you mean to use '%s'?";
+            error.param_count = 2;
             error.code = 1;
             break;
         case SCANNER_INVALID_STRING:
             error.message = "A string cannot contain '%s': '%s'";
             error.fix = "End the string properly first";
+            error.param_count = 2;
             error.code = 1;
             break;
         case SCANNER_INVALID_BLOCK_COMMENT:
             error.message = "A block comment needs to be ended before end of the file";
+            error.param_count = 0;
             error.code = 1;
             break;
         case SCANNER_INVALID_IDENTIFIER:
             error.message = "'%s' is not a valid identifier (only letters, digits, and underscores are allowed)";
             error.fix = "Identifier cannot begin with a digit. An underscore is not a valid identifier by itself";
+            error.param_count = 1;
             error.code = 1;
             break;
         case SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS:
             error.message = "A block comment cannot be followed by non-whitespace characters on the same line: '%s'";
             error.fix = "Remove the characters between the block comment and end of line";
+            error.param_count = 1;
             error.code = 1;
             break;
         case SCANNER_INVALID_INDENTATION:
             error.message = "Indentation used in an incorrect way";
             error.fix = "Align indentation correctly";
+            error.param_count = 0;
             error.code = 1;
             break;
         case SCANNER_INVALID_INDENTATION_USING_TAB:
             error.message = "Tab cannot be used to indentation";
             error.fix = "Replace tab with spaces";
+            error.param_count = 0;
             error.code = 1;
             break;
         // Syntax errors
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
             error.message = "The symbol @ can only be followed by identifier 'main'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_SYNTAX_ERROR:
             error.message = "Expected %s but got %s instead";
+            error.param_count = 2;
             error.code = 2;
             break;
         case PARSER_GLOBAL_SCOPE_INVALID:
             error.message = "Invalid use of '%s' in the global scope";
+            error.param_count = 1;
             error.code = 2;
             break;
         case PARSER_MISSING_IMPORT:
             error.message = "Missing import header";
             error.fix = "Add the required 'import ifj26.*' header at the start of the file";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_HEADER:
             error.message = "Missing or incorrect 'ifj26.*' header";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_EXT_PARAM:
             error.message = "Missing extension parameter";
             error.fix = "The 'extension' keyword should be followed by a valid parameter: 'extension (param: Type)'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_EXT_PARAM_END:
             error.message = "Extension allows only one parameter";
             error.fix = "Add ')' after the first extension parameter: 'extension (param: Type)'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_EXT_MISSING_NEWLINE:
             error.message = "An extension needs to be followed by a newline";
             error.fix = "Add a line break after the extension before the function definitions";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_EXT_MISSING_INDENT:
             error.message = "The extension block needs to be indented";
             error.fix = "Add an indent in front of any function definitions inside the extension";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_EXT_BLOCK_INVALID:
             error.message = "The extension block can only contain extension functions";
             error.fix = "Did you mean to end the extension instead?";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_INVALID_FUNCTION:
             error.message = "Missing function identifier";
             error.fix = "The 'def' keyword should be followed by a valid identifier";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_PARAM_BRACKET:
             error.message = "Missing closing ) bracket after function parameters";
             error.fix = "Add ) at the end of the function parameter list";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_PARAM_TYPE:
             error.message = "Missing parameter type specifier";
             error.fix = "Make sure every parameter has its type correctly specified '(param : Type)'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_INCORRECT_TYPE:
             error.message = "Unknown variable type: '%s'";
             error.fix = "Valid parameter types include: (String, Int, Double, Unit, Boolean)";
+            error.param_count = 1;
             error.code = 2;
             break;
         case PARSER_INVALID_PARAM_LIST_END:
             error.message = "Missing comma separator or closing bracket after function parameter list";
             error.fix = "Add ',' between function parameters or ')' to close the parameter list: '(param1 : Int, param2: Int)'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_INVALID_PARAM:
             error.message = "Expected a parameter declaration or closing bracket";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_DOUBLE_PARAM_TYPE:
             error.message = "Multiple data types specified for a single function parameter";
             error.fix = "Valid parameter format: 'param: Type'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_FUNCTION_ASSIGNMENT:
             error.message = "Expected '=' after function declaration";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_FUNCTION_MISSING_INDENT:
             error.message = "A multiline function declaration block needs to be indented";
             error.fix = "Add a same size indent in front of all statements inside the function";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_ST_VAR_DEF_MISSING_IDENTIFIER:
             error.message = "Missing variable identifier in its definition";
             error.fix = "Add a valid identifier name after the variable definition keyword (var, val)";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT:
             error.message = "Expected '=' after variable declaration";
+            error.param_count = 0;
             error.code = 2;
             break;
-        case PARSER_ST_MISSING_LINE_FEED:
-            error.message = "A statement must be ended with a new line";
+        case PARSER_ST_MISSING_SEPARATOR:
+            error.message = "A statement must be ended with a new or a semicolon ';'";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED:
             error.message = "A single-line function declaration must be ended with a new line";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_WHILE_MISSING_DO:
             error.message = "Expected 'do' keyword after while loop condition";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_WHILE_MISSING_LINE_FEED:
             error.message = "A while loop block must start on a new line";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_WHILE_MISSING_INDENT:
             error.message = "A while loop block needs to be indented";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_IF_MISSING_THEN:
             error.message = "Expected 'then' keyword after if statement condition";
+            error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_IF_MISSING_INDENT:
             error.message = "A multiline if statement needs to be indented";
+            error.param_count = 0;
+            error.code = 2;
+            break;
+        case PARSER_INVALID_EXPRESSION_USE:
+            error.message = "Invalid use of '%s' inside an expression";
+            error.param_count = 0;
+            error.code = 2;
+            break;
+        case PARSER_INVALID_EXPRESSION_FORMAT:
+            error.message = "Invalid expression format";
+            error.param_count = 0;
             error.code = 2;
             break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
+            error.param_count = 1;
             error.code = 99;
             break;
         case STREAM_READ_ERROR:
             error.message = "An error has occurred when trying to read from the input stream";
+            error.param_count = 0;
             error.code = 99;
             break;
         case CORRUPTED_MEMORY:
             error.message = "An error has occurred when trying to read from memory in state: '%i'";
+            error.param_count = 1;
             error.code = 99;
             break;
         // Program errors
         case PARSER_RULE_INCOMPLETE:
             error.message = "The required parser rule for '%s' is incomplete";
+            error.param_count = 1;
+            error.code = 100;
+            break;
+        case SYMTABLE_ENTRY_NOT_FOUND:
+            error.message = "The identifier '%s' was not found in the given symtable";
+            error.param_count = 1;
             error.code = 100;
             break;
         case PARSER_RULE_INCORRECT_CALL:
             error.message = "A rule was called when it does not match the next token";
+            error.param_count = 0;
             error.code = 100;
             break;
         case SCANNER_NO_TRANSITION:
             error.message = "No scanner transition was found for state '%i' and character '%c'";
             error.fix = "Try adding this case in scanner.c";
+            error.param_count = 2;
             error.code = 100;
             break;
         default:
             error.message = "An unknown error has occurred...?";
             error.fix = "Try adding a valid error message in the shared module";
+            error.param_count = 0;
             error.code = 100;
             break;
     }

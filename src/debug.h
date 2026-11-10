@@ -23,17 +23,33 @@ void log_parsed(ParserContext* parser);
 void log_remaining(ParserContext* parser);
 
 void log_ast_start(ParserContext* parser);
-void log_ast_added(ParserContext* parser);
+void log_ast_end(ParserContext* parser);
 
-void print_ast(ASTNode* ast);
-void print_ast_function(ASTNode* function_node, const Symtable* global_symtable);
-void print_ast_parameter(const ASTNode* parameter_node, const Symtable* local_symtable);
+typedef struct branch {
+    const struct branch* parent;
+    Symtable* symtable;
+    bool followed;
+    bool last;
+} Branch;
+
+void print_ast(ASTNode* root);
+void print_ast_indent(const Branch* branch);
+int print_ast_recursively(ASTNode* node, Branch* parent);
+const SymtableEntry* get_scoped_symtable_entry(const Branch* branch, const char* identifier);
+
+void log_precedence_stack(const ParserContext* parser, const Stack* stack);
 
 void print_token(const Token* token);
 
+void print_line(ParserContext* parser);
+
+bool is_string_token(const Token* token);
+const char* str_operation(const Operator op);
+
+const char* str_type(const char type_char);
 const char* str_token(const Token* token, TokenStringType mode);
 const char* str_keyword(int idx);
-const char* str_operator(int idx);
+const char* str_token_operator(int idx);
 const char* str_compare(int idx);
 
 const char* map_str(const char** map, int size, int idx, const char* fallback);

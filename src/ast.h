@@ -8,6 +8,7 @@
 #ifndef IFJ_1_COMPILER_AST_H
 #define IFJ_1_COMPILER_AST_H
 
+#include "stack.h"
 #include "symtable.h"
 #include <stdbool.h>
 
@@ -19,11 +20,23 @@ typedef enum {
     AST_NONE,
     AST_PROGRAM,
     AST_FUNCTION,
+    AST_EXTENSION,
+    AST_EXPRESSION,
     AST_PARAMETER,
-    AST_VAR_DEF,
     AST_VAR_ASSIGN,
-    AST_VAR,
+    AST_VAR_DEF,
+    AST_LITERAL,
+    AST_WHILE_DO,
+    AST_RETURN,
 } ASTNodeType;
+
+typedef enum {
+    AST_INTEGER,
+    AST_DOUBLE,
+    AST_BOOLEAN,
+    AST_UNIT,
+    AST_UNKNOWN_LITERAL
+} ASTLiteralType;
 
 typedef struct {
     ASTNode* first;
@@ -35,8 +48,12 @@ typedef struct {
 
 typedef struct {
     ASTNodeList functions;
+    ASTNodeList extensions;
     Symtable* global_symtable;
+
     ASTNode* recent_node;
+    ASTNode* recent_function;
+    Stack* block_stack;
 } ASTProgram;
 
 typedef struct {
@@ -47,20 +64,51 @@ typedef struct {
 } ASTFunction;
 
 typedef struct {
+    ASTNode* condition;
+    ASTNodeList statements;
+    Symtable* symtable;
+} ASTWhileDo;
+
+typedef struct {
+    ASTNodeList functions;
+    ASTNode* parameter;
+    Symtable* symtable;
+} ASTExtension;
+
+typedef struct {
     const char* identifier;
     ASTNode* expression;
 } ASTVarDef;
+
+typedef struct {
+    ASTNode* expression;
+} ASTReturn;
+
+typedef struct {
+    ASTNode* left;
+    ASTNode* right;
+    int operation;
+} ASTExpression;
 
 typedef struct {
     const char* identifier;
 } ASTVariable;
 
 typedef struct {
+    ASTLiteralType type;
+    union {
+        int val_integer;
+        double val_double;
+        bool val_bool;
+    };
+} ASTLiteral;
+
+typedef struct {
     const char* identifier;
 } ASTParameter;
 
 typedef struct {
-    ASTNode* target;
+    const char* target;
     ASTNode* expression;
 } ASTAssignment;
 
@@ -74,11 +122,39 @@ struct ast_node {
         ASTProgram program;
         ASTVarDef vardef;
         ASTFunction function;
+        ASTExtension extension;
         ASTParameter parameter;
         ASTVariable variable;
         ASTAssignment assignment;
+        ASTExpression expression;
+        ASTLiteral literal;
+        ASTWhileDo while_do;
+        ASTReturn return_st;
     };
 };
+
+// =====================================
+
+typedef enum {
+    OP_NONE,
+    OP_DOT,
+    OP_NOT,
+    OP_UNARY_PLUS,
+    OP_UNARY_MINUS,
+    OP_MUL,
+    OP_DIV,
+    OP_ADD,
+    OP_SUB,
+    OP_LESS,
+    OP_LESS_EQUAL,
+    OP_GREATER,
+    OP_GREATER_EQUAL,
+    OP_EQUAL,
+    OP_NOT_EQUAL,
+    OP_AND,
+    OP_OR,
+    OP_TERMINAL
+} Operator;
 
 // =====================================
 
@@ -86,9 +162,22 @@ ASTNode* new_ast();
 void free_ast_nodes(ASTNode* node);
 void free_node_list(ASTNodeList* list);
 
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);
+ASTNode* ast_add_ext_parameter(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable);
+
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable);
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
+
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_return(ASTNode* ast);
+
+ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
+
+ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
+ASTNode* ast_new_expression(const ASTExpression expression);
+ASTNode* ast_new_literal(const ASTLiteral literal);
 
 Symtable* create_local_symtable(ASTNode* ast);
 
