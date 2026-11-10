@@ -333,7 +333,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 } else if (c == ' ' && context->beginning_of_file == true) {
                     indent_value = 1;
                     state = STATE_INDENT;
-                } else if (c == ' ' && context->beginning_of_file == false)
+                } else if ((c == ' ' && context->beginning_of_file == false) || c == '\r')
                     continue;
                 else if (c == EOF)
                     state = STATE_END_OF_FILE;
@@ -1449,6 +1449,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB, LINE);
                     return token;
                 }
+                if (c == '\r') {
+                    state = STATE_LINE_FEED;
+                    break;
+                }
 
                 // no whitespace on new line
                 indent_value = 0;
@@ -1469,7 +1473,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_LINE_FEED;
                 else if (c == '/')
                     state = STATE_SLASH;
-                else {
+                else if (c == '\r') {
+                    state = STATE_INDENT;
+                    break;
+                } else {
                     status = check_indentation(context, indent_value, true);
 
                     if (status == INVALID_INDENTATION) {
