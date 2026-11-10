@@ -243,7 +243,9 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    SymtableEntry* function = symtable_add_entry(top(parser->symtable_stack),
+    // Bypass extension symtable
+    Symtable* global_symtable = parser->ast->program.global_symtable;
+    SymtableEntry* function = symtable_add_entry(global_symtable,
         (SymtableEntry) {
             .defined = true,
             .function = true,

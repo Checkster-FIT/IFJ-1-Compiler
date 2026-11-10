@@ -46,10 +46,6 @@ Symtable* add_builtin_entries(Symtable* symtable)
     entry.data_type = 'd';
     symtable_add_entry(symtable, entry);
 
-    entry.identifier = "readBoolean";
-    entry.data_type = 'b';
-    symtable_add_entry(symtable, entry);
-
     entry.identifier = "toStr";
     entry.data_type = 's';
     symtable_add_entry(symtable, entry);
@@ -74,7 +70,29 @@ Symtable* add_builtin_entries(Symtable* symtable)
     entry.data_type = 's';
     symtable_add_entry(symtable, entry);
 
-    return NULL;
+    // BOOL-THEN
+    entry.identifier = "readBoolean";
+    entry.data_type = 'b';
+    symtable_add_entry(symtable, entry);
+
+    // VAL-MEM
+    entry.identifier = "floor";
+    entry.data_type = 'd';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "toString";
+    entry.data_type = 's';
+    symtable_add_entry(symtable, entry);
+
+    // entry.identifier = "toInt"; // ?????
+    // entry.data_type = 'i';
+    // symtable_add_entry(symtable, entry);
+
+    entry.identifier = "length";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    return symtable;
 }
 
 void free_symtable(const Symtable* symtable)
