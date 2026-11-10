@@ -8,7 +8,9 @@
 #include "scanner.h"
 #include "error.h"
 #include "shared_strings.h"
+#include "stack.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +50,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     if (!scanned_string)
         return 1;
 
-    IndentStack* indent_stack = init_indent_stack();
+    Stack* indent_stack = init_stack();
     if (!indent_stack) {
         dispose_scanned_string(scanned_string);
         return 1;
@@ -65,6 +67,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->read_buffer = false;
     scanner_context->scanning_variable_inside_string_interpolation = false;
     scanner_context->pending_eof = false;
+    scanner_context->block_comment_counter = 0;
 
     scanner_context->strings = strings;
     scanner_context->line = 0;
@@ -74,7 +77,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
 void destroy_scanner(const ScannerContext* scanner_context)
 {
     dispose_scanned_string(scanner_context->scanned_string);
-    dispose_indent_stack(scanner_context->indent_stack);
+    dispose_stack(scanner_context->indent_stack);
 }
 
 ScannedString* init_scanned_string()
@@ -173,72 +176,22 @@ int check_identifier_for_kw(ScannedString* string)
     return IS_IDENTIFIER;
 }
 
-IndentStack* init_indent_stack()
-{
-    IndentStack* indent_stack = malloc(sizeof(IndentStack));
-    if (!indent_stack)
-        return NULL;
-
-    indent_stack->top = NULL;
-
-    return indent_stack;
-}
-
-void dispose_indent_stack(IndentStack* stack)
-{
-    while (stack->top != NULL) {
-        pop_indent(stack);
-    }
-
-    free(stack);
-}
-
-int push_indent(IndentStack* stack, int value)
-{
-    IndentEl* indent_el = malloc(sizeof(IndentEl));
-    if (!indent_el)
-        return 1;
-
-    indent_el->value = value;
-    indent_el->next = stack->top;
-    stack->top = indent_el;
-    return 0;
-}
-
-void pop_indent(IndentStack* stack)
-{
-    if (!stack->top)
-        return;
-
-    IndentEl* indent_el = stack->top;
-    stack->top = indent_el->next;
-    free(indent_el);
-}
-
-int top_indent(IndentStack* stack)
-{
-    if (!stack->top)
-        return 0; // on empty stack, return 0 - default indent value
-
-    return stack->top->value;
-}
-
 int check_indentation(ScannerContext* context, int current_indent, bool first_call)
 {
-    int s_top = top_indent(context->indent_stack);
+    int const s_top = (int)(intptr_t)top(context->indent_stack);
     if (s_top == current_indent && first_call == true)
         return NO_INDENTATION;
     if (s_top == current_indent && first_call == false)
         return DEDENTATION;
     if (s_top < current_indent && first_call == true) {
-        push_indent(context->indent_stack, current_indent);
+        push(context->indent_stack, (void*)(intptr_t)current_indent);
         return INDENTATION;
     }
     if (s_top < current_indent && first_call == false) {
         return INVALID_INDENTATION;
     }
 
-    pop_indent(context->indent_stack);
+    pop(context->indent_stack);
     context->number_of_pending_dedents += 1;
     return check_indentation(context, current_indent, false);
 }
@@ -525,19 +478,45 @@ Token get_token(ScannerContext* context, FILE* stream)
                         return token;
                     }
                     continue; // ignore 'n'
+                }
 
-                } else if (c != '\n' && c != EOF)
+                if (c == 'r') {
                     state = STATE_STRING_BEGIN;
-                else if (c == '\n') {
+                    status = scanned_string_append(context->scanned_string, '\r');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == 't') {
+                    state = STATE_STRING_BEGIN;
+                    status = scanned_string_append(context->scanned_string, '\t');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
-                } else {
+                }
+
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
+                state = STATE_STRING_BEGIN;
                 break;
 
             case STATE_STRING_END:
@@ -744,7 +723,38 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c == 'n') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\n');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
                     continue; // ignore 'n'
+                }
+
+                if (c == 'r') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\r');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue; // ignore 'r'
+                }
+
+                if (c == 't') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\t');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue; // ignore 't'
                 }
 
                 state = STATE_MULTILINE_STRING_INTERPOLATION;
@@ -944,21 +954,55 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 scanned_string_remove_last(context->scanned_string); // remove '\'
 
-                if (c != '\n' && c != EOF)
+                if (c == 'n') {
                     state = STATE_STRING_INTERPOLATION;
-                else if (c == 'n') {
-                    state = STATE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\n');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
                     continue; // ignore 'n'
-                } else if (c == '\n') {
+                }
+
+                if (c == 't') {
+                    state = STATE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\t');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == 'r') {
+                    state = STATE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\r');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
-                } else {
+                }
+
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
+                state = STATE_STRING_INTERPOLATION;
                 break;
 
             // IDENTIFIER / KEYWORD / BOOLEAN
@@ -1051,7 +1095,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_ZERO:
-                if (c == 0)
+                if (c == '0')
                     state = STATE_ZERO;
                 else if (c == '.')
                     state = STATE_DECIMAL_POINT;
@@ -1317,7 +1361,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                 context->interpolation = context->master_interpolated_string; // restore the type of string interpolation
                 scanned_string_remove_last(context->scanned_string); // remove }
                 state = STATE_START;
-                break;
+
+                context->read_buffer = true; // following character is already consumed and needs to be handled properly
+                continue; // don't write the char into scanned_string
 
             // DECLARATION - COLON, COMMA, AT
             case STATE_COLON:
@@ -1451,7 +1497,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 while (context->indent_stack->top != NULL) {
                     context->number_of_pending_dedents += 1;
-                    pop_indent(context->indent_stack);
+                    pop(context->indent_stack);
                 }
 
                 token.type = LINE_FEED;
@@ -1523,6 +1569,8 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_BLOCK_COMMENT_END_WITHOUT_LF:
                 clear_scanned_string(context->scanned_string);
                 state = STATE_START;
+
+                context->read_buffer = true;
                 continue;
 
             case STATE_BLOCK_COMMENT_END_WITH_LF:

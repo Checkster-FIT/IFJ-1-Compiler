@@ -10,8 +10,6 @@
 
 #include <stdbool.h>
 
-#define EMPTY_STACK (-1)
-
 typedef struct stack_el {
     void* data;
     struct stack_el* next;
