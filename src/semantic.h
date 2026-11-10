@@ -8,8 +8,8 @@
 #ifndef IFJ_1_COMPILER_SEMANTIC_H
 #define IFJ_1_COMPILER_SEMANTIC_H
 
+#include "ast.h"
 
-
-
+int run_semantic(ASTNode* ast);
 
 #endif // IFJ_1_COMPILER_SEMANTIC_H

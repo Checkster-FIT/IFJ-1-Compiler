@@ -58,7 +58,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = true; // TODO: Disable debug
+    parser->debug = false; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;

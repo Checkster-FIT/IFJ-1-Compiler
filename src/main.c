@@ -7,8 +7,8 @@
 
 #include "generator.h"
 #include "parser.h"
+#include "semantic.h"
 #include "shared_strings.h"
-#include "symtable.h"
 
 int main()
 {
@@ -24,6 +24,8 @@ int main()
     }
 
     const int exit_code_parser = run_parser(ast, strings);
+    const int exit_code_semantic = run_semantic(ast);
+
     run_generator(ast);
 
     free_strings(strings);
