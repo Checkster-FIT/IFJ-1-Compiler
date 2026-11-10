@@ -295,7 +295,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             else if (node->expression.operation != OP_NONE)
                 fprintf(stderr, "[%sE%sE%s]\n", color, str_operation(node->expression.operation), reset);
             else
-                fprintf(stderr, "[%sExp%s]\n", color, reset);
+                fprintf(stderr, "[%sE?E%s]\n", color, reset);
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
@@ -305,36 +305,46 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_LITERAL:
             switch (node->literal.type) {
                 case AST_INTEGER:
-                    fprintf(stderr, "[%sInt%s]", color_secondary, reset);
-                    fprintf(stderr, ": %i\n", node->literal.val_integer);
+                    fprintf(stderr, "[%sInt%s]", color, reset);
+                    fprintf(stderr, " %i\n", node->literal.val_integer);
                     break;
                 case AST_DOUBLE:
-                    fprintf(stderr, "[%sDouble%s]", color_secondary, reset);
-                    fprintf(stderr, ": %lf\n", node->literal.val_double);
+                    fprintf(stderr, "[%sDouble%s]", color, reset);
+                    fprintf(stderr, " %lf\n", node->literal.val_double);
                     break;
                 case AST_BOOLEAN:
-                    fprintf(stderr, "[%sBool%s]", color_secondary, reset);
-                    fprintf(stderr, ": %s\n", node->literal.val_bool ? "true" : "false");
+                    fprintf(stderr, "[%sBool%s]", color, reset);
+                    fprintf(stderr, " %s\n", node->literal.val_bool ? "true" : "false");
                     break;
                 case AST_UNIT:
-                    fprintf(stderr, "[%sUnit%s]", color_secondary, reset);
-                    fprintf(stderr, ": ()\n");
+                    fprintf(stderr, "[%sUnit%s]", color, reset);
+                    fprintf(stderr, " ()\n");
                     break;
                 case AST_UNKNOWN_LITERAL:
-                    fprintf(stderr, "[%s...%s]\n", color_secondary, reset);
+                    fprintf(stderr, "[%s...%s]\n", color, reset);
                     break;
             }
             break;
 
+        case AST_TERM:
+            entry = get_scoped_symtable_entry(parent, node->term.identifier);
+            if (entry->function)
+                fprintf(stderr, "[%sFun%s]", color, reset);
+            else
+                fprintf(stderr, "[%sVar%s]", color, reset);
+            fprintf(stderr, " %s: %s\n", entry->identifier, str_type(entry->data_type));
+            print_ast_recursively(node->term.parameters.first, &this);
+            break;
+
         case AST_VAR_ASSIGN:
             entry = get_scoped_symtable_entry(parent, node->vardef.identifier);
-            fprintf(stderr, "[%sAss%s] ", color, reset);
+            fprintf(stderr, "[%sV=E%s] ", color, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
             break;
 
         case AST_WHILE_DO:
-            fprintf(stderr, "[%sWhi%s] \n", color_secondary, reset);
+            fprintf(stderr, "[%sWhile%s] \n", color_secondary, reset);
             this.symtable = node->while_do.symtable;
 
             this.followed = node->while_do.statements.first != NULL;

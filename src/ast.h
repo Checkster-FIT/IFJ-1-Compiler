@@ -28,6 +28,7 @@ typedef enum {
     AST_LITERAL,
     AST_WHILE_DO,
     AST_RETURN,
+    AST_TERM,
 } ASTNodeType;
 
 typedef enum {
@@ -37,6 +38,12 @@ typedef enum {
     AST_UNIT,
     AST_UNKNOWN_LITERAL
 } ASTLiteralType;
+
+typedef enum {
+    TERM_VAR,
+    TERM_FUN_CALL,
+    TERM_UNKNOWN
+} ASTTermType;
 
 typedef struct {
     ASTNode* first;
@@ -105,6 +112,11 @@ typedef struct {
 
 typedef struct {
     const char* identifier;
+    ASTNodeList parameters;
+} ASTTerm;
+
+typedef struct {
+    const char* identifier;
 } ASTParameter;
 
 typedef struct {
@@ -130,6 +142,7 @@ struct ast_node {
         ASTLiteral literal;
         ASTWhileDo while_do;
         ASTReturn return_st;
+        ASTTerm term;
     };
 };
 
@@ -178,6 +191,7 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);
 ASTNode* ast_new_literal(const ASTLiteral literal);
+ASTNode* ast_new_term(const char* identifier);
 
 Symtable* create_local_symtable(ASTNode* ast);
 
