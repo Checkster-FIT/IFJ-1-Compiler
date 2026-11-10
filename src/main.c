@@ -5,14 +5,29 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
+#include "generator.h"
 #include "parser.h"
+#include "shared_strings.h"
+#include "symtable.h"
 
-int main(const int argc, char* argv[])
+int main()
 {
-    (void)argc;
-    (void)argv;
+    AllocatedStrings* strings = new_strings();
+    if (strings == NULL) {
+        return EXIT_CODE_INTERNAL_ERROR;
+    }
 
-    const int status = run_parser();
+    ASTNode* ast = new_ast();
+    if (ast == NULL) {
+        free_strings(strings);
+        return EXIT_CODE_INTERNAL_ERROR;
+    }
 
-    return status;
+    const int exit_code_parser = run_parser(ast, strings);
+    run_generator(ast);
+
+    free_strings(strings);
+    free_ast_nodes(ast);
+
+    return exit_code_parser;
 }

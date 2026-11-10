@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    bst.h
- * @brief   Header file for RB tree implementation
+ * @brief   Red-Black tree abstract data type implementation
  * @author  Tobiáš Mikan <xmikant00>
  */
 
@@ -19,7 +19,6 @@ typedef enum {
     RED = 1
 } NodeColor;
 
-
 /**
  * @brief Structure representing a node in a RB tree
  *
@@ -27,7 +26,7 @@ typedef enum {
  * node and pointers to its left and right children.
  */
 typedef struct tnode_s {
-    void* key; // pointer to the key of this node
+    const void* key; // pointer to the key of this node
     void* value; // pointer to the value of this node
     NodeColor color; // either r or b based on color of the node
 
@@ -40,7 +39,7 @@ typedef struct tnode_s {
  */
 typedef struct rbtree_s {
     TNode* root;
-    int (*cmp)(void* a, void* b);
+    int (*cmp)(const void* a, const void* b);
 } RBTree;
 
 /**
@@ -50,7 +49,7 @@ typedef struct rbtree_s {
  *
  * Used to start the tree
  */
-RBTree* TreeInit(int (*cmp)(void*, void*));
+RBTree* tree_init(int (*cmp)(const void*, const void*));
 
 /**
  * @brief Node creation
@@ -59,7 +58,7 @@ RBTree* TreeInit(int (*cmp)(void*, void*));
  * @param value Value of the node
  * @return Pointer to new node
  */
-TNode* NodeCreate(void* key, void* value);
+TNode* node_create(const void* key, void* value);
 
 /**
  * @brief Checks if node is Black or Red
@@ -69,7 +68,7 @@ TNode* NodeCreate(void* key, void* value);
  *
  * Returns Red for Red nodes or Black for Black nodes or NULL nodes
  */
-NodeColor ColorCheck(TNode* node);
+NodeColor color_check(TNode* node);
 
 /**
  * @brief Performs a left rotation on the given subtree root.
@@ -77,7 +76,7 @@ NodeColor ColorCheck(TNode* node);
  * @param node The node whose right child is promoted during the rotation.
  * @return Pointer to the new root of the rotated subtree.
  */
-TNode* RotateLeft(TNode* node);
+TNode* rotate_left(TNode* node);
 
 /**
  * @brief Performs a right rotation on the given subtree root.
@@ -85,14 +84,14 @@ TNode* RotateLeft(TNode* node);
  * @param node The node whose left child is promoted during the rotation.
  * @return Pointer to the new root of the rotated subtree.
  */
-TNode* RotateRight(TNode* node);
+TNode* rotate_right(TNode* node);
 
 /**
  * @brief Performs a color flip on the node.
  *
  * @param node The node whose color is being changed.
  */
-void FlipColor(TNode* node);
+void flip_color(TNode* node);
 
 /**
  * @brief Inserts new node into tree.
@@ -103,7 +102,7 @@ void FlipColor(TNode* node);
  *
  * @return Returns pointer to the root of the tree where the node was inserted.
  */
-TNode* TreeInsert(RBTree* tree, void* key, void* value);
+TNode* tree_insert(RBTree* tree, const void* key, void* value);
 
 /**
  * @brief Recursively travel the tree and insert the node in its correct place.
@@ -114,7 +113,7 @@ TNode* TreeInsert(RBTree* tree, void* key, void* value);
  *
  * @return Pointer to the subtree root
  */
-TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, void*));
+TNode* recursive_insert(TNode* node, const void* key, void* value, int (*cmp)(const void*, const void*));
 
 /**
  * @brief Recursively travel the tree and search for the node with the key.
@@ -124,7 +123,7 @@ TNode* RecursiveInsert(TNode* node, void* key, void* value, int(*cmp)(void*, voi
  *
  * @return Node with the key, or NULL when not found
  */
-TNode* Search(RBTree* tree, void* key);
+TNode* search(const RBTree* tree, const void* key);
 
 /**
  * @brief String compare for this RBTree implementation.
@@ -134,6 +133,6 @@ TNode* Search(RBTree* tree, void* key);
  *
  * @return < 0 if first param is smaller (first alphabetically), > 0 if second param is smaller (first alphabetically) or 0 when they are equal.
  */
-int RBTreeStrcmp(void* a, void* b);
+int rb_tree_strcmp(const void* a, const void* b);
 
 #endif // IFJ_1_COMPILER_BST_H

@@ -3,7 +3,8 @@
 
 # Compiler parameters
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -g -O0
+CXXFLAGS += -std=gnu++17
 STANDARD = 17
 
 # Project directory structure
@@ -14,15 +15,10 @@ TEX_DIR = tex
 
 # Project executable names
 MAIN_EXEC = ifj26compiler
-TEST_EXEC = ifj26tests
-
-# Units to be included in tests and the source files for tests
-TEST_UNITS = scanner.c
-TEST_FILES = test.cpp
 
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
-DB_TARGETS = build $(TEST_EXEC)
+
 
 ARCHIVE_NAME = archive
 ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
@@ -42,7 +38,7 @@ $(MAIN_EXEC): $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 run: $(MAIN_EXEC)
-	@./$(MAIN_EXEC)
+	@./$(MAIN_EXEC) < $(CODE_EXAMPLE)
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)
@@ -50,20 +46,14 @@ valgrind: $(SRC_DIR)/*.c
 
 clean:
 	@rm -fv $(MAIN_EXEC)
-	@rm -fv $(TEST_DIR)/$(TEST_EXEC) $(TEST_EXEC)
+	@rm -frv $(BUILD)
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
 	@rm -fv *.pdf
 
 # -----------------------------------------------
-.PHONY: database
-# -----------------------------------------------
-database:
-	bear -- make -B $(DB_TARGETS)
-
-# -----------------------------------------------
-.PHONY: check format tidy tidy-cpp checklist
+.PHONY: check format tidy tidy-cpp checklist examples
 # -----------------------------------------------
 MAKEFLAGS += --no-print-directory
 
@@ -84,22 +74,83 @@ tidy-cpp:
 	@clang-tidy $(TEST_DIR)/*.cpp -- -I$(SRC_DIR) -std=c++$(STANDARD)
 
 checklist:
-	@sh checklist.sh
+	@bash checklist.sh
+
+examples: $(MAIN_EXEC)
+	@bash ./tests/data/compile.sh
 
 # -----------------------------------------------
-.PHONY: build-tests test
+.PHONY: test build-test
 # -----------------------------------------------
 
-GTEST_OBJ = ./tests/testing.o
-GTEST_FLAGS = -lgtest -lgtest_main -pthread
+GTEST_FLAGS = -lgtest -pthread -g
 
-$(TEST_DIR)/$(TEST_EXEC): $(TEST_DIR)/*.cpp $(SRC_DIR)/*.c
-	@gcc -Isrc -c src/$(TEST_UNITS) -o $(GTEST_OBJ)
-	g++ -Isrc tests/$(TEST_FILES) $(GTEST_OBJ) $(GTEST_FLAGS) -o $(TEST_DIR)/$(TEST_EXEC)
-	@rm -f $(GTEST_OBJ)
+# Units to be included in tests and the source files for tests
+TEST_UNITS = scanner parser
+TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
+TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
+TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-test: $(TEST_DIR)/$(TEST_EXEC)
-	@./$(TEST_DIR)/$(TEST_EXEC)
+TEST_SHARED = error shared_strings symtable ast bst debug stack
+TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
+TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
+
+GTEST_MAIN = $(TEST_DIR)/test_main.cpp
+
+BUILD = $(TEST_DIR)/build
+OBJ = $(BUILD)/obj
+
+# Create build folder if necessary
+$(BUILD):
+	@mkdir -p $@
+
+$(OBJ):
+	@mkdir -p $@
+
+
+# Compile each module
+
+$(OBJ)/%.o: $(SRC_DIR)/%.c | $(BUILD) $(OBJ)
+	@gcc -I$(SRC_DIR) -c $< -o $@ -g -O0
+
+# Compile each test source file
+$(OBJ)/%_tests.o: $(TEST_DIR)/%_tests.cpp | $(BUILD) $(OBJ)
+	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+
+# Compile the shared test main
+$(OBJ)/test_main.o: $(GTEST_MAIN) | $(BUILD) $(OBJ)
+	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+
+# Create an executable for each test module
+SHARED_OBJECTS = $(addprefix $(OBJ)/,$(TEST_SHARED_O))
+TEST_MAIN_OBJECT = $(OBJ)/test_main.o
+
+# Link the object files together
+$(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJECT)
+	$(CXX) $^ $(GTEST_FLAGS) -o $@
+
+# [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
+$(BUILD)/parser_tests: $(OBJ)/scanner.o
+$(BUILD)/scanner_tests: $(OBJ)/parser.o
+
+TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
+build-test: $(TEST_EXECUTABLES)
+test: $(TEST_EXECUTABLES)
+	@for test in $^; do echo; $$test 2>/dev/null || true; done
+
+test-parser: $(BUILD)/parser_tests
+	@$^ 2>/dev/null || true
+
+test-scanner: $(BUILD)/scanner_tests
+	@$^ 2>/dev/null || true
+
+# -----------------------------------------------
+.PHONY: database
+# -----------------------------------------------
+DB_TARGETS = build test
+
+database:
+	bear -- make -B $(DB_TARGETS)
 
 # -----------------------------------------------
 .PHONY: doc archive
