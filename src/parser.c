@@ -715,9 +715,6 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     const bool tmp_term_debug = parser->debug_prefix_term;
     parser->debug_prefix_term = true;
 
-    // TODO: Temporary basic term accepting for now
-    //  Add support for more complex terms
-
     // <term> -> [INTEGER] <dot_call>
     if (accept_next(INTEGER, parser)) {
         *term_target = ast_new_literal((ASTLiteral) {
@@ -747,10 +744,7 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
 
     // <term> -> <string> <dot_call>
     else if (check_next_string_any(parser)) {
-        *term_target = ast_new_literal((ASTLiteral) {
-            .type = AST_UNKNOWN_LITERAL,
-        });
-        status = parse_string(parser);
+        status = parse_string(parser, term_target);
     }
 
     // <term> -> <fun_call> <dot_call>
@@ -766,66 +760,119 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     return CORRECT;
 }
 
-int parse_string(ParserContext* parser)
+int parse_string(ParserContext* parser, ASTNode** term_target)
 {
     // <string> -> [STRING]
     // <string> -> [MULTILINE_STRING]
-    if (accept_next(STRING, parser) || accept_next(MULTILINE_STRING, parser))
+    if (accept_next(STRING, parser) || accept_next(MULTILINE_STRING, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
         return CORRECT;
+    }
+
+    *term_target = ast_new_literal((ASTLiteral) {
+        .type = AST_UNKNOWN_LITERAL,
+    });
 
     // <string> -> <interpolated_string>
     if (check_next(STRING_INTERPOLATION, parser)
-        || check_next(STRING_INTERPOLATION_END, parser))
-        return parse_interpolated_string(parser);
+        || check_next(STRING_INTERPOLATION_END, parser)) {
+
+        *term_target = ast_new_interpolated_string();
+        return parse_interpolated_string(parser, &(*term_target)->interpolated_string);
+    }
 
     // <string> -> <multiline_interpolated_string>
     if (check_next(MULTILINE_STRING_INTERPOLATION, parser)
-        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
-        return parse_multiline_interpolated_string(parser);
+        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+
+        *term_target = ast_new_interpolated_string();
+        return parse_multiline_interpolated_string(parser, &(*term_target)->interpolated_string);
+    }
 
     return failed(parser, PARSER_RULE_INCOMPLETE, str_token(&parser->next, GET_NAME));
 }
 
-int parse_interpolated_string(ParserContext* parser)
+int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string)
 {
     // <interpolated_string> -> [STRING_INTERPOLATION_END]
-    if (accept_next(STRING_INTERPOLATION_END, parser))
+    if (accept_next(STRING_INTERPOLATION_END, parser)) {
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
         return CORRECT;
+    }
 
     // <interpolated_string> -> [STRING_INTERPOLATION] <interpolated_string>
-    if (accept_next(STRING_INTERPOLATION, parser))
-        return parse_interpolated_string(parser);
+    if (accept_next(STRING_INTERPOLATION, parser)) {
+
+        // Empty interpolated string that are not END can be discarded
+        if (*parser->accepted.attribute_string == '\0')
+            return parse_interpolated_string(parser, interpolated_string);
+
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
+        return parse_interpolated_string(parser, interpolated_string);
+    }
 
     // <interpolated_string> -> <EXPR> <interpolated_string>
     const bool tmp = parser->interpolated_expression;
     parser->interpolated_expression = true;
 
-    if (!parse_expression(parser, NULL))
+    ASTNode* expression_result;
+    if (!parse_expression(parser, &expression_result))
         return FAILED;
+    ast_list_add(&interpolated_string->expressions, expression_result);
 
     parser->interpolated_expression = tmp;
-    return parse_interpolated_string(parser);
+    return parse_interpolated_string(parser, interpolated_string);
 }
 
-int parse_multiline_interpolated_string(ParserContext* parser)
+int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string)
 {
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]
-    if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+    if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
         return CORRECT;
+    }
 
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
-    if (accept_next(MULTILINE_STRING_INTERPOLATION, parser))
-        return parse_multiline_interpolated_string(parser);
+    if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
+
+        // Empty interpolated string that are not END can be discarded
+        if (*parser->accepted.attribute_string == '\0')
+            return parse_interpolated_string(parser, interpolated_string);
+
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
+        return parse_multiline_interpolated_string(parser, interpolated_string);
+    }
 
     // <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
     const bool tmp = parser->interpolated_expression;
     parser->interpolated_expression = true;
 
-    if (!parse_expression(parser, NULL))
+    ASTNode* expression_result;
+    if (!parse_expression(parser, &expression_result))
         return FAILED;
+    ast_list_add(&interpolated_string->expressions, expression_result);
 
     parser->interpolated_expression = tmp;
-    return parse_multiline_interpolated_string(parser);
+    return parse_multiline_interpolated_string(parser, interpolated_string);
 }
 
 int parse_function_call(ParserContext* parser, ASTNode** term_target)
