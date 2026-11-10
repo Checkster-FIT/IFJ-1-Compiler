@@ -248,7 +248,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_FUNCTION:
-            entry = search(parent->symtable, node->function.identifier)->value;
+            entry = get_scoped_symtable_entry(parent, node->function.identifier);
             fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             this.symtable = node->function.symtable;
@@ -270,13 +270,13 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_PARAMETER:
-            entry = search(parent->symtable, node->parameter.identifier)->value;
+            entry = get_scoped_symtable_entry(parent, node->parameter.identifier);
             fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             break;
 
         case AST_VAR_DEF:
-            entry = search(parent->symtable, node->vardef.identifier)->value;
+            entry = get_scoped_symtable_entry(parent, node->vardef.identifier);
             if (!entry->constant)
                 fprintf(stderr, "[%sVar%s] ", color, reset);
             else
@@ -305,34 +305,62 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                     fprintf(stderr, ": %i\n", node->literal.val_integer);
                     break;
                 case AST_DOUBLE:
-                    fprintf(stderr, "[%sDou%s]", color_secondary, reset);
+                    fprintf(stderr, "[%sDouble%s]", color_secondary, reset);
                     fprintf(stderr, ": %lf\n", node->literal.val_double);
                     break;
                 case AST_BOOLEAN:
-                    fprintf(stderr, "[%sBoo%s]", color_secondary, reset);
+                    fprintf(stderr, "[%sBool%s]", color_secondary, reset);
                     fprintf(stderr, ": %s\n", node->literal.val_bool ? "true" : "false");
                     break;
                 case AST_UNIT:
-                    fprintf(stderr, "[%sUni%s]", color_secondary, reset);
+                    fprintf(stderr, "[%sUnit%s]", color_secondary, reset);
                     fprintf(stderr, ": ()\n");
                     break;
                 case AST_UNKNOWN_LITERAL:
-                    fprintf(stderr, "[%s...%s]", color_secondary, reset);
-                    fprintf(stderr, ": ?\n");
+                    fprintf(stderr, "[%s...%s]\n", color_secondary, reset);
                     break;
             }
             break;
 
         case AST_VAR_ASSIGN:
-            entry = search(parent->symtable, node->vardef.identifier)->value;
+            entry = get_scoped_symtable_entry(parent, node->vardef.identifier);
             fprintf(stderr, "[%sAss%s] ", color, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
+            break;
+
+        case AST_WHILE_DO:
+            fprintf(stderr, "[%sWhi%s] \n", color_secondary, reset);
+            this.symtable = node->while_do.symtable;
+
+            this.followed = node->while_do.statements.first != NULL;
+            print_ast_recursively(node->while_do.condition, &this);
+            this.followed = false;
+            print_ast_recursively(node->function.statements.first, &this);
             break;
     }
 
     print_ast_recursively(node->next, parent);
     return 0;
+}
+
+const SymtableEntry* get_scoped_symtable_entry(const Branch* branch, const char* identifier)
+{
+    const Branch* active_branch = branch;
+
+    while (active_branch != NULL) {
+        const TNode* node = search(active_branch->symtable, identifier);
+
+        if (node != NULL) {
+            return node->value;
+        }
+
+        active_branch = active_branch->parent;
+    }
+
+    fprintf(stderr, "\n");
+    print_error(SYMTABLE_ENTRY_NOT_FOUND, 0, identifier);
+    return NULL;
 }
 
 const char* str_operation(const Operator op)

@@ -279,6 +279,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 1;
             error.code = 100;
             break;
+        case SYMTABLE_ENTRY_NOT_FOUND:
+            error.message = "The identifier '%s' was not found in the given symtable";
+            error.param_count = 1;
+            error.code = 100;
+            break;
         case PARSER_RULE_INCORRECT_CALL:
             error.message = "A rule was called when it does not match the next token";
             error.param_count = 0;

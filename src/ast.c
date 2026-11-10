@@ -41,8 +41,15 @@ ASTNode* new_ast()
             },
             .recent_node = NULL,
             .global_symtable = symtable,
+            .block_stack = init_stack()
         },
     };
+
+    if (node->program.block_stack == NULL) {
+        free(node);
+        free(symtable);
+        return NULL;
+    }
 
     return node;
 }
@@ -82,6 +89,11 @@ void free_ast_nodes(ASTNode* node)
             free_ast_nodes(node->expression.right);
             break;
         case AST_LITERAL:
+            break;
+        case AST_WHILE_DO:
+            free_ast_nodes(node->while_do.condition);
+            free_node_list(&node->while_do.statements);
+            free_symtable(node->while_do.symtable);
             break;
     }
 
@@ -143,7 +155,8 @@ ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* sy
 
     ast_list_add(&ast->program.extensions.last->extension.functions, node);
     ast->program.recent_node = node;
-    ast->program.last_function = node;
+    ast->program.recent_function = node;
+    push(ast->program.block_stack, &node->function.statements);
     return node;
 }
 
@@ -166,7 +179,8 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
 
     ast_list_add(&ast->program.functions, node);
     ast->program.recent_node = node;
-    ast->program.last_function = node;
+    ast->program.recent_function = node;
+    push(ast->program.block_stack, &node->function.statements);
     return node;
 }
 
@@ -185,7 +199,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier)
         },
     };
 
-    ASTFunction* function = &ast->program.last_function->function;
+    ASTFunction* function = &ast->program.recent_function->function;
     ast_list_add(&function->parameters, node);
 
     ast->program.recent_node = node;
@@ -232,7 +246,8 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
         },
     };
 
-    ast_list_add(&ast->program.last_function->function.statements, node);
+    ASTNodeList* statements = top(ast->program.block_stack);
+    ast_list_add(statements, node);
     ast->program.recent_node = node;
     return node;
 }
@@ -253,14 +268,40 @@ ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
         },
     };
 
-    ast_list_add(&ast->program.last_function->function.statements, node);
+    ASTNodeList* statements = top(ast->program.block_stack);
+    ast_list_add(statements, node);
+    ast->program.recent_node = node;
+    return node;
+}
+
+ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_WHILE_DO,
+        .next = NULL,
+        .while_do = {
+            .condition = NULL,
+            .statements = { },
+            .symtable = symtable
+        },
+    };
+
+    ASTNodeList* statements = top(ast->program.block_stack);
+    ast_list_add(statements, node);
+    push(ast->program.block_stack, &node->while_do.statements);
     ast->program.recent_node = node;
     return node;
 }
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
 {
-    ast_list_add(&ast->program.last_function->function.statements, expression);
+    ASTNodeList* statements = top(ast->program.block_stack);
+    ast_list_add(statements, expression);
     ast->program.recent_node = expression;
     return expression;
 }

@@ -8,6 +8,7 @@
 #ifndef IFJ_1_COMPILER_AST_H
 #define IFJ_1_COMPILER_AST_H
 
+#include "stack.h"
 #include "symtable.h"
 #include <stdbool.h>
 
@@ -24,7 +25,8 @@ typedef enum {
     AST_PARAMETER,
     AST_VAR_ASSIGN,
     AST_VAR_DEF,
-    AST_LITERAL
+    AST_LITERAL,
+    AST_WHILE_DO,
 } ASTNodeType;
 
 typedef enum {
@@ -49,7 +51,8 @@ typedef struct {
     Symtable* global_symtable;
 
     ASTNode* recent_node;
-    ASTNode* last_function;
+    ASTNode* recent_function;
+    Stack* block_stack;
 } ASTProgram;
 
 typedef struct {
@@ -58,6 +61,12 @@ typedef struct {
     ASTNodeList parameters;
     Symtable* symtable;
 } ASTFunction;
+
+typedef struct {
+    ASTNode* condition;
+    ASTNodeList statements;
+    Symtable* symtable;
+} ASTWhileDo;
 
 typedef struct {
     ASTNodeList functions;
@@ -114,6 +123,7 @@ struct ast_node {
         ASTAssignment assignment;
         ASTExpression expression;
         ASTLiteral literal;
+        ASTWhileDo while_do;
     };
 };
 
@@ -154,6 +164,8 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
 
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
+
+ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);

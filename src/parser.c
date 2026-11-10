@@ -278,6 +278,7 @@ int parse_function(ParserContext* parser)
     if (!parse_function_body(parser))
         return FAILED;
 
+    pop(parser->ast->program.block_stack);
     pop(parser->symtable_stack);
     return CORRECT;
 }
@@ -600,7 +601,15 @@ int parse_construct_while(ParserContext* parser)
     if (!accept_next_keyword(WHILE_KW, parser))
         return FAILED;
 
-    if (!parse_expression(parser, NULL))
+    Symtable* symtable = new_symtable();
+    if (symtable == NULL || push(parser->symtable_stack, symtable))
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
+
+    ASTNode* node = ast_add_while_do(parser->ast, symtable);
+    if (node == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST While do");
+
+    if (!parse_expression(parser, &(node->while_do.condition)))
         return FAILED;
 
     if (!accept_next_keyword(DO_KW, parser))
@@ -618,6 +627,8 @@ int parse_construct_while(ParserContext* parser)
     if (!accept_next(DEDENT, parser))
         return FAILED;
 
+    pop(parser->ast->program.block_stack);
+    pop(parser->symtable_stack);
     return CORRECT;
 }
 
@@ -1053,7 +1064,13 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
 
         // <E> -> ()
         else {
-            // Unit literal
+
+            ASTNode* unit_literal = ast_new_literal((ASTLiteral) { .type = AST_UNIT });
+
+            if (!unit_literal || push(expression_stack, unit_literal) == 1) {
+                return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
+            }
+
             free(node);
             return stack_accept_elem(stack, P_L_BRACKET);
         }

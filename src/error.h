@@ -71,6 +71,7 @@ typedef enum error_enum {
     STREAM_READ_ERROR,
     CORRUPTED_MEMORY,
     NUMBER_CONVERT_ERROR,
+    SYMTABLE_ENTRY_NOT_FOUND,
 } ErrorEnum;
 
 typedef struct {
