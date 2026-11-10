@@ -11,6 +11,8 @@
 #include "ast.h"
 #include "symtable.h"
 
+int run_generator(ASTNode* root);
+
 void generator(ASTNode* root);
 
 void generate_program(ASTNode* root);

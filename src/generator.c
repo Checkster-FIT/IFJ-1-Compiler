@@ -11,6 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int run_generator(ASTNode* ast)
+{
+    print_ast(ast);
+    return 0;
+}
+
 void generator(ASTNode* node)
 {
     printf(".IFJcode26\n\n");
@@ -46,6 +52,8 @@ void generate_program(ASTNode* node)
 void generate_function(ASTNode* node)
 {
     print_label(node->function.identifier);
+    printf("CREATEFRAME\n");
+    printf("POPFRAME\n");
     printf("POPFRAME\n");
     printf("RETURN\n");
 }
