@@ -478,19 +478,45 @@ Token get_token(ScannerContext* context, FILE* stream)
                         return token;
                     }
                     continue; // ignore 'n'
+                }
 
-                } else if (c != '\n' && c != EOF)
+                if (c == 'r') {
                     state = STATE_STRING_BEGIN;
-                else if (c == '\n') {
+                    status = scanned_string_append(context->scanned_string, '\r');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == 't') {
+                    state = STATE_STRING_BEGIN;
+                    status = scanned_string_append(context->scanned_string, '\t');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
-                } else {
+                }
+
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
+                state = STATE_STRING_BEGIN;
                 break;
 
             case STATE_STRING_END:
@@ -707,6 +733,30 @@ Token get_token(ScannerContext* context, FILE* stream)
                     continue; // ignore 'n'
                 }
 
+                if (c == 'r') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\r');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue; // ignore 'r'
+                }
+
+                if (c == 't') {
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\t');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue; // ignore 't'
+                }
+
                 state = STATE_MULTILINE_STRING_INTERPOLATION;
 
                 break;
@@ -916,18 +966,43 @@ Token get_token(ScannerContext* context, FILE* stream)
                     continue; // ignore 'n'
                 }
 
-                if (c != '\n' && c != EOF)
+                if (c == 't') {
                     state = STATE_STRING_INTERPOLATION;
-                else if (c == '\n') {
+                    status = scanned_string_append(context->scanned_string, '\t');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == 'r') {
+                    state = STATE_STRING_INTERPOLATION;
+                    status = scanned_string_append(context->scanned_string, '\r');
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    continue;
+                }
+
+                if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character", context->scanned_string->chars);
                     return token;
-                } else {
+                }
+
+                if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
                 }
 
+                state = STATE_STRING_INTERPOLATION;
                 break;
 
             // IDENTIFIER / KEYWORD / BOOLEAN
@@ -1020,7 +1095,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 break;
 
             case STATE_ZERO:
-                if (c == 0)
+                if (c == '0')
                     state = STATE_ZERO;
                 else if (c == '.')
                     state = STATE_DECIMAL_POINT;
