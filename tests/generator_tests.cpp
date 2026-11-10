@@ -22,15 +22,15 @@ protected:
 
     void add_function(const char* name, bool is_main)
     {
-        ast_add_function(ast, name);
-        create_local_symtable(ast);   // jinak spadne free_symtable(NULL)
+        ast_add_function(ast, name, ast->program.global_symtable);
+        create_local_symtable(ast); // jinak spadne free_symtable(NULL)
 
         if (is_main) {
             SymtableEntry e = {};
             e.defined = true;
             e.main = true;
             e.identifier = name;
-            symtable_add(ast->program.global_symtable, e);
+            symtable_add_entry(ast->program.global_symtable, e);
         }
     }
 };
