@@ -34,6 +34,7 @@ def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
         abc = abc + abc;
     ()
 
+    val function = square(add(2, 3))
     return ()
 
 def todo() =

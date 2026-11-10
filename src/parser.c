@@ -862,10 +862,11 @@ int parse_function_call_parameter_list(ParserContext* parser)
     // <fun_call_param_list> -> , <EXPR> <fun_call_param_list>
     if (accept_next(COMMA, parser)) {
 
+        const bool tmp_parameter_expression = parser->parameter_expression;
         parser->parameter_expression = true;
         if (!parse_expression(parser, NULL))
             return FAILED;
-        parser->parameter_expression = false;
+        parser->parameter_expression = tmp_parameter_expression;
 
         return parse_function_call_parameter_list(parser);
     }
