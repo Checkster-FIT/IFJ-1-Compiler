@@ -36,6 +36,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
 
     parser->ast = ast;
     push(parser->symtable_stack, ast->program.global_symtable);
+    add_builtin_entries(ast->program.global_symtable);
 
     // Scanned tokens
     parser->future.type = NONE;
@@ -242,7 +243,15 @@ int parse_function(ParserContext* parser)
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
 
-    SymtableEntry* function = symtable_add_entry(top(parser->symtable_stack), (SymtableEntry) { .defined = true, .main = is_main, .identifier = parser->accepted.attribute_string });
+    // Bypass extension symtable
+    Symtable* global_symtable = parser->ast->program.global_symtable;
+    SymtableEntry* function = symtable_add_entry(global_symtable,
+        (SymtableEntry) {
+            .defined = true,
+            .function = true,
+            .main = is_main,
+            .identifier = parser->accepted.attribute_string,
+        });
 
     // - Create a new local symtable
     Symtable* local_symtable = new_symtable();
@@ -372,6 +381,8 @@ int parse_param(ParserContext* parser)
 
     SymtableEntry parameter = {
         .defined = true,
+        .function = false,
+        .constant = true,
         .identifier = parser->accepted.attribute_string,
         .data_type = '?'
     };
@@ -427,7 +438,7 @@ int parse_function_body(ParserContext* parser)
         return FAILED;
     ast_add_expression(parser->ast, expr_node);
 
-    if (!accept_next(LINE_FEED, parser))
+    if (!parse_separator(parser))
         return failed(parser, PARSER_FUNCTION_SINGLE_LINE_MISSING_LINE_FEED);
 
     return CORRECT;
@@ -518,6 +529,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     log_ast_start(parser);
     SymtableEntry vardef = {
         .defined = true,
+        .function = false,
         .data_type = '?'
     };
 
@@ -703,14 +715,12 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     const bool tmp_term_debug = parser->debug_prefix_term;
     parser->debug_prefix_term = true;
 
-    // TODO: Temporary basic term accepting for now
-    //  Add support for more complex terms
-
     // <term> -> [INTEGER] <dot_call>
     if (accept_next(INTEGER, parser)) {
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_INTEGER,
-            .val_integer = parser->accepted.attribute_int });
+            .val_integer = parser->accepted.attribute_int,
+        });
         status = CORRECT;
     }
 
@@ -718,7 +728,8 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     else if (accept_next(DOUBLE, parser)) {
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_DOUBLE,
-            .val_double = parser->accepted.attribute_double });
+            .val_double = parser->accepted.attribute_double,
+        });
         status = CORRECT;
     }
 
@@ -726,22 +737,20 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     else if (accept_next(BOOLEAN, parser)) {
         *term_target = ast_new_literal((ASTLiteral) {
             .type = AST_BOOLEAN,
-            .val_bool = parser->accepted.attribute_bool });
+            .val_bool = parser->accepted.attribute_bool,
+        });
         status = CORRECT;
     }
 
     // <term> -> <string> <dot_call>
     else if (check_next_string_any(parser)) {
-        *term_target = ast_new_literal((ASTLiteral) {
-            .type = AST_UNKNOWN_LITERAL });
-        status = parse_string(parser);
+        status = parse_string(parser, term_target);
     }
 
     // <term> -> <fun_call> <dot_call>
     else if (check_next(IDENTIFIER, parser)) {
-        *term_target = ast_new_literal((ASTLiteral) {
-            .type = AST_UNKNOWN_LITERAL });
-        status = parse_function_call(parser);
+        *term_target = ast_new_term(parser->next.attribute_string);
+        status = parse_function_call(parser, term_target);
     }
 
     parser->debug_prefix_term = tmp_term_debug;
@@ -751,92 +760,145 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     return CORRECT;
 }
 
-int parse_string(ParserContext* parser)
+int parse_string(ParserContext* parser, ASTNode** term_target)
 {
     // <string> -> [STRING]
     // <string> -> [MULTILINE_STRING]
-    if (accept_next(STRING, parser) || accept_next(MULTILINE_STRING, parser))
+    if (accept_next(STRING, parser) || accept_next(MULTILINE_STRING, parser)) {
+        *term_target = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
         return CORRECT;
+    }
+
+    *term_target = ast_new_literal((ASTLiteral) {
+        .type = AST_UNKNOWN_LITERAL,
+    });
 
     // <string> -> <interpolated_string>
     if (check_next(STRING_INTERPOLATION, parser)
-        || check_next(STRING_INTERPOLATION_END, parser))
-        return parse_interpolated_string(parser);
+        || check_next(STRING_INTERPOLATION_END, parser)) {
+
+        *term_target = ast_new_interpolated_string();
+        return parse_interpolated_string(parser, &(*term_target)->interpolated_string);
+    }
 
     // <string> -> <multiline_interpolated_string>
     if (check_next(MULTILINE_STRING_INTERPOLATION, parser)
-        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser))
-        return parse_multiline_interpolated_string(parser);
+        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+
+        *term_target = ast_new_interpolated_string();
+        return parse_multiline_interpolated_string(parser, &(*term_target)->interpolated_string);
+    }
 
     return failed(parser, PARSER_RULE_INCOMPLETE, str_token(&parser->next, GET_NAME));
 }
 
-int parse_interpolated_string(ParserContext* parser)
+int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string)
 {
     // <interpolated_string> -> [STRING_INTERPOLATION_END]
-    if (accept_next(STRING_INTERPOLATION_END, parser))
+    if (accept_next(STRING_INTERPOLATION_END, parser)) {
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
         return CORRECT;
+    }
 
     // <interpolated_string> -> [STRING_INTERPOLATION] <interpolated_string>
-    if (accept_next(STRING_INTERPOLATION, parser))
-        return parse_interpolated_string(parser);
+    if (accept_next(STRING_INTERPOLATION, parser)) {
+
+        // Empty interpolated string that are not END can be discarded
+        if (*parser->accepted.attribute_string == '\0')
+            return parse_interpolated_string(parser, interpolated_string);
+
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
+        return parse_interpolated_string(parser, interpolated_string);
+    }
 
     // <interpolated_string> -> <EXPR> <interpolated_string>
     const bool tmp = parser->interpolated_expression;
     parser->interpolated_expression = true;
 
-    if (!parse_expression(parser, NULL))
+    ASTNode* expression_result;
+    if (!parse_expression(parser, &expression_result))
         return FAILED;
+    ast_list_add(&interpolated_string->expressions, expression_result);
 
     parser->interpolated_expression = tmp;
-    return parse_interpolated_string(parser);
+    return parse_interpolated_string(parser, interpolated_string);
 }
 
-int parse_multiline_interpolated_string(ParserContext* parser)
+int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string)
 {
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]
-    if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser))
+    if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
         return CORRECT;
+    }
 
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
-    if (accept_next(MULTILINE_STRING_INTERPOLATION, parser))
-        return parse_multiline_interpolated_string(parser);
+    if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
+
+        // Empty interpolated string that are not END can be discarded
+        if (*parser->accepted.attribute_string == '\0')
+            return parse_interpolated_string(parser, interpolated_string);
+
+        ASTNode* string = ast_new_literal((ASTLiteral) {
+            .type = AST_STRING,
+            .val_string = parser->accepted.attribute_string,
+        });
+        ast_list_add(&interpolated_string->expressions, string);
+        return parse_multiline_interpolated_string(parser, interpolated_string);
+    }
 
     // <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
     const bool tmp = parser->interpolated_expression;
     parser->interpolated_expression = true;
 
-    if (!parse_expression(parser, NULL))
+    ASTNode* expression_result;
+    if (!parse_expression(parser, &expression_result))
         return FAILED;
+    ast_list_add(&interpolated_string->expressions, expression_result);
 
     parser->interpolated_expression = tmp;
-    return parse_multiline_interpolated_string(parser);
+    return parse_multiline_interpolated_string(parser, interpolated_string);
 }
 
-int parse_function_call(ParserContext* parser)
+int parse_function_call(ParserContext* parser, ASTNode** term_target)
 {
-    return accept_next(IDENTIFIER, parser) && parse_function_call_group_list(parser);
+    return accept_next(IDENTIFIER, parser) && parse_function_call_group_list(parser, term_target);
 }
 
-int parse_function_call_group_list(ParserContext* parser)
+int parse_function_call_group_list(ParserContext* parser, ASTNode** term_target)
 {
     // <fun_call_group_list> -> ( <fun_call_param_first> ) <fun_call_group_list>
     if (accept_next(LEFT_BRACKET, parser)) {
 
-        if (!parse_function_call_parameter_first(parser))
+        if (!parse_function_call_parameter_first(parser, term_target))
             return FAILED;
 
         if (!accept_next(RIGHT_BRACKET, parser))
             return FAILED;
 
-        return parse_function_call_group_list(parser);
+        return parse_function_call_group_list(parser, term_target);
     }
 
     // <fun_call_group_list> -> 3
     return CORRECT;
 }
 
-int parse_function_call_parameter_first(ParserContext* parser)
+int parse_function_call_parameter_first(ParserContext* parser, ASTNode** term_target)
 {
     // <fun_call_param_first> -> 3
     if (check_next(RIGHT_BRACKET, parser))
@@ -845,25 +907,33 @@ int parse_function_call_parameter_first(ParserContext* parser)
     // <fun_call_param_first> -> <EXPR> <fun_call_param_list>
     const bool tmp_parameter_expression = parser->parameter_expression;
     parser->parameter_expression = true;
-    if (!parse_expression(parser, NULL))
+
+    ASTNode* expression_result;
+    if (!parse_expression(parser, &expression_result))
         return FAILED;
+    ast_list_add(&(*term_target)->term.parameters, expression_result);
+
     parser->parameter_expression = tmp_parameter_expression;
 
-    return parse_function_call_parameter_list(parser);
+    return parse_function_call_parameter_list(parser, term_target);
 }
 
-int parse_function_call_parameter_list(ParserContext* parser)
+int parse_function_call_parameter_list(ParserContext* parser, ASTNode** term_target)
 {
     // <fun_call_param_list> -> , <EXPR> <fun_call_param_list>
     if (accept_next(COMMA, parser)) {
 
         const bool tmp_parameter_expression = parser->parameter_expression;
         parser->parameter_expression = true;
-        if (!parse_expression(parser, NULL))
+
+        ASTNode* expression_result;
+        if (!parse_expression(parser, &expression_result))
             return FAILED;
+        ast_list_add(&(*term_target)->term.parameters, expression_result);
+
         parser->parameter_expression = tmp_parameter_expression;
 
-        return parse_function_call_parameter_list(parser);
+        return parse_function_call_parameter_list(parser, term_target);
     }
 
     // <fun_call_param_list> -> 3
@@ -1441,7 +1511,7 @@ int get_line(const ParserContext* parser)
 
 int failed(ParserContext* parser, const int err, ...)
 {
-    va_list args = {};
+    va_list args = { };
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);

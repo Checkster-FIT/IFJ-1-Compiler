@@ -20,6 +20,81 @@ Symtable* new_symtable()
     return ptr;
 }
 
+Symtable* add_builtin_entries(Symtable* symtable)
+{
+    SymtableEntry entry = {
+        .function = true,
+        .identifier = "",
+        .data_type = '?',
+        .defined = true,
+        .main = false,
+    };
+
+    entry.identifier = "print";
+    entry.data_type = 'u';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "readLine";
+    entry.data_type = 's';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "readInt";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "readDouble";
+    entry.data_type = 'd';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "toStr";
+    entry.data_type = 's';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "toInt";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "strLength";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "subStr";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "ord";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "chr";
+    entry.data_type = 's';
+    symtable_add_entry(symtable, entry);
+
+    // BOOL-THEN
+    entry.identifier = "readBoolean";
+    entry.data_type = 'b';
+    symtable_add_entry(symtable, entry);
+
+    // VAL-MEM
+    entry.identifier = "floor";
+    entry.data_type = 'd';
+    symtable_add_entry(symtable, entry);
+
+    entry.identifier = "toString";
+    entry.data_type = 's';
+    symtable_add_entry(symtable, entry);
+
+    // entry.identifier = "toInt"; // ?????
+    // entry.data_type = 'i';
+    // symtable_add_entry(symtable, entry);
+
+    entry.identifier = "length";
+    entry.data_type = 'i';
+    symtable_add_entry(symtable, entry);
+
+    return symtable;
+}
+
 void free_symtable(const Symtable* symtable)
 {
     if (symtable == NULL) {

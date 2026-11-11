@@ -41,7 +41,7 @@
     // -------------------------------------------------
 
     <function_body> -> [LF] [INDENT] <statement_list> [DEDENT]
-    <function_body> -> <EXPR> [LF]
+    <function_body> -> <EXPR> <separator>
 
     <statement_list> -> <statement> <separator> <statement_list> // Add ';' as a separator
     <statement_list> -> <construct> <statement_list>

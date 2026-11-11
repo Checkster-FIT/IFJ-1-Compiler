@@ -28,12 +28,15 @@ typedef enum {
     AST_LITERAL,
     AST_WHILE_DO,
     AST_RETURN,
+    AST_TERM,
+    AST_INTERPOLATED_STRING,
 } ASTNodeType;
 
 typedef enum {
     AST_INTEGER,
     AST_DOUBLE,
     AST_BOOLEAN,
+    AST_STRING,
     AST_UNIT,
     AST_UNKNOWN_LITERAL
 } ASTLiteralType;
@@ -95,13 +98,27 @@ typedef struct {
 } ASTVariable;
 
 typedef struct {
+    const char* identifier;
+} ASTString;
+
+typedef struct {
     ASTLiteralType type;
     union {
         int val_integer;
         double val_double;
         bool val_bool;
+        const char* val_string;
     };
 } ASTLiteral;
+
+typedef struct {
+    ASTNodeList expressions;
+} ASTInterpolatedString;
+
+typedef struct {
+    const char* identifier;
+    ASTNodeList parameters;
+} ASTTerm;
 
 typedef struct {
     const char* identifier;
@@ -130,6 +147,8 @@ struct ast_node {
         ASTLiteral literal;
         ASTWhileDo while_do;
         ASTReturn return_st;
+        ASTTerm term;
+        ASTInterpolatedString interpolated_string;
     };
 };
 
@@ -178,6 +197,8 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);
 ASTNode* ast_new_literal(const ASTLiteral literal);
+ASTNode* ast_new_term(const char* identifier);
+ASTNode* ast_new_interpolated_string();
 
 Symtable* create_local_symtable(ASTNode* ast);
 

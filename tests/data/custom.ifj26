@@ -18,7 +18,7 @@ def factorial(n: Int): Int =
     result
 
 def pi_string() =
-    3.14159265359.toString
+    3.14159265359.toStr
 
 @main def runFoo(): Unit =
     val n = readInt()
@@ -37,8 +37,11 @@ def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     val function = square(add(2, 3))
     return ()
 
+def square(i: Int) = i*i
+def add(a: Int, b: Int) = a+b;
+
 def todo() =
-    (5).toString
+    (5).toStr
 
     var xyz = if abc == 1 then "One" else "Not one"
 

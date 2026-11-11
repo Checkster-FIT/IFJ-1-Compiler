@@ -141,14 +141,14 @@ int stack_accept_elem(Stack* stack, const PrecedenceGroup group);
 int get_stack_top_operator(const Stack* stack);
 
 int parse_term(ParserContext* parser, ASTNode** term_target);
-int parse_function_call(ParserContext* parser);
-int parse_function_call_group_list(ParserContext* parser);
-int parse_function_call_parameter_first(ParserContext* parser);
-int parse_function_call_parameter_list(ParserContext* parser);
+int parse_function_call(ParserContext* parser, ASTNode** term_target);
+int parse_function_call_group_list(ParserContext* parser, ASTNode** term_target);
+int parse_function_call_parameter_first(ParserContext* parser, ASTNode** term_target);
+int parse_function_call_parameter_list(ParserContext* parser, ASTNode** term_target);
 
-int parse_string(ParserContext* parser);
-int parse_interpolated_string(ParserContext* parser);
-int parse_multiline_interpolated_string(ParserContext* parser);
+int parse_string(ParserContext* parser, ASTNode** term_target);
+int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string);
+int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string);
 
 // -----------------------------------------
 

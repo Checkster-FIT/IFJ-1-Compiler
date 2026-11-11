@@ -94,10 +94,15 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_LITERAL:
             break;
+        case AST_TERM:
+            break;
         case AST_WHILE_DO:
             free_ast_nodes(node->while_do.condition);
             free_node_list(&node->while_do.statements);
             free_symtable(node->while_do.symtable);
+            break;
+        case AST_INTERPOLATED_STRING:
+            free_node_list(&node->interpolated_string.expressions);
             break;
     }
 
@@ -127,7 +132,7 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .type = AST_EXTENSION,
         .next = NULL,
         .extension = {
-            .functions = {},
+            .functions = { },
             .parameter = NULL,
             .symtable = symtable,
         },
@@ -152,8 +157,8 @@ ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* sy
         .next = NULL,
         .function = {
             .identifier = identifier,
-            .statements = {},
-            .parameters = {},
+            .statements = { },
+            .parameters = { },
             .symtable = symtable },
     };
 
@@ -176,8 +181,8 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
         .next = NULL,
         .function = {
             .identifier = identifier,
-            .statements = {},
-            .parameters = {},
+            .statements = { },
+            .parameters = { },
             .symtable = symtable },
     };
 
@@ -311,7 +316,7 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
         .next = NULL,
         .while_do = {
             .condition = NULL,
-            .statements = {},
+            .statements = { },
             .symtable = symtable },
     };
 
@@ -344,6 +349,42 @@ ASTNode* ast_new_expression(const ASTExpression expression)
             .left = expression.left,
             .right = expression.right,
         }
+    };
+
+    return node;
+}
+
+ASTNode* ast_new_term(const char* identifier)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_TERM,
+        .next = NULL,
+        .term = {
+            .identifier = identifier,
+        },
+    };
+
+    return node;
+}
+
+ASTNode* ast_new_interpolated_string()
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_INTERPOLATED_STRING,
+        .next = NULL,
+        .interpolated_string = {
+            .expressions = { },
+        },
     };
 
     return node;
