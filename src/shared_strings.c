@@ -67,13 +67,85 @@ char* add_string(const AllocatedStrings* strings, const char* str)
     return new;
 }
 
-// DynamicString* create_dynamic_string(const char* str)
-// {
-//     const size_t length = strlen(str) + 1;
-//
-//     DynamicString* object = malloc(sizeof(DynamicString));
-//     object->ptr = malloc(length);
-//
-//     strncpy(object->ptr, str, length);
-//     return object;
-// }
+DynamicString* init_dynamic_string()
+{
+    const size_t string_len = 64;
+
+    DynamicString* string_struct = malloc(sizeof(DynamicString));
+    char* string_chars = malloc(sizeof(char) * string_len);
+
+    if (!string_struct || !string_chars) {
+        free(string_struct);
+        free(string_chars);
+        return NULL;
+    }
+
+    string_struct->chars = string_chars;
+    string_struct->chars[0] = '\0';
+    string_struct->len = 0;
+    string_struct->capacity = string_len;
+
+    return string_struct;
+}
+
+int resize_dynamic_string(DynamicString* string)
+{
+    const size_t new_capacity = string->capacity * 2;
+    char* new_string = realloc(string->chars, sizeof(char) * new_capacity);
+    if (!new_string) {
+        // realloc error
+        return 1;
+    }
+
+    string->capacity = new_capacity;
+    string->chars = new_string;
+
+    return 0;
+}
+
+void clear_dynamic_string(DynamicString* string)
+{
+    string->len = 0;
+    string->chars[0] = '\0';
+}
+
+int dynamic_string_append(DynamicString* string, char c)
+{
+    if (string->len + 1 >= string->capacity) {
+        int result = resize_dynamic_string(string);
+        if (result == 1)
+            return 1;
+    }
+
+    string->chars[string->len] = c;
+    string->len += 1;
+    string->chars[string->len] = '\0';
+
+    return 0;
+}
+
+void dynamic_string_remove_last(DynamicString* string)
+{
+    if (string->len == 0)
+        return; // nothing to be removed
+
+    string->len -= 1;
+    string->chars[string->len] = '\0';
+}
+
+char dynamic_string_top(const DynamicString* string)
+{
+    // empty string
+    if (string->len == 0)
+        return '\0';
+
+    return string->chars[(string->len) - 1];
+}
+
+void dispose_dynamic_string(DynamicString* string)
+{
+    if (!string)
+        return;
+    free(string->chars);
+    free(string);
+}
