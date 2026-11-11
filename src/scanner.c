@@ -68,6 +68,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->scanning_variable_inside_string_interpolation = false;
     scanner_context->pending_eof = false;
     scanner_context->block_comment_counter = 0;
+    scanner_context->pending_dot = false;
 
     scanner_context->strings = strings;
     scanner_context->line = 0;
@@ -117,6 +118,8 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
  *
  * TAB on empty line should not throw an error
  *
+ * nested interpolation - simple string x multiline string
+ *
  */
 Token get_token(ScannerContext* context, FILE* stream)
 {
@@ -150,6 +153,13 @@ Token get_token(ScannerContext* context, FILE* stream)
         return token;
     }
 
+    if (context->pending_dot) {
+        context->pending_dot = false;
+
+        token.type = DOT;
+        return token;
+    }
+
     while (1) {
 
         char c;
@@ -160,7 +170,6 @@ Token get_token(ScannerContext* context, FILE* stream)
         if (context->read_buffer) {
             c = context->scanned_char_buffer;
         } else {
-            // TODO: 'ABC\xffDEF' > test.txt behaves incorrectly (255 value treated as EOF)
             c = (char)fgetc(stream);
 
             if (ferror(stream)) {
@@ -678,9 +687,6 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 break;
 
-                // TODO:
-                //   nested interpolation - simple string x multiline string
-
             case STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR:
 
                 dynamic_string_remove_last(context->scanned_string); // removes $
@@ -1048,6 +1054,26 @@ Token get_token(ScannerContext* context, FILE* stream)
             case STATE_DECIMAL_POINT:
                 if (c >= '0' && c <= '9')
                     state = STATE_DOUBLE_DECIMAL_NUMBER;
+
+                // dot notation (e.x. 12.toInt)
+                else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                    dynamic_string_remove_last(context->scanned_string); // remove .
+
+                    long value = strtol(context->scanned_string->chars, &end_ptr, 10);
+
+                    if (context->scanned_string->chars == end_ptr || *end_ptr != '\0') {
+                        token.type = ERROR;
+                        token.attribute_error = print_error(NUMBER_CONVERT_ERROR, LINE, state);
+                        return token;
+                    }
+
+                    token.type = INTEGER;
+                    token.attribute_int = value;
+
+                    context->pending_dot = true;
+                    RETURN_TOKEN_AND_SET_READ_BUFFER // read this c again
+                }
+
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_DOUBLE_INVALID_DECIMAL_POINT, LINE, context->scanned_string->chars);

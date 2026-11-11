@@ -247,6 +247,7 @@ typedef struct {
     bool scanning_variable_inside_string_interpolation;
     bool pending_eof;
     int line;
+    bool pending_dot;
 
     AllocatedStrings* strings;
 } ScannerContext;
