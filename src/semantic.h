@@ -10,6 +10,18 @@
 
 #include "ast.h"
 
+/**
+ * @brief Performs semantic check on function node.
+ *
+ * Checks:
+ *  number and order of parameters
+ *  data types of parameters
+ *  expressions inside function
+ *
+ * @param fun_node Pointer to function AST node.
+ * @return Data type of function return value.
+ */
+char fun_sem(ASTNode* fun_node);
 int run_semantic(ASTNode* ast);
 
 #endif // IFJ_1_COMPILER_SEMANTIC_H

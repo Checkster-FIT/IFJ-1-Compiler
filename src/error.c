@@ -257,6 +257,24 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 0;
             error.code = 2;
             break;
+        // Semantic error
+        case SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE:
+            error.message = "Function declaration does not match function return value data type";
+            error.param_count = 0;
+            error.code = 6;
+            break;
+        case SEMANTIC_MULTIPLE_MAIN:
+            error.message = "Two or more functions are marked with `@main`";
+            error.fix = "Exactly one function must be marked as entry function";
+            error.param_count = 0;
+            error.code = 4;
+            break;
+        case SEMANTIC_NO_MAIN:
+            error.message = "No function is marked with `@main`";
+            error.fix = "Exactly one function must be marked as entry function";
+            error.param_count = 0;
+            error.code = 3;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
@@ -269,8 +287,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 99;
             break;
         case CORRUPTED_MEMORY:
-            error.message = "An error has occurred when trying to read from memory in state: '%i'";
-            error.param_count = 1;
+            error.message = "An error has occurred when trying to read from internal memory";
+            error.param_count = 0;
             error.code = 99;
             break;
         // Program errors

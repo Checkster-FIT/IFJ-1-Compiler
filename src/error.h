@@ -66,6 +66,11 @@ typedef enum error_enum {
     // Syntax error
     SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL,
 
+    // Semantic error
+    SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE,
+    SEMANTIC_MULTIPLE_MAIN,
+    SEMANTIC_NO_MAIN,
+
     // Internal error
     MEMORY_ALLOCATION_ERROR,
     STREAM_READ_ERROR,

@@ -217,7 +217,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
     if (parent->parent) {
         print_ast_indent(parent->parent);
-    fprintf(stderr, "\033[1;37m%s\033[0m", parent->last ? "   └────" : "   ├────");    }
+        fprintf(stderr, "\033[1;37m%s\033[0m", parent->last ? "   └────" : "   ├────");
+    }
 
     char* color = "\033[1;34m";
     char* color_secondary = "\033[1;32m";
