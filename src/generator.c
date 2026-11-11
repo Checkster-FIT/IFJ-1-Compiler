@@ -86,10 +86,11 @@ void generate_local_variables(Symtable* symtable)
 void generate_parameters(ASTNodeList parameters)
 {
     ASTNode* param = parameters.first;
-    while (param != NULL) {
-        printf("DEFVAR LF@%s\n", param->parameter.identifier);
-        printf("POPS LF@%s\n", param->parameter.identifier);
+    if (param == NULL) {
+        return;
     }
+    printf("DEFVAR LF@%s\n", param->parameter.identifier);
+    printf("POPS LF@%s\n", param->parameter.identifier);
 }
 
 void print_call(const char* name)
