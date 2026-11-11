@@ -20,77 +20,47 @@ Symtable* new_symtable()
     return ptr;
 }
 
-Symtable* add_builtin_entries(Symtable* symtable)
+SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const char* parameters, const char return_type)
 {
-    SymtableEntry entry = {
+    const SymtableEntry entry = {
         .function = true,
-        .identifier = "",
-        .data_type = '?',
         .defined = true,
+        .builtin = true,
+        .constant = true,
         .main = false,
+        .identifier = identifier,
+        .data_type = return_type,
+        .parameters = init_dynamic_string(),
     };
 
-    entry.identifier = "print";
-    entry.data_type = 'u';
-    symtable_add_entry(symtable, entry);
+    if (entry.parameters == NULL)
+        return NULL;
 
-    entry.identifier = "readLine";
-    entry.data_type = 's';
-    symtable_add_entry(symtable, entry);
+    dynamic_string_append_str(entry.parameters, parameters);
+    return symtable_add_entry(symtable, entry);
+}
 
-    entry.identifier = "readInt";
-    entry.data_type = 'i';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "readDouble";
-    entry.data_type = 'd';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "toStr";
-    entry.data_type = 's';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "toInt";
-    entry.data_type = 'i';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "strLength";
-    entry.data_type = 'i';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "subStr";
-    entry.data_type = 'i';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "ord";
-    entry.data_type = 'i';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "chr";
-    entry.data_type = 's';
-    symtable_add_entry(symtable, entry);
+Symtable* add_built_in_entries(Symtable* symtable)
+{
+    add_built_in_function(symtable, "print", "#a", 'u');
+    add_built_in_function(symtable, "readLine", "#", 's');
+    add_built_in_function(symtable, "readInt", "#", 'i');
+    add_built_in_function(symtable, "readDouble", "#", 'd');
+    add_built_in_function(symtable, "toStr", "#a", 's');
+    add_built_in_function(symtable, "toInt", "#d", 'i');
+    add_built_in_function(symtable, "strLength", "#s", 'i');
+    add_built_in_function(symtable, "subStr", "#sii", 'i');
+    add_built_in_function(symtable, "ord", "#si", 'i');
+    add_built_in_function(symtable, "chr", "#i", 's');
 
     // BOOL-THEN
-    entry.identifier = "readBoolean";
-    entry.data_type = 'b';
-    symtable_add_entry(symtable, entry);
+    add_built_in_function(symtable, "readBoolean", "#", 'b');
 
     // VAL-MEM
-    entry.identifier = "floor";
-    entry.data_type = 'd';
-    symtable_add_entry(symtable, entry);
-
-    entry.identifier = "toString";
-    entry.data_type = 's';
-    symtable_add_entry(symtable, entry);
-
-    // entry.identifier = "toInt"; // ?????
-    // entry.data_type = 'i';
-    // symtable_add_entry(symtable, entry);
-
-    entry.identifier = "length";
-    entry.data_type = 'i';
-    symtable_add_entry(symtable, entry);
+    add_built_in_function(symtable, "floor", "", 'd');
+    add_built_in_function(symtable, "toString", "", 's');
+    add_built_in_function(symtable, "length", "", 'i');
+    // add_built_in_function(symtable, "toInt", "", 'i'); // ?????
 
     return symtable;
 }
@@ -108,7 +78,13 @@ void free_allocated_entries(const TNode* node)
 
     free_allocated_entries(node->left);
     free_allocated_entries(node->right);
-    free(node->value);
+
+    const SymtableEntry* entry = node->value;
+    if (entry != NULL) {
+        dispose_dynamic_string(entry->parameters);
+        free(node->value);
+    }
+
     free((void*)node);
 }
 
@@ -119,6 +95,14 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
     if (data == NULL) {
         print_error(MEMORY_ALLOCATION_ERROR, -1);
         return NULL;
+    }
+
+    if (data->parameters != NULL) {
+        data->parameters = init_dynamic_string();
+        if (data->parameters == NULL) {
+            print_error(MEMORY_ALLOCATION_ERROR, -1);
+            return NULL;
+        }
     }
 
     *data = entry;

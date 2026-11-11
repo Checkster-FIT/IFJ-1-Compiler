@@ -56,6 +56,14 @@ void clear_dynamic_string(DynamicString* string);
 int dynamic_string_append(DynamicString* string, char c);
 
 /**
+ * @brief Appends another string at the end of the dynamic string, resizing if necessary.
+ * @param string Pointer to the dynamic string.
+ * @param str String to append.
+ * @return 0 on success, 1 on memory allocation fail.
+ */
+int dynamic_string_append_str(DynamicString* string, const char* str);
+
+/**
  * @brief Removes the last character from the string.
  *
  * @param string Pointer to the dynamic string.

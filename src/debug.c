@@ -255,7 +255,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_FUNCTION:
             entry = get_closest_symtable_entry(node, node->function.identifier);
             fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
-            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            fprintf(stderr, "%s: %s", entry->identifier, str_type(entry->data_type));
+
+            if (entry->parameters)
+                fprintf(stderr, " <%s>", entry->parameters->chars);
+            fprintf(stderr, "\n");
+
             this.symtable = node->function.symtable;
 
             this.followed = node->function.statements.first != NULL;
@@ -298,7 +303,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                 || node->expression.operation == OP_NOT)
                 fprintf(stderr, "[%s%sE%s]\n", color, str_operation(node->expression.operation), reset);
             else if (node->expression.operation != OP_NONE)
-                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
+                fprintf(stderr, "[%sE%sE%s]\n", color, str_operation(node->expression.operation), reset);
             else
                 fprintf(stderr, "[%sE?E%s]\n", color, reset);
             this.followed = node->expression.right != NULL;
@@ -339,7 +344,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_TERM:
             entry = get_closest_symtable_entry(node, node->term.identifier);
             fprintf(stderr, "[%sTerm%s]", color, reset);
-            fprintf(stderr, " %s: %s\n", entry->identifier, str_type(entry->data_type));
+            fprintf(stderr, " %s: %s", entry->identifier, str_type(entry->data_type));
+
+            if (entry->parameters)
+                fprintf(stderr, " <%s>", entry->parameters->chars);
+            fprintf(stderr, "\n");
+
             print_ast_recursively(node->term.parameters.first, &this);
             break;
 

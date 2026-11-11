@@ -36,7 +36,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
 
     parser->ast = ast;
     push(parser->symtable_stack, ast->program.global_symtable);
-    add_builtin_entries(ast->program.global_symtable);
+    add_built_in_entries(ast->program.global_symtable);
 
     // Scanned tokens
     parser->future.type = NONE;
@@ -196,7 +196,7 @@ int parse_extension(ParserContext* parser)
         return failed(parser, PARSER_MISSING_EXT_PARAM);
 
     ast_add_parameter_group(parser->ast, AST_TARGET_EXTENSION);
-    if (!parse_param(parser))
+    if (!parse_param(parser, NULL))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
 
     if (!accept_next(RIGHT_BRACKET, parser))
@@ -252,7 +252,11 @@ int parse_function(ParserContext* parser)
             .function = true,
             .main = is_main,
             .identifier = parser->accepted.attribute_string,
+            .parameters = init_dynamic_string()
         });
+
+    if (function->parameters == NULL)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Function symtable parameters");
 
     // - Create a new local symtable
     Symtable* local_symtable = new_symtable();
@@ -268,7 +272,7 @@ int parse_function(ParserContext* parser)
     const bool tmp = parser->inside_extension;
     parser->inside_extension = false;
 
-    if (!parse_param_group_list(parser))
+    if (!parse_param_group_list(parser, function))
         return FAILED;
 
     parser->inside_extension = tmp;
@@ -328,20 +332,24 @@ int parse_type(ParserContext* parser)
     return failed(parser, PARSER_INCORRECT_TYPE, invalid);
 }
 
-int parse_param_group_list(ParserContext* parser)
+int parse_param_group_list(ParserContext* parser, SymtableEntry* entry)
 {
     // <param_group_list> -> ( <param_list_first> ) <param_group_list>
     if (check_next(LEFT_BRACKET, parser)) {
         if (!accept_next(LEFT_BRACKET, parser))
             return FAILED;
 
+        if (entry && entry->parameters) {
+            dynamic_string_append(entry->parameters, '#');
+        }
+
         ast_add_parameter_group(parser->ast, AST_TARGET_FUNCTION);
-        if (!parse_param_list_first(parser))
+        if (!parse_param_list_first(parser, entry))
             return FAILED;
 
         if (!accept_next(RIGHT_BRACKET, parser))
             return failed(parser, PARSER_INVALID_PARAM_LIST_END);
-        if (!parse_param_group_list(parser))
+        if (!parse_param_group_list(parser, entry))
             return FAILED;
 
         return CORRECT;
@@ -351,27 +359,27 @@ int parse_param_group_list(ParserContext* parser)
     return CORRECT;
 }
 
-int parse_param_list_first(ParserContext* parser)
+int parse_param_list_first(ParserContext* parser, SymtableEntry* entry)
 {
     // <param_list_first> -> <param> <param_list>
     if (check_next(IDENTIFIER, parser))
-        return parse_param(parser) && parse_param_list(parser);
+        return parse_param(parser, entry) && parse_param_list(parser, entry);
 
     // <param_list_first> -> 3
     return CORRECT;
 }
 
-int parse_param_list(ParserContext* parser)
+int parse_param_list(ParserContext* parser, SymtableEntry* entry)
 {
     // <param_list> -> , <param> <param_list>
     if (check_next(COMMA, parser))
-        return accept_next(COMMA, parser) && parse_param(parser) && parse_param_list(parser);
+        return accept_next(COMMA, parser) && parse_param(parser, entry) && parse_param_list(parser, entry);
 
     // <param_list> -> 3
     return CORRECT;
 }
 
-int parse_param(ParserContext* parser)
+int parse_param(ParserContext* parser, SymtableEntry* entry)
 {
     // <param> -> [IDENTIFIER] : <type>
     log_ast_start(parser);
@@ -394,6 +402,9 @@ int parse_param(ParserContext* parser)
         return FAILED;
 
     parameter.data_type = parser->last_type;
+    if (entry && entry->parameters) {
+        dynamic_string_append(entry->parameters, parser->last_type);
+    }
 
     // AST - Parameter
     if (parser->inside_extension) {
