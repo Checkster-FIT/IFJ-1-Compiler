@@ -10,27 +10,37 @@
 #include "debug.h"
 #include "error.h"
 
+char handle_expression(ASTNode* child_node)
+{
+    return e;
+}
+
 /** TODO:
  *
- *  parameters count
+ *  parameters count and order
  *
  *  parameters data types
- *
- *  expressions
  *
  */
 char fun_sem(ASTNode* fun_node)
 {
 
+    // expressions
 
+    char c;
+    ASTNode* child_node = fun_node->function.statements.first;
 
+    while (child_node) {
+        c = handle_expression(child_node);
+        child_node = child_node->next;
+    }
 
-    return e;
+    return c;
 }
 
 bool is_main(ASTNode* fun_node)
 {
-    SymtableEntry* entry = get_scoped_symtable_entry(fun_node, fun_node->function.identifier);
+    SymtableEntry* entry = get_closest_symtable_entry(fun_node, fun_node->function.identifier);
     if (entry->main)
         return true;
 
@@ -44,35 +54,37 @@ bool is_main(ASTNode* fun_node)
 int run_semantic(ASTNode* ast)
 {
 
-    if (ast->type != AST_PROGRAM) {
-        return print_error(CORRUPTED_MEMORY, 0);
-    }
+     if (ast->type != AST_PROGRAM) {
+         return print_error(CORRUPTED_MEMORY, 0);
+     }
 
-    ASTNode* fun_node = ast->program.functions.first;
+     ASTNode* fun_node = ast->program.functions.first;
 
-    bool main_found = false;
+     bool main_found = false;
 
-    while (fun_node) {
-        char ret = fun_sem(fun_node);
-        SymtableEntry* entry = get_scoped_symtable_entry(fun_node, fun_node->function.identifier);
-        if (!entry->data_type)
-            entry->data_type = ret;
+     while (fun_node) {
+         char ret = fun_sem(fun_node);
 
-        if (ret != entry->data_type)
-            return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, 0);
+         SymtableEntry* entry = get_closest_symtable_entry(fun_node, fun_node->function.identifier);
 
-        if (is_main(fun_node)) {
-            if (main_found)
-                return print_error(SEMANTIC_MULTIPLE_MAIN, 0);
+         if (!entry->data_type)
+             entry->data_type = ret;
 
-            main_found = true;
-        }
+         if (ret != entry->data_type)
+             return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, 0);
 
-        fun_node = fun_node->next;
-    }
+         if (is_main(fun_node)) {
+             if (main_found)
+                 return print_error(SEMANTIC_MULTIPLE_MAIN, 0);
 
-    if (!main_found)
-        return print_error(SEMANTIC_NO_MAIN, 0);
+             main_found = true;
+         }
+
+         fun_node = fun_node->next;
+     }
+
+     if (!main_found)
+         return print_error(SEMANTIC_NO_MAIN, 0);
 
     return 0;
 }

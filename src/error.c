@@ -275,6 +275,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 0;
             error.code = 3;
             break;
+        case SEMANTIC_VARIABLE_OR_FUNCTION_REDEFINITION:
+            error.message = "Repeated definition of function, variable, or value in the same block is not allowed";
+            error.fix = "Remove repeated definition and use assignment";
+            error.param_count = 0;
+            error.code = 4;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
