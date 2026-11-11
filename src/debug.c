@@ -254,7 +254,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             this.symtable = node->function.symtable;
 
             this.followed = node->function.statements.first != NULL;
-            print_ast_recursively(node->function.parameters.first, &this);
+            print_ast_recursively(node->function.parameter_groups.first, &this);
             this.followed = false;
             print_ast_recursively(node->function.statements.first, &this);
             break;
@@ -264,7 +264,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             this.symtable = node->extension.symtable;
 
             this.followed = node->extension.functions.first != NULL;
-            print_ast_recursively(node->extension.parameter, &this);
+            print_ast_recursively(node->function.parameter_groups.first, &this);
             this.followed = false;
             print_ast_recursively(node->extension.functions.first, &this);
             break;
@@ -366,6 +366,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_INTERPOLATED_STRING:
             fprintf(stderr, "[%sIString%s] \n", color, reset);
             print_ast_recursively(node->interpolated_string.expressions.first, &this);
+            break;
+        case AST_PARAMETER_GROUP:
+            fprintf(stderr, "[%s(P)%s] \n", color, reset);
+            print_ast_recursively(node->parameter_group.parameters.first, &this);
             break;
     }
 

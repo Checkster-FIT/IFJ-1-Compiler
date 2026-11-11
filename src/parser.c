@@ -195,6 +195,7 @@ int parse_extension(ParserContext* parser)
     if (!accept_next(LEFT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM);
 
+    ast_add_parameter_group(parser->ast, AST_TARGET_EXTENSION);
     if (!parse_param(parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
 
@@ -337,8 +338,11 @@ int parse_param_group_list(ParserContext* parser)
     if (check_next(LEFT_BRACKET, parser)) {
         if (!accept_next(LEFT_BRACKET, parser))
             return FAILED;
+
+        ast_add_parameter_group(parser->ast, AST_TARGET_FUNCTION);
         if (!parse_param_list_first(parser))
             return FAILED;
+
         if (!accept_next(RIGHT_BRACKET, parser))
             return failed(parser, PARSER_INVALID_PARAM_LIST_END);
         if (!parse_param_group_list(parser))
@@ -397,10 +401,10 @@ int parse_param(ParserContext* parser)
 
     // AST - Parameter
     if (parser->inside_extension) {
-        if (ast_add_ext_parameter(parser->ast, parameter.identifier) == NULL)
+        if (ast_add_parameter(parser->ast, parameter.identifier, AST_TARGET_EXTENSION) == NULL)
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Parameter");
     } else {
-        if (ast_add_parameter(parser->ast, parameter.identifier) == NULL)
+        if (ast_add_parameter(parser->ast, parameter.identifier, AST_TARGET_FUNCTION) == NULL)
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Parameter");
     }
     log_ast_end(parser);

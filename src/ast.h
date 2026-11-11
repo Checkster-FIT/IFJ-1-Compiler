@@ -22,6 +22,7 @@ typedef enum {
     AST_FUNCTION,
     AST_EXTENSION,
     AST_EXPRESSION,
+    AST_PARAMETER_GROUP,
     AST_PARAMETER,
     AST_VAR_ASSIGN,
     AST_VAR_DEF,
@@ -47,6 +48,11 @@ typedef struct {
     ASTNode* active;
 } ASTNodeList;
 
+typedef enum {
+    AST_TARGET_FUNCTION,
+    AST_TARGET_EXTENSION,
+} ASTTarget;
+
 // ====================================
 
 typedef struct {
@@ -62,9 +68,13 @@ typedef struct {
 typedef struct {
     const char* identifier;
     ASTNodeList statements;
-    ASTNodeList parameters;
+    ASTNodeList parameter_groups;
     Symtable* symtable;
 } ASTFunction;
+
+typedef struct {
+    ASTNodeList parameters;
+} ASTParamGroup;
 
 typedef struct {
     ASTNode* condition;
@@ -74,7 +84,7 @@ typedef struct {
 
 typedef struct {
     ASTNodeList functions;
-    ASTNode* parameter;
+    ASTNodeList parameter_groups;
     Symtable* symtable;
 } ASTExtension;
 
@@ -140,6 +150,7 @@ struct ast_node {
         ASTVarDef vardef;
         ASTFunction function;
         ASTExtension extension;
+        ASTParamGroup parameter_group;
         ASTParameter parameter;
         ASTVariable variable;
         ASTAssignment assignment;
@@ -182,11 +193,11 @@ void free_ast_nodes(ASTNode* node);
 void free_node_list(ASTNodeList* list);
 
 ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);
-ASTNode* ast_add_ext_parameter(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable);
 
 ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable);
-ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
+ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target);
+ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget target);
 
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
@@ -199,8 +210,6 @@ ASTNode* ast_new_expression(const ASTExpression expression);
 ASTNode* ast_new_literal(const ASTLiteral literal);
 ASTNode* ast_new_term(const char* identifier);
 ASTNode* ast_new_interpolated_string();
-
-Symtable* create_local_symtable(ASTNode* ast);
 
 void ast_list_add(ASTNodeList* list, ASTNode* node);
 
