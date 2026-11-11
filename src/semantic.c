@@ -49,13 +49,12 @@ int run_semantic(ASTNode* ast)
     }
 
     ASTNode* fun_node = ast->program.functions.first;
-    ASTFunction function = fun_node->function;
 
     bool main_found = false;
 
     while (fun_node) {
         char ret = fun_sem(fun_node);
-        SymtableEntry* entry = get_scoped_symtable_entry(fun_node, function.identifier);
+        SymtableEntry* entry = get_scoped_symtable_entry(fun_node, fun_node->function.identifier);
         if (!entry->data_type)
             entry->data_type = ret;
 
