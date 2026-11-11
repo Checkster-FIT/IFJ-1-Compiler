@@ -215,6 +215,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
     parent->last = !node->next && !parent->followed;
 
+    // if (node->parent)
+    //     fprintf(stderr, "%p", node->parent);
+    // else
+    //     fprintf(stderr, "0x????????????");
+
     if (parent->parent) {
         print_ast_indent(parent->parent);
         fprintf(stderr, "\033[1;37m%s\033[0m", parent->last ? "   └────" : "   ├────");
@@ -248,7 +253,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_FUNCTION:
-            entry = get_scoped_symtable_entry(parent, node->function.identifier);
+            entry = get_closest_symtable_entry(node, node->function.identifier);
             fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             this.symtable = node->function.symtable;
@@ -270,13 +275,13 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_PARAMETER:
-            entry = get_scoped_symtable_entry(parent, node->parameter.identifier);
+            entry = get_closest_symtable_entry(node, node->parameter.identifier);
             fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             break;
 
         case AST_VAR_DEF:
-            entry = get_scoped_symtable_entry(parent, node->vardef.identifier);
+            entry = get_closest_symtable_entry(node, node->vardef.identifier);
             if (!entry->constant)
                 fprintf(stderr, "[%sVar%s] ", color, reset);
             else
@@ -293,7 +298,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                 || node->expression.operation == OP_NOT)
                 fprintf(stderr, "[%s%sE%s]\n", color, str_operation(node->expression.operation), reset);
             else if (node->expression.operation != OP_NONE)
-                fprintf(stderr, "[%sE%sE%s]\n", color, str_operation(node->expression.operation), reset);
+                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
             else
                 fprintf(stderr, "[%sE?E%s]\n", color, reset);
             this.followed = node->expression.right != NULL;
@@ -332,17 +337,14 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_TERM:
-            entry = get_scoped_symtable_entry(parent, node->term.identifier);
-            if (entry->function)
-                fprintf(stderr, "[%sFun%s]", color, reset);
-            else
-                fprintf(stderr, "[%sVar%s]", color, reset);
+            entry = get_closest_symtable_entry(node, node->term.identifier);
+            fprintf(stderr, "[%sTerm%s]", color, reset);
             fprintf(stderr, " %s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->term.parameters.first, &this);
             break;
 
         case AST_VAR_ASSIGN:
-            entry = get_scoped_symtable_entry(parent, node->vardef.identifier);
+            entry = get_closest_symtable_entry(node, node->vardef.identifier);
             fprintf(stderr, "[%sV=E%s] ", color, reset);
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
@@ -372,28 +374,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_recursively(node->parameter_group.parameters.first, &this);
             break;
     }
-
     print_ast_recursively(node->next, parent);
     return 0;
-}
-
-const SymtableEntry* get_scoped_symtable_entry(const Branch* branch, const char* identifier)
-{
-    const Branch* active_branch = branch;
-
-    while (active_branch != NULL) {
-        const TNode* node = search(active_branch->symtable, identifier);
-
-        if (node != NULL) {
-            return node->value;
-        }
-
-        active_branch = active_branch->parent;
-    }
-
-    fprintf(stderr, "\n");
-    print_error(SYMTABLE_ENTRY_NOT_FOUND, 0, identifier);
-    return NULL;
 }
 
 const char* str_operation(const Operator op)

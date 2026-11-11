@@ -260,13 +260,9 @@ int parse_function(ParserContext* parser)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
 
     // AST - New function
-    if (parser->inside_extension) {
-        if (ast_add_ext_function(parser->ast, function->identifier, local_symtable) == NULL)
+    const ASTTarget target = parser->inside_extension ? AST_TARGET_EXTENSION : AST_TARGET_FUNCTION;
+    if (ast_add_function(parser->ast, function->identifier, local_symtable, target) == NULL)
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
-    } else {
-        if (ast_add_function(parser->ast, function->identifier, local_symtable) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
-    }
     log_ast_end(parser);
 
     const bool tmp = parser->inside_extension;
@@ -559,6 +555,7 @@ int parse_statement_variable_definition(ParserContext* parser)
 
     if (!parse_expression(parser, &(node->vardef.expression)))
         return FAILED;
+    node->vardef.expression->parent = node;
 
     log_ast_end(parser);
 
@@ -580,7 +577,11 @@ int parse_statement_assignment(ParserContext* parser)
     if (node == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
 
-    return parse_expression(parser, &(node->assignment.expression));
+    if (!parse_expression(parser, &(node->assignment.expression)))
+        return FAILED;
+    node->assignment.expression->parent = node;
+
+    return CORRECT;
 }
 
 int parse_statement_return(ParserContext* parser)
@@ -595,6 +596,7 @@ int parse_statement_return(ParserContext* parser)
 
     if (!parse_expression(parser, &(node->return_st.expression)))
         return FAILED;
+    node->return_st.expression->parent = node;
 
     return CORRECT;
 }
@@ -639,6 +641,7 @@ int parse_construct_while(ParserContext* parser)
 
     if (!parse_expression(parser, &(node->while_do.condition)))
         return FAILED;
+    node->while_do.condition->parent = node;
 
     if (!accept_next_keyword(DO_KW, parser))
         return failed(parser, PARSER_WHILE_MISSING_DO);
@@ -785,7 +788,7 @@ int parse_string(ParserContext* parser, ASTNode** term_target)
         || check_next(STRING_INTERPOLATION_END, parser)) {
 
         *term_target = ast_new_interpolated_string();
-        return parse_interpolated_string(parser, &(*term_target)->interpolated_string);
+        return parse_interpolated_string(parser, *term_target);
     }
 
     // <string> -> <multiline_interpolated_string>
@@ -793,13 +796,13 @@ int parse_string(ParserContext* parser, ASTNode** term_target)
         || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
 
         *term_target = ast_new_interpolated_string();
-        return parse_multiline_interpolated_string(parser, &(*term_target)->interpolated_string);
+        return parse_multiline_interpolated_string(parser, *term_target);
     }
 
     return failed(parser, PARSER_RULE_INCOMPLETE, str_token(&parser->next, GET_NAME));
 }
 
-int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string)
+int parse_interpolated_string(ParserContext* parser, ASTNode* target_string_node)
 {
     // <interpolated_string> -> [STRING_INTERPOLATION_END]
     if (accept_next(STRING_INTERPOLATION_END, parser)) {
@@ -807,7 +810,8 @@ int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* inte
             .type = AST_STRING,
             .val_string = parser->accepted.attribute_string,
         });
-        ast_list_add(&interpolated_string->expressions, string);
+        string->parent = target_string_node;
+        ast_list_add(&target_string_node->interpolated_string.expressions, string);
         return CORRECT;
     }
 
@@ -816,14 +820,15 @@ int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* inte
 
         // Empty interpolated string that are not END can be discarded
         if (*parser->accepted.attribute_string == '\0')
-            return parse_interpolated_string(parser, interpolated_string);
+            return parse_interpolated_string(parser, target_string_node);
 
         ASTNode* string = ast_new_literal((ASTLiteral) {
             .type = AST_STRING,
             .val_string = parser->accepted.attribute_string,
         });
-        ast_list_add(&interpolated_string->expressions, string);
-        return parse_interpolated_string(parser, interpolated_string);
+        string->parent = target_string_node;
+        ast_list_add(&target_string_node->interpolated_string.expressions, string);
+        return parse_interpolated_string(parser, target_string_node);
     }
 
     // <interpolated_string> -> <EXPR> <interpolated_string>
@@ -833,13 +838,14 @@ int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* inte
     ASTNode* expression_result;
     if (!parse_expression(parser, &expression_result))
         return FAILED;
-    ast_list_add(&interpolated_string->expressions, expression_result);
+    expression_result->parent = target_string_node;
+    ast_list_add(&target_string_node->interpolated_string.expressions, expression_result);
 
     parser->interpolated_expression = tmp;
-    return parse_interpolated_string(parser, interpolated_string);
+    return parse_interpolated_string(parser, target_string_node);
 }
 
-int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string)
+int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_string_node)
 {
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION_END]
     if (accept_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
@@ -847,7 +853,8 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedSt
             .type = AST_STRING,
             .val_string = parser->accepted.attribute_string,
         });
-        ast_list_add(&interpolated_string->expressions, string);
+        string->parent = target_string_node;
+        ast_list_add(&target_string_node->interpolated_string.expressions, string);
         return CORRECT;
     }
 
@@ -856,14 +863,15 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedSt
 
         // Empty interpolated string that are not END can be discarded
         if (*parser->accepted.attribute_string == '\0')
-            return parse_interpolated_string(parser, interpolated_string);
+            return parse_interpolated_string(parser, target_string_node);
 
         ASTNode* string = ast_new_literal((ASTLiteral) {
             .type = AST_STRING,
             .val_string = parser->accepted.attribute_string,
         });
-        ast_list_add(&interpolated_string->expressions, string);
-        return parse_multiline_interpolated_string(parser, interpolated_string);
+        string->parent = target_string_node;
+        ast_list_add(&target_string_node->interpolated_string.expressions, string);
+        return parse_multiline_interpolated_string(parser, target_string_node);
     }
 
     // <multiline_interpolated_string> -> <EXPR> <multiline_interpolated_string>
@@ -873,10 +881,11 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedSt
     ASTNode* expression_result;
     if (!parse_expression(parser, &expression_result))
         return FAILED;
-    ast_list_add(&interpolated_string->expressions, expression_result);
+    expression_result->parent = target_string_node;
+    ast_list_add(&target_string_node->interpolated_string.expressions, expression_result);
 
     parser->interpolated_expression = tmp;
-    return parse_multiline_interpolated_string(parser, interpolated_string);
+    return parse_multiline_interpolated_string(parser, target_string_node);
 }
 
 int parse_function_call(ParserContext* parser, ASTNode** term_target)
@@ -915,6 +924,7 @@ int parse_function_call_parameter_first(ParserContext* parser, ASTNode** term_ta
     ASTNode* expression_result;
     if (!parse_expression(parser, &expression_result))
         return FAILED;
+    expression_result->parent = *term_target;
     ast_list_add(&(*term_target)->term.parameters, expression_result);
 
     parser->parameter_expression = tmp_parameter_expression;
@@ -933,6 +943,7 @@ int parse_function_call_parameter_list(ParserContext* parser, ASTNode** term_tar
         ASTNode* expression_result;
         if (!parse_expression(parser, &expression_result))
             return FAILED;
+        expression_result->parent = *term_target;
         ast_list_add(&(*term_target)->term.parameters, expression_result);
 
         parser->parameter_expression = tmp_parameter_expression;
@@ -1125,7 +1136,6 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
     // <E> -> [t]
     if (stack_accept_elem(stack, P_TERM)) {
 
-        // TODO: node->expression.left = TERM
         if (push(expression_stack, term_node) == 1) {
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Expression");
         }
@@ -1136,7 +1146,8 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
     ASTNode* node = ast_new_expression((ASTExpression) {
         .left = NULL,
         .right = NULL,
-        .operation = OP_NONE });
+        .operation = OP_NONE,
+    });
 
     if (stack_accept_elem(stack, P_R_BRACKET)) {
 
@@ -1148,7 +1159,6 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
 
         // <E> -> ()
         else {
-
             ASTNode* unit_literal = ast_new_literal((ASTLiteral) { .type = AST_UNIT });
 
             if (!unit_literal || push(expression_stack, unit_literal) == 1) {
@@ -1171,6 +1181,7 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
     // <E> := +<E>, -<E>, !<E>
     if (stack_accept_elem(stack, P_UNARY)) {
         node->expression.left = top(expression_stack);
+        node->expression.left->parent = node;
         pop(expression_stack);
 
         if (push(expression_stack, node) == 1) {
@@ -1199,8 +1210,10 @@ int stack_accept_rule(Stack* stack, ASTNode* term_node, Stack* expression_stack,
         }
 
         node->expression.right = top(expression_stack);
+        node->expression.right->parent = node;
         pop(expression_stack);
         node->expression.left = top(expression_stack);
+        node->expression.left->parent = node;
         pop(expression_stack);
 
         if (push(expression_stack, node) == 1) {

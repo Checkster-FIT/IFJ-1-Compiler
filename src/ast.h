@@ -144,6 +144,7 @@ typedef struct {
 struct ast_node {
     ASTNodeType type;
     ASTNode* next;
+    ASTNode* parent;
 
     union {
         ASTProgram program;
@@ -189,28 +190,26 @@ typedef enum {
 // =====================================
 
 ASTNode* new_ast();
+void ast_list_add(ASTNodeList* list, ASTNode* node);
 void free_ast_nodes(ASTNode* node);
 void free_node_list(ASTNodeList* list);
+SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* identifier);
+ASTNodeList* get_top_statement_block(const ASTNode* ast);
 
 ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);
-ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable);
-
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable);
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable, ASTTarget target);
 ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target);
 ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget target);
-
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_return(ASTNode* ast);
-
 ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);
+
 ASTNode* ast_new_literal(const ASTLiteral literal);
 ASTNode* ast_new_term(const char* identifier);
 ASTNode* ast_new_interpolated_string();
-
-void ast_list_add(ASTNodeList* list, ASTNode* node);
 
 #endif // IFJ_1_COMPILER_AST_H

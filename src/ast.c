@@ -28,6 +28,7 @@ ASTNode* new_ast()
     *node = (ASTNode) {
         .type = AST_PROGRAM,
         .next = NULL,
+        .parent = NULL,
         .program = {
             .functions = {
                 .first = NULL,
@@ -122,6 +123,36 @@ void free_node_list(ASTNodeList* list)
     }
 }
 
+void ast_list_add(ASTNodeList* list, ASTNode* node)
+{
+    if (list == NULL)
+        return;
+
+    if (list->first == NULL) {
+        list->first = node;
+        list->active = node;
+        list->last = node;
+    } else if (list->last != NULL) {
+        list->last->next = node;
+        list->last = node;
+    }
+}
+
+ASTNodeList* get_top_statement_block(const ASTNode* ast)
+{
+    ASTNode* node = top(ast->program.block_stack);
+
+    if (node == NULL)
+        return NULL;
+
+    if (node->type == AST_FUNCTION)
+        return &node->function.statements;
+    if (node->type == AST_WHILE_DO)
+        return &node->while_do.statements;
+
+    return NULL;
+}
+
 // ========================================
 
 ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
@@ -134,6 +165,7 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
     *node = (ASTNode) {
         .type = AST_EXTENSION,
         .next = NULL,
+        .parent = ast,
         .extension = {
             .functions = { },
             .parameter_groups = { },
@@ -141,38 +173,13 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         },
     };
 
-    ast_list_add(&ast->program.extensions, node);
+    ast_list_add(&node->parent->program.extensions, node);
+
     ast->program.recent_node = node;
     return node;
 }
 
-ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable)
-{
-    // TODO: Merge?
-
-    ASTNode* node = malloc(sizeof(ASTNode));
-
-    if (node == NULL)
-        return NULL;
-
-    *node = (ASTNode) {
-        .type = AST_FUNCTION,
-        .next = NULL,
-        .function = {
-            .identifier = identifier,
-            .statements = { },
-            .parameter_groups = { },
-            .symtable = symtable },
-    };
-
-    ast_list_add(&ast->program.extensions.last->extension.functions, node);
-    ast->program.recent_node = node;
-    ast->program.recent_function = node;
-    push(ast->program.block_stack, &node->function.statements);
-    return node;
-}
-
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable)
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable, const ASTTarget target)
 {
     ASTNode* node = malloc(sizeof(ASTNode));
 
@@ -182,17 +189,28 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
     *node = (ASTNode) {
         .type = AST_FUNCTION,
         .next = NULL,
+        .parent = NULL,
         .function = {
             .identifier = identifier,
             .statements = { },
             .parameter_groups = { },
-            .symtable = symtable },
+            .symtable = symtable,
+        },
     };
 
-    ast_list_add(&ast->program.functions, node);
-    ast->program.recent_node = node;
+    if (target == AST_TARGET_FUNCTION) {
+        node->parent = ast;
+        ast_list_add(&node->parent->program.functions, node);
+    }
+    else if (target == AST_TARGET_EXTENSION) {
+        node->parent = ast->program.extensions.last;
+        ast_list_add(&node->parent->extension.functions, node);
+    }
+
+    push(ast->program.block_stack, node);
+
     ast->program.recent_function = node;
-    push(ast->program.block_stack, &node->function.statements);
+    ast->program.recent_node = node;
     return node;
 }
 
@@ -206,20 +224,21 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
     *node = (ASTNode) {
         .type = AST_PARAMETER_GROUP,
         .next = NULL,
+        .parent = NULL,
         .parameter_group = {
             .parameters = { },
         },
     };
 
     if (target == AST_TARGET_FUNCTION) {
-        ASTFunction* function = &ast->program.recent_function->function;
-        ast_list_add(&function->parameter_groups, node);
-
+        node->parent = ast->program.recent_function;
+        ast_list_add(&node->parent->function.parameter_groups, node);
     }
     else if (target == AST_TARGET_EXTENSION) {
-        ASTExtension* extension = &ast->program.extensions.last->extension;
-        ast_list_add(&extension->parameter_groups, node);
+        node->parent = ast->program.extensions.last;
+        ast_list_add(&node->parent->extension.parameter_groups, node);
     }
+
     ast->program.recent_node = node;
     return node;
 }
@@ -234,18 +253,19 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget
     *node = (ASTNode) {
         .type = AST_PARAMETER,
         .next = NULL,
+        .parent = NULL,
         .parameter = {
             .identifier = identifier,
         },
     };
 
     if (target == AST_TARGET_FUNCTION) {
-        const ASTFunction* function = &ast->program.recent_function->function;
-        ast_list_add(&function->parameter_groups.last->parameter_group.parameters, node);
+        node->parent = ast->program.recent_function->function.parameter_groups.last;
+        ast_list_add(&node->parent->parameter_group.parameters, node);
     }
     else if (target == AST_TARGET_EXTENSION) {
-        const ASTExtension* extension = &ast->program.extensions.last->extension;
-        ast_list_add(&extension->parameter_groups.last->parameter_group.parameters, node);
+        node->parent = ast->program.extensions.last->extension.parameter_groups.last;
+        ast_list_add(&node->parent->parameter_group.parameters, node);
     }
 
     ast->program.recent_node = node;
@@ -268,8 +288,9 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
         },
     };
 
-    ASTNodeList* statements = top(ast->program.block_stack);
-    ast_list_add(statements, node);
+    node->parent = top(ast->program.block_stack);
+    ast_list_add(get_top_statement_block(ast), node);
+
     ast->program.recent_node = node;
     return node;
 }
@@ -290,8 +311,9 @@ ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
         },
     };
 
-    ASTNodeList* statements = top(ast->program.block_stack);
-    ast_list_add(statements, node);
+    node->parent = top(ast->program.block_stack);
+    ast_list_add(get_top_statement_block(ast), node);
+
     ast->program.recent_node = node;
     return node;
 }
@@ -311,8 +333,9 @@ ASTNode* ast_add_return(ASTNode* ast)
         },
     };
 
-    ASTNodeList* statements = top(ast->program.block_stack);
-    ast_list_add(statements, node);
+    node->parent = top(ast->program.block_stack);
+    ast_list_add(get_top_statement_block(ast), node);
+
     ast->program.recent_node = node;
     return node;
 }
@@ -333,20 +356,71 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
             .symtable = symtable },
     };
 
-    ASTNodeList* statements = top(ast->program.block_stack);
-    ast_list_add(statements, node);
-    push(ast->program.block_stack, &node->while_do.statements);
+    node->parent = top(ast->program.block_stack);
+    ast_list_add(get_top_statement_block(ast), node);
+    push(ast->program.block_stack, node);
+
     ast->program.recent_node = node;
     return node;
 }
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
 {
-    ASTNodeList* statements = top(ast->program.block_stack);
-    ast_list_add(statements, expression);
+    expression->parent = top(ast->program.block_stack);
+    ast_list_add(get_top_statement_block(ast), expression);
+
     ast->program.recent_node = expression;
     return expression;
 }
+
+// ===============================================
+
+SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* identifier)
+{
+    if (node == NULL)
+        return NULL;
+
+    const ASTNode* current = node->parent;
+
+    while (current != NULL) {
+
+        const Symtable* symtable = NULL;
+        switch (current->type) {
+            case AST_PROGRAM:
+                symtable = current->program.global_symtable;
+                break;
+            case AST_FUNCTION:
+                symtable = current->function.symtable;
+                break;
+            case AST_EXTENSION:
+                symtable = current->extension.symtable;
+                break;
+            case AST_WHILE_DO:
+                symtable = current->while_do.symtable;
+                break;
+            default:
+                break;
+        }
+
+        if (symtable == NULL) {
+            current = current->parent;
+            continue;
+        }
+
+        const TNode* search_result = search(symtable, identifier);
+
+        if (search_result == NULL) {
+            current = current->parent;
+            continue;
+        }
+
+        return search_result->value;
+    }
+
+    return NULL;
+}
+
+// ============================================================
 
 ASTNode* ast_new_expression(const ASTExpression expression)
 {
@@ -358,6 +432,7 @@ ASTNode* ast_new_expression(const ASTExpression expression)
     *node = (ASTNode) {
         .type = AST_EXPRESSION,
         .next = NULL,
+        .parent = NULL,
         .expression = {
             .left = expression.left,
             .right = expression.right,
@@ -377,6 +452,7 @@ ASTNode* ast_new_term(const char* identifier)
     *node = (ASTNode) {
         .type = AST_TERM,
         .next = NULL,
+        .parent = NULL,
         .term = {
             .identifier = identifier,
         },
@@ -395,6 +471,7 @@ ASTNode* ast_new_interpolated_string()
     *node = (ASTNode) {
         .type = AST_INTERPOLATED_STRING,
         .next = NULL,
+        .parent = NULL,
         .interpolated_string = {
             .expressions = { },
         },
@@ -413,6 +490,7 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
     *node = (ASTNode) {
         .type = AST_LITERAL,
         .next = NULL,
+        .parent = NULL,
         .literal = literal
     };
 
@@ -420,15 +498,3 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
 }
 
 // ========================================
-
-void ast_list_add(ASTNodeList* list, ASTNode* node)
-{
-    if (list->first == NULL) {
-        list->first = node;
-        list->active = node;
-        list->last = node;
-    } else if (list->last != NULL) {
-        list->last->next = node;
-        list->last = node;
-    }
-}
