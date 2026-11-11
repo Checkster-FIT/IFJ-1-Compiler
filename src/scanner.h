@@ -236,7 +236,7 @@ typedef struct {
     // we need to store master/parent type of string interpolation
     // for return to correct type after processing expression inside the interpolated string
     int master_interpolated_string;
-    ScannedString* scanned_string;
+    DynamicString* scanned_string;
     Stack* indent_stack;
     bool pending_indent;
     int number_of_pending_dedents;
@@ -281,7 +281,7 @@ void destroy_scanner(const ScannerContext* scanner_context);
  * @param string Pointer to the scanned string.
  * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
  */
-int check_identifier_for_kw(ScannedString* string);
+int check_identifier_for_kw(DynamicString* string);
 
 /**
  * @brief Compares current indent value with values on stack. And returns corresponding macro.
