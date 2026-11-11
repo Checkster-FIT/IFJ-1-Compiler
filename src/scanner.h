@@ -220,12 +220,6 @@ typedef enum {
 
 } State;
 
-typedef struct {
-    char* chars;
-    size_t len;
-    size_t capacity;
-} ScannedString;
-
 typedef struct indent_el {
     int value;
     struct indent_el* next;
@@ -242,7 +236,7 @@ typedef struct {
     // we need to store master/parent type of string interpolation
     // for return to correct type after processing expression inside the interpolated string
     int master_interpolated_string;
-    ScannedString* scanned_string;
+    DynamicString* scanned_string;
     Stack* indent_stack;
     bool pending_indent;
     int number_of_pending_dedents;
@@ -253,6 +247,7 @@ typedef struct {
     bool scanning_variable_inside_string_interpolation;
     bool pending_eof;
     int line;
+    bool pending_dot;
 
     AllocatedStrings* strings;
 } ScannerContext;
@@ -282,64 +277,12 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings);
 void destroy_scanner(const ScannerContext* scanner_context);
 
 /**
- * @brief Allocates and initializes a dynamic string structure.
- *
- * @return Pointer to the allocated ScannedString, or NULL on malloc fail.
- */
-ScannedString* init_scanned_string();
-
-/**
- * @brief Doubles the capacity of the string buffer.
- *
- * @param string Pointer to the scanned string.
- * @return 0 on success, 1 on realloc fail.
- */
-int resize_scanned_string(ScannedString* string);
-
-/**
- * @brief Empties the dynamic string (without freeing memory).
- *
- * @param string Pointer to the scanned string.
- */
-void clear_scanned_string(ScannedString* string);
-
-/**
- * @brief Appends character to the string, resizing if necessary.
- * @param string Pointer to the scanned string.
- * @param scanned_char Character to append.
- * @return 0 on success, 1 on memory allocation fail.
- */
-int scanned_string_append(ScannedString* string, char scanned_char);
-
-/**
- * @brief Removes the last character from the string.
- *
- * @param string Pointer to the scanned string.
- */
-void scanned_string_remove_last(ScannedString* string);
-
-/**
- * @brief Returns the last character in the string.
- *
- * @param string Pointer to the scanned string.
- * @return The last character, or '\0' if the string is empty.
- */
-char scanned_string_top(const ScannedString* string);
-
-/**
- * @brief Frees the string structure and its buffer.
- *
- * @param string Pointer to the scanned string.
- */
-void dispose_scanned_string(ScannedString* string);
-
-/**
  * @brief Compares scanned string with the list of keywords for match.
  *
  * @param string Pointer to the scanned string.
  * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
  */
-int check_identifier_for_kw(ScannedString* string);
+int check_identifier_for_kw(DynamicString* string);
 
 /**
  * @brief Compares current indent value with values on stack. And returns corresponding macro.
