@@ -101,6 +101,9 @@ void free_ast_nodes(ASTNode* node)
             free_node_list(&node->while_do.statements);
             free_symtable(node->while_do.symtable);
             break;
+        case AST_INTERPOLATED_STRING:
+            free_node_list(&node->interpolated_string.expressions);
+            break;
     }
 
     // fprintf(stderr,"Freed: %i\n", node->type);
@@ -363,6 +366,24 @@ ASTNode* ast_new_term(const char* identifier)
         .next = NULL,
         .term = {
             .identifier = identifier,
+        },
+    };
+
+    return node;
+}
+
+ASTNode* ast_new_interpolated_string()
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_INTERPOLATED_STRING,
+        .next = NULL,
+        .interpolated_string = {
+            .expressions = { },
         },
     };
 

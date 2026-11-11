@@ -315,6 +315,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                     fprintf(stderr, "[%sBool%s]", color, reset);
                     fprintf(stderr, " %s\n", node->literal.val_bool ? "true" : "false");
                     break;
+                case AST_STRING:
+                    fprintf(stderr, "[%sString%s] \"", color, reset);
+                    fprintf_escaped(stderr, node->literal.val_string);
+                    fprintf(stderr, "\"\n");
+                    break;
                 case AST_UNIT:
                     fprintf(stderr, "[%sUnit%s]", color, reset);
                     fprintf(stderr, " ()\n");
@@ -355,6 +360,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_RETURN:
             fprintf(stderr, "[%sRet%s] \n", color, reset);
             print_ast_recursively(node->return_st.expression, &this);
+            break;
+
+        case AST_INTERPOLATED_STRING:
+            fprintf(stderr, "[%sIString%s] \n", color, reset);
+            print_ast_recursively(node->interpolated_string.expressions.first, &this);
             break;
     }
 
