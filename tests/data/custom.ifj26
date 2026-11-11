@@ -41,7 +41,9 @@ def square(i: Int) = i*i
 def add(a: Int, b: Int) = a+b;
 
 def todo() =
+    var todo: String = "todo";
     (5).toStr
+    2.toStr
 
     var xyz = if abc == 1 then "One" else "Not one"
 

@@ -147,8 +147,8 @@ int parse_function_call_parameter_first(ParserContext* parser, ASTNode** term_ta
 int parse_function_call_parameter_list(ParserContext* parser, ASTNode** term_target);
 
 int parse_string(ParserContext* parser, ASTNode** term_target);
-int parse_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string);
-int parse_multiline_interpolated_string(ParserContext* parser, ASTInterpolatedString* interpolated_string);
+int parse_interpolated_string(ParserContext* parser, ASTNode* target_string_node);
+int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_string_node);
 
 // -----------------------------------------
 
