@@ -67,16 +67,22 @@ char* add_string(const AllocatedStrings* strings, const char* str)
     return new;
 }
 
+// ====================================
+
 DynamicString* init_dynamic_string()
 {
     const size_t string_len = 64;
 
     DynamicString* string_struct = malloc(sizeof(DynamicString));
+
+    if (!string_struct) {
+        return NULL;
+    }
+
     char* string_chars = malloc(sizeof(char) * string_len);
 
-    if (!string_struct || !string_chars) {
+    if (!string_chars) {
         free(string_struct);
-        free(string_chars);
         return NULL;
     }
 

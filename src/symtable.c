@@ -30,14 +30,21 @@ SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const
         .main = false,
         .identifier = identifier,
         .data_type = return_type,
-        .parameters = init_dynamic_string(),
+        .parameters = NULL,
     };
 
-    if (entry.parameters == NULL)
+    SymtableEntry* added_entry = symtable_add_entry(symtable, entry);
+    if (!added_entry)
         return NULL;
 
-    dynamic_string_append_str(entry.parameters, parameters);
-    return symtable_add_entry(symtable, entry);
+    added_entry->parameters = init_dynamic_string();
+    if (!added_entry->parameters)
+        return NULL;
+
+    if (dynamic_string_append_str(added_entry->parameters, parameters) == 1)
+        return NULL;
+
+    return added_entry;
 }
 
 Symtable* add_built_in_entries(Symtable* symtable)
@@ -97,6 +104,8 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
         return NULL;
     }
 
+    *data = entry;
+
     if (data->parameters != NULL) {
         data->parameters = init_dynamic_string();
         if (data->parameters == NULL) {
@@ -104,8 +113,6 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
             return NULL;
         }
     }
-
-    *data = entry;
 
     if (tree_insert(symtable, entry.identifier, data) == NULL)
         return NULL;

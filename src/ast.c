@@ -65,6 +65,7 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_PROGRAM:
             free_node_list(&node->program.functions);
+            free_node_list(&node->program.extensions);
             free_symtable(node->program.global_symtable);
             dispose_stack(node->program.block_stack);
             break;
@@ -75,7 +76,7 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_EXTENSION:
             free_node_list(&node->extension.functions);
-            free_node_list(&node->function.parameter_groups);
+            free_node_list(&node->extension.parameter_groups);
             free_symtable(node->extension.symtable);
             break;
         case AST_PARAMETER:
@@ -96,6 +97,7 @@ void free_ast_nodes(ASTNode* node)
         case AST_LITERAL:
             break;
         case AST_TERM:
+            free_node_list(&node->term.arguments);
             break;
         case AST_WHILE_DO:
             free_ast_nodes(node->while_do.condition);
@@ -108,6 +110,19 @@ void free_ast_nodes(ASTNode* node)
         case AST_PARAMETER_GROUP:
             free_node_list(&node->parameter_group.parameters);
             break;
+        case AST_IF:
+            free_ast_nodes(node->if_statement.condition);
+            free_ast_nodes(node->if_statement.then_node);
+            free_ast_nodes(node->if_statement.else_node);
+            break;
+        case AST_THEN:
+            free_node_list(&node->then_statement.statements);
+            free_symtable(node->then_statement.symtable);
+            break;
+        case AST_ELSE:
+            free_node_list(&node->else_statement.statements);
+            free_symtable(node->else_statement.symtable);
+            break;
     }
 
     // fprintf(stderr,"Freed: %i\n", node->type);
@@ -116,6 +131,8 @@ void free_ast_nodes(ASTNode* node)
 
 void free_node_list(ASTNodeList* list)
 {
+    list->active = list->first;
+
     while (list->active) {
         ASTNode* next = list->active->next;
         free_ast_nodes(list->active);
@@ -149,6 +166,10 @@ ASTNodeList* get_top_statement_block(const ASTNode* ast)
         return &node->function.statements;
     if (node->type == AST_WHILE_DO)
         return &node->while_do.statements;
+    if (node->type == AST_THEN)
+        return &node->then_statement.statements;
+    if (node->type == AST_ELSE)
+        return &node->else_statement.statements;
 
     return NULL;
 }
@@ -364,6 +385,65 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
     return node;
 }
 
+ASTNode* ast_add_if(ASTNode* ast)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_IF,
+        .next = NULL,
+        .if_statement = {
+            .condition = NULL,
+            .then_node = NULL,
+            .else_node = NULL,
+        },
+    };
+
+    node->parent = top(ast->program.block_stack);
+    ast_list_add(get_top_statement_block(ast), node);
+    ast->program.recent_node = node;
+    return node;
+}
+
+ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Symtable* symtable)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    if (type == AST_THEN) {
+        *node = (ASTNode) {
+            .type = AST_THEN,
+            .next = NULL,
+            .then_statement = {
+                .symtable = symtable,
+                .statements = { },
+            },
+        };
+        if_node->if_statement.then_node = node;
+    }
+    else if (type == AST_ELSE) {
+        *node = (ASTNode) {
+            .type = AST_ELSE,
+            .next = NULL,
+            .else_statement = {
+                .symtable = symtable,
+                .statements = { },
+            },
+        };
+        if_node->if_statement.else_node = node;
+    }
+
+    node->parent = if_node;
+    push(ast->program.block_stack, node);
+    ast->program.recent_node = node;
+    return node;
+}
+
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
 {
     expression->parent = top(ast->program.block_stack);
@@ -397,6 +477,12 @@ SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* ident
                 break;
             case AST_WHILE_DO:
                 symtable = current->while_do.symtable;
+                break;
+            case AST_THEN:
+                symtable = current->then_statement.symtable;
+                break;
+            case AST_ELSE:
+                symtable = current->else_statement.symtable;
                 break;
             default:
                 break;

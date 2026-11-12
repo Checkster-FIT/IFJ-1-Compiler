@@ -27,7 +27,13 @@ typedef enum {
     AST_VAR_ASSIGN,
     AST_VAR_DEF,
     AST_LITERAL,
+
     AST_WHILE_DO,
+
+    AST_IF,
+    AST_THEN,
+    AST_ELSE,
+
     AST_RETURN,
     AST_TERM,
     AST_INTERPOLATED_STRING,
@@ -83,6 +89,22 @@ typedef struct {
 } ASTWhileDo;
 
 typedef struct {
+    ASTNode* condition;
+    ASTNode* then_node;
+    ASTNode* else_node;
+} ASTIf;
+
+typedef struct {
+    ASTNodeList statements;
+    Symtable* symtable;
+} ASTThen;
+
+typedef struct {
+    ASTNodeList statements;
+    Symtable* symtable;
+} ASTElse;
+
+typedef struct {
     ASTNodeList functions;
     ASTNodeList parameter_groups;
     Symtable* symtable;
@@ -127,7 +149,7 @@ typedef struct {
 
 typedef struct {
     const char* identifier;
-    ASTNodeList parameters;
+    ASTNodeList arguments;
 } ASTTerm;
 
 typedef struct {
@@ -161,6 +183,9 @@ struct ast_node {
         ASTReturn return_st;
         ASTTerm term;
         ASTInterpolatedString interpolated_string;
+        ASTIf if_statement;
+        ASTThen then_statement;
+        ASTElse else_statement;
     };
 };
 
@@ -204,6 +229,9 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_return(ASTNode* ast);
 ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
+
+ASTNode* ast_add_if(ASTNode* ast);
+ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Symtable* symtable);
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);

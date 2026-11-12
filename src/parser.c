@@ -252,10 +252,13 @@ int parse_function(ParserContext* parser)
             .function = true,
             .main = is_main,
             .identifier = parser->accepted.attribute_string,
-            .parameters = init_dynamic_string()
         });
 
-    if (function->parameters == NULL)
+    if (!function)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Function symtable entry");
+
+    function->parameters = init_dynamic_string();
+    if (!function->parameters)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "Function symtable parameters");
 
     // - Create a new local symtable
@@ -681,8 +684,10 @@ int parse_construct_if_then(ParserContext* parser)
     if (!accept_next_keyword(IF_KW, parser))
         return FAILED;
 
-    if (!parse_expression(parser, NULL))
+    ASTNode* if_node = ast_add_if(parser->ast);
+    if (!parse_expression(parser, &if_node->if_statement.condition))
         return FAILED;
+    if_node->if_statement.condition->parent = if_node;
 
     if (!accept_next_keyword(THEN_KW, parser))
         return failed(parser, PARSER_IF_MISSING_THEN);
@@ -692,15 +697,33 @@ int parse_construct_if_then(ParserContext* parser)
     if (indented && !accept_next(INDENT, parser))
         return failed(parser, PARSER_IF_MISSING_INDENT);
 
-    // TODO: Handle statements ending with else but not LF or ';'
+    Symtable* then_symtable = new_symtable();
+    if (then_symtable == NULL || push(parser->symtable_stack, then_symtable))
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
+
+    ast_add_if_branch(parser->ast, AST_THEN, if_node, then_symtable);
     if (!parse_statement_list(parser))
         return FAILED;
+    pop(parser->ast->program.block_stack);
+    pop(parser->symtable_stack);
 
     if (indented && !accept_next(DEDENT, parser))
         return FAILED;
 
-    if (check_next_keyword(ELSE_KW, parser))
-        return parse_construct_else(parser);
+    if (check_next_keyword(ELSE_KW, parser)) {
+
+        Symtable* else_symtable = new_symtable();
+        if (else_symtable == NULL || push(parser->symtable_stack, else_symtable))
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "Local symtable");
+
+        ast_add_if_branch(parser->ast, AST_ELSE, if_node, else_symtable);
+        if (!parse_construct_else(parser))
+            return FAILED;
+
+        pop(parser->ast->program.block_stack);
+        pop(parser->symtable_stack);
+        return CORRECT;
+    }
 
     return CORRECT;
 }
@@ -789,10 +812,6 @@ int parse_string(ParserContext* parser, ASTNode** term_target)
         });
         return CORRECT;
     }
-
-    *term_target = ast_new_literal((ASTLiteral) {
-        .type = AST_UNKNOWN_LITERAL,
-    });
 
     // <string> -> <interpolated_string>
     if (check_next(STRING_INTERPOLATION, parser)
@@ -936,7 +955,7 @@ int parse_function_call_parameter_first(ParserContext* parser, ASTNode** term_ta
     if (!parse_expression(parser, &expression_result))
         return FAILED;
     expression_result->parent = *term_target;
-    ast_list_add(&(*term_target)->term.parameters, expression_result);
+    ast_list_add(&(*term_target)->term.arguments, expression_result);
 
     parser->parameter_expression = tmp_parameter_expression;
 
@@ -955,7 +974,7 @@ int parse_function_call_parameter_list(ParserContext* parser, ASTNode** term_tar
         if (!parse_expression(parser, &expression_result))
             return FAILED;
         expression_result->parent = *term_target;
-        ast_list_add(&(*term_target)->term.parameters, expression_result);
+        ast_list_add(&(*term_target)->term.arguments, expression_result);
 
         parser->parameter_expression = tmp_parameter_expression;
 
@@ -1000,7 +1019,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
     while (true) {
         const PrecedenceElement last_elem = get_last_precedence_terminal(stack);
         PrecedenceElement* next_elem = create_next_precedence_terminal(parser, last_elem);
-        const PrecedenceElement* top_elem = top(stack);
+        PrecedenceElement* top_elem = top(stack);
 
         if (precedence_stack_finished(stack, next_elem->group, parser)) {
             if (expr_target != NULL)
@@ -1041,7 +1060,10 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                 continue;
             default:
                 free_ast_nodes(top(expression_stack));
-                free(top(stack));
+                while (top(stack)) {
+                    free(top(stack));
+                    pop(stack);
+                }
                 free(next_elem);
                 dispose_stack(stack);
                 dispose_stack(expression_stack);
