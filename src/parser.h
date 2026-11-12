@@ -123,10 +123,10 @@ int parse_construct_else(ParserContext* parser);
 int parse_type_specifier(ParserContext* parser);
 int parse_type(ParserContext* parser);
 
-int parse_param_group_list(ParserContext* parser);
-int parse_param_list_first(ParserContext* parser);
-int parse_param_list(ParserContext* parser);
-int parse_param(ParserContext* parser);
+int parse_param_group_list(ParserContext* parser, SymtableEntry* entry);
+int parse_param_list_first(ParserContext* parser, SymtableEntry* entry);
+int parse_param_list(ParserContext* parser, SymtableEntry* entry);
+int parse_param(ParserContext* parser, SymtableEntry* entry);
 
 // -----------------------------------------
 PrecedenceElement* create_next_precedence_terminal(const ParserContext* parser, PrecedenceElement last_elem);

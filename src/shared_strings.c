@@ -124,6 +124,16 @@ int dynamic_string_append(DynamicString* string, char c)
     return 0;
 }
 
+int dynamic_string_append_str(DynamicString* string, const char* str)
+{
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (dynamic_string_append(string, str[i]))
+            return 1;
+    }
+
+    return 0;
+}
+
 void dynamic_string_remove_last(DynamicString* string)
 {
     if (string->len == 0)
