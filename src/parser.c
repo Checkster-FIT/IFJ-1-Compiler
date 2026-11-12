@@ -806,6 +806,7 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     if (status == FAILED)
         return failed(parser, PARSER_INVALID_EXPRESSION_USE,
             str_token(&parser->next, GET_NAME));
+
     return CORRECT;
 }
 
@@ -1468,7 +1469,7 @@ Token retrieve_next_token(ParserContext* parser)
     if (parser->mockup_scanner) {
 
         if (parser->mockup_token_index >= parser->mockup_token_count)
-            return (Token){ .type = END_OF_FILE };
+            return (Token) { .type = END_OF_FILE };
 
         const Token token = parser->mockup_tokens[parser->mockup_token_index];
         parser->mockup_token_index++;

@@ -419,6 +419,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             fprintf(stderr, "[%sElse%s] \n", color_secondary, reset);
             print_ast_recursively(node->else_statement.statements.first, &this);
             break;
+        case AST_CONVERSION:
+            fprintf(stderr, "[%sConv%s] ", color, reset);
+            fprintf(stderr, "<%c>\n", node->conversion.result_type);
+            print_ast_recursively(node->vardef.expression, &this);
+            break;
     }
     print_ast_recursively(node->next, parent);
     return 0;
