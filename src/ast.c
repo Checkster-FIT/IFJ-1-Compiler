@@ -222,8 +222,7 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
     if (target == AST_TARGET_FUNCTION) {
         node->parent = ast;
         ast_list_add(&node->parent->program.functions, node);
-    }
-    else if (target == AST_TARGET_EXTENSION) {
+    } else if (target == AST_TARGET_EXTENSION) {
         node->parent = ast->program.extensions.last;
         ast_list_add(&node->parent->extension.functions, node);
     }
@@ -254,8 +253,7 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
     if (target == AST_TARGET_FUNCTION) {
         node->parent = ast->program.recent_function;
         ast_list_add(&node->parent->function.parameter_groups, node);
-    }
-    else if (target == AST_TARGET_EXTENSION) {
+    } else if (target == AST_TARGET_EXTENSION) {
         node->parent = ast->program.extensions.last;
         ast_list_add(&node->parent->extension.parameter_groups, node);
     }
@@ -283,8 +281,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget
     if (target == AST_TARGET_FUNCTION) {
         node->parent = ast->program.recent_function->function.parameter_groups.last;
         ast_list_add(&node->parent->parameter_group.parameters, node);
-    }
-    else if (target == AST_TARGET_EXTENSION) {
+    } else if (target == AST_TARGET_EXTENSION) {
         node->parent = ast->program.extensions.last->extension.parameter_groups.last;
         ast_list_add(&node->parent->parameter_group.parameters, node);
     }
@@ -425,8 +422,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             },
         };
         if_node->if_statement.then_node = node;
-    }
-    else if (type == AST_ELSE) {
+    } else if (type == AST_ELSE) {
         *node = (ASTNode) {
             .type = AST_ELSE,
             .next = NULL,

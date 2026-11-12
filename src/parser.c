@@ -72,6 +72,12 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     // How many tokens after failure should be printed
     parser->debug_print_remaining = 7;
 
+    // Disable unit testing scanner mockup
+    parser->mockup_scanner = false;
+    parser->mockup_tokens = NULL;
+    parser->mockup_token_count = 0;
+    parser->mockup_token_index = 0;
+
     return parser;
 }
 
@@ -89,17 +95,19 @@ int destroy_parser(const ParserContext* parser)
 
 // =======================================================
 
-int run_parser(ASTNode* ast, AllocatedStrings* strings)
+int run_parser(ASTNode* ast, AllocatedStrings* strings, ParserContext* external_context)
 {
     ParserContext parser;
-    if (init_parser(&parser, ast, strings) == NULL)
+
+    if (external_context != NULL)
+        parser = *external_context;
+    else if (init_parser(&parser, ast, strings) == NULL)
         return print_error(MEMORY_ALLOCATION_ERROR, 0, "ParserContext");
 
     const int status = parse_program(&parser);
 
-    if (parser.debug && status == FAILED) {
+    if (parser.debug && status == FAILED)
         log_remaining(&parser);
-    }
 
     return destroy_parser(&parser);
 }
@@ -269,7 +277,7 @@ int parse_function(ParserContext* parser)
     // AST - New function
     const ASTTarget target = parser->inside_extension ? AST_TARGET_EXTENSION : AST_TARGET_FUNCTION;
     if (ast_add_function(parser->ast, function->identifier, local_symtable, target) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
     log_ast_end(parser);
 
     const bool tmp = parser->inside_extension;
@@ -1446,7 +1454,7 @@ void next(ParserContext* parser)
         parser->future.type = NONE;
         parser->future_line = -1;
     } else {
-        parser->next = get_token(&parser->scanner, stdin);
+        parser->next = retrieve_next_token(parser);
     }
 
     if (parser->next.type == ERROR)
@@ -1455,10 +1463,27 @@ void next(ParserContext* parser)
 
 // -------------------------------------------------------
 
+Token retrieve_next_token(ParserContext* parser)
+{
+    if (parser->mockup_scanner) {
+
+        if (parser->mockup_token_index >= parser->mockup_token_count)
+            return (Token){ .type = END_OF_FILE };
+
+        const Token token = parser->mockup_tokens[parser->mockup_token_index];
+        parser->mockup_token_index++;
+        return token;
+    }
+
+    return get_token(&parser->scanner, stdin);
+}
+
+// -------------------------------------------------------
+
 bool check_future(const enum type_enum type, ParserContext* parser)
 {
     parser->future_line = parser->scanner.line;
-    parser->future = get_token(&parser->scanner, stdin);
+    parser->future = retrieve_next_token(parser);
     return parser->future.type == type;
 }
 

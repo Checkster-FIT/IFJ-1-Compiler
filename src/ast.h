@@ -127,10 +127,6 @@ typedef struct {
 
 typedef struct {
     const char* identifier;
-} ASTVariable;
-
-typedef struct {
-    const char* identifier;
 } ASTString;
 
 typedef struct {
@@ -175,7 +171,6 @@ struct ast_node {
         ASTExtension extension;
         ASTParamGroup parameter_group;
         ASTParameter parameter;
-        ASTVariable variable;
         ASTAssignment assignment;
         ASTExpression expression;
         ASTLiteral literal;
