@@ -49,7 +49,7 @@ void generate_function(ASTNode* node)
     printf("PUSHFRAME\n");
 
     generate_local_variables(node->function.symtable);
-    generate_parameters(node->function.parameter_groups.first);
+    generate_parameters(&node->function.parameter_groups);
     generate_statements(node->function.statements.first);
 
     printf("POPFRAME\n");
@@ -79,13 +79,18 @@ void generate_local_variables(Symtable* symtable)
     generate_local_variables_recursive(symtable->root);
 }
 
-void generate_parameters(ASTNode* param)
+void generate_parameters(ASTNodeList* param_group)
 {
-    if (param == NULL) {
+    if (param_group == NULL) {
         return;
     }
-    generate_parameters(param->next);
-    printf("POPS LF@%s\n", param->parameter.identifier);
+    ASTNode* param = param_group->first;
+    while (param != NULL) {
+        if (param->parameter.identifier != NULL) {
+            printf("POPS LF@%s\n", param->parameter.identifier);
+        }
+        param = param->next;
+    }
 }
 
 void generate_expression(ASTNode* node)
@@ -240,13 +245,13 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
         case AST_WHILE_DO:
             static int while_counter = 0;
             while_counter += 1;
-            printf("\nLABEL while_start_%d\n", while_counter);
+            printf("LABEL while_start_%d\n", while_counter);
             printf("PUSHS bool@false\n");
             generate_expression(statement->while_do.condition);
             printf("JUMPIFEQS while_end_%d\n", while_counter);
             generate_statements(statement->while_do.statements.first);
             printf("JUMP while_start_%d\n", while_counter);
-            printf("\nLABEL while_end_%d\n", while_counter);
+            printf("LABEL while_end_%d\n", while_counter);
             break;
         case AST_RETURN:
             generate_expression(statement->return_st.expression);

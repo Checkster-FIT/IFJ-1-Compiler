@@ -19,7 +19,7 @@ void generate_function(ASTNode* root);
 
 void generate_local_variables(Symtable* root);
 
-void generate_parameters(ASTNode* parameter);
+void generate_parameters(ASTNodeList* parameter_group);
 
 void generate_expresssion(ASTNode* expression);
 
