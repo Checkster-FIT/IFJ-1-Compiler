@@ -13,18 +13,16 @@
 
 int run_generator(ASTNode* root);
 
-void generator(ASTNode* root);
-
 void generate_program(ASTNode* root);
 
 void generate_function(ASTNode* root);
 
 void generate_local_variables(Symtable* root);
 
-void generate_parameters(ASTNodeList parameters);
+void generate_parameters(ASTNode* parameter);
 
-void print_call(const char* name);
+void generate_expresssion(ASTNode* expression);
 
-void print_label(const char* name);
+void generate_statements(ASTNode* statement);
 
 #endif // IFJ_1_COMPILER_GENERATOR_H
