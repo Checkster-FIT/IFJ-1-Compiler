@@ -13,15 +13,11 @@
 /**
  * @brief Performs semantic check on function node.
  *
- * Checks:
- *  number and order of parameters
- *  data types of parameters
- *  expressions inside function
- *
  * @param fun_node Pointer to function AST node.
- * @return Data type of function return value.
+ * @param fun_return_type Pointer into which the return value of inspected function is stored.
+ * @return 0 on success, else on error
  */
-char fun_sem(ASTNode* fun_node);
+int fun_sem(ASTNode* fun_node, char* fun_return_type);
 int run_semantic(ASTNode* ast);
 
 #endif // IFJ_1_COMPILER_SEMANTIC_H
