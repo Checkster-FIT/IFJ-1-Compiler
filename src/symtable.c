@@ -33,9 +33,6 @@ SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const
         .parameters = NULL,
     };
 
-    if (entry.parameters == NULL)
-        return NULL;
-
     SymtableEntry* added_entry = symtable_add_entry(symtable, entry);
     if (!added_entry)
         return NULL;
@@ -44,7 +41,7 @@ SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const
     if (!added_entry->parameters)
         return NULL;
 
-    if (dynamic_string_append_str(entry.parameters, parameters) == 1)
+    if (dynamic_string_append_str(added_entry->parameters, parameters) == 1)
         return NULL;
 
     return added_entry;

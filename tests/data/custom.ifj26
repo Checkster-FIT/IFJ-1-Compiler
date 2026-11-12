@@ -1,12 +1,6 @@
 import ifj26.*
 
 def factorial(n: Int): Int =
-
-    abc = (
-        6 +
-        5 +
-    )
-
     var result = 1 + (n * 8)
     var i: Int = n
     while i > 1 do
@@ -54,12 +48,13 @@ def todo() =
 
 //     var xyz = if abc == 1 then "One" else "Not one"
 
-    abc = (
-        6 +
-        5 +
-    )
+//     abc = (
+//         6 +
+//         5 +
+//     )
 
+    var i = 5;
     if i < 0 || i > 50 then
         return 0;
-    else if (i + n) == -9 then
+    else if (i + add(i, 8) == -9) then
         return 5

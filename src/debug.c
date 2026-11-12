@@ -205,7 +205,7 @@ void print_ast_indent(const Branch* branch)
         return;
 
     print_ast_indent(branch->parent);
-    fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "       " : "   │   ");
+    fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "       " : "  │    ");
 }
 
 int print_ast_recursively(ASTNode* node, Branch* parent)
@@ -221,8 +221,18 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     //     fprintf(stderr, "0x????????????");
 
     if (parent->parent) {
+
+        // Add one more line before functions
+        if (node->type == AST_FUNCTION
+            && (node->parent->program.extensions.last != NULL
+                ||  node->parent->program.functions.first != node)) {
+            print_ast_indent(parent->parent);
+            fprintf(stderr, "\033[1;30m%s\033[0m",  "  │    ");
+            fputc('\n', stderr);
+        }
+
         print_ast_indent(parent->parent);
-        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "   └────" : "   ├────");
+        fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "  └─────" : "  ├─────");
     }
 
     char* color = "\033[1;34m";
@@ -259,6 +269,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
+            if (entry && entry->main)
+                fprintf(stderr, " (main)");
             fprintf(stderr, "\n");
 
             this.symtable = node->function.symtable;
@@ -279,6 +291,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_recursively(node->extension.functions.first, &this);
             break;
 
+        case AST_PARAMETER_GROUP:
+            fprintf(stderr, "[%sParGroup%s] \n", color_secondary, reset);
+            print_ast_recursively(node->parameter_group.parameters.first, &this);
+            break;
         case AST_PARAMETER:
             entry = get_closest_symtable_entry(node, node->parameter.identifier);
             fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
@@ -293,7 +309,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             else if (entry)
                 fprintf(stderr, "[%sVal%s] ", color, reset);
             else
-                fprintf(stderr, "[%sVa?%s] ", color, reset);
+                fprintf(stderr, "[%sV??%s] ", color, reset);
 
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
@@ -304,11 +320,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             if (node->expression.operation == OP_UNARY_MINUS
                 || node->expression.operation == OP_UNARY_PLUS
                 || node->expression.operation == OP_NOT)
-                fprintf(stderr, "[%s%sE%s]\n", color, str_operation(node->expression.operation), reset);
+                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
             else if (node->expression.operation != OP_NONE)
-                fprintf(stderr, "[%sE%sE%s]\n", color, str_operation(node->expression.operation), reset);
+                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
             else
-                fprintf(stderr, "[%sE?E%s]\n", color, reset);
+                fprintf(stderr, "[%s?%s]\n", color, reset);
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
@@ -355,12 +371,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             fprintf(stderr, "\n");
 
-            print_ast_recursively(node->term.parameters.first, &this);
+            print_ast_recursively(node->term.arguments.first, &this);
             break;
 
         case AST_VAR_ASSIGN:
             entry = get_closest_symtable_entry(node, node->vardef.identifier);
-            fprintf(stderr, "[%sV=E%s] ", color, reset);
+            fprintf(stderr, "[%s=%s] ", color, reset);
             if (entry)
                 fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
@@ -385,9 +401,23 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             fprintf(stderr, "[%sIString%s] \n", color, reset);
             print_ast_recursively(node->interpolated_string.expressions.first, &this);
             break;
-        case AST_PARAMETER_GROUP:
-            fprintf(stderr, "[%s(P)%s] \n", color, reset);
-            print_ast_recursively(node->parameter_group.parameters.first, &this);
+
+        case AST_IF:
+            fprintf(stderr, "[%sIf%s] \n", color_secondary, reset);
+            this.followed = node->if_statement.then_node != NULL;
+            print_ast_recursively(node->if_statement.condition, &this);
+            this.followed = node->if_statement.else_node != NULL;
+            print_ast_recursively(node->if_statement.then_node, &this);
+            this.followed = false;
+            print_ast_recursively(node->if_statement.else_node, &this);
+            break;
+        case AST_THEN:
+            fprintf(stderr, "[%sThen%s] \n", color_secondary, reset);
+            print_ast_recursively(node->then_statement.statements.first, &this);
+            break;
+        case AST_ELSE:
+            fprintf(stderr, "[%sElse%s] \n", color_secondary, reset);
+            print_ast_recursively(node->else_statement.statements.first, &this);
             break;
     }
     print_ast_recursively(node->next, parent);
