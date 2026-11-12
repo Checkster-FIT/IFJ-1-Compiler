@@ -10,9 +10,13 @@
 
 #include "ast.h"
 
+int handle_block(ASTNodeList list, char* result_type);
+
 int handle_statement(ASTNode* statement_node, char* result_type);
 
 int handle_expression(ASTNode* node, char* result_type);
+
+bool is_main(ASTNode* fun_node);
 
 int run_semantic(ASTNode* ast);
 

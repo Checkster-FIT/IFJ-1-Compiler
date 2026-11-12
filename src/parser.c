@@ -269,7 +269,7 @@ int parse_function(ParserContext* parser)
     // AST - New function
     const ASTTarget target = parser->inside_extension ? AST_TARGET_EXTENSION : AST_TARGET_FUNCTION;
     if (ast_add_function(parser->ast, function->identifier, local_symtable, target) == NULL)
-            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Function");
     log_ast_end(parser);
 
     const bool tmp = parser->inside_extension;

@@ -281,6 +281,40 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 0;
             error.code = 4;
             break;
+        case SEMANTIC_NEGATION_OF_NON_BOOL_TYPE:
+            error.message = "Unable to perform unary negation on type '%s'";
+            error.fix = "Negation can only be performed on Boolean data type";
+            error.param_count = 1;
+            error.code = 6;
+        case SEMANTIC_UNARY_OPERATION_NOT_OVER_NUMBER:
+            error.message = "Unable to perform unary '%s' operator on type '%s'";
+            error.fix = "Must be Int or Double";
+            error.param_count = 2;
+            error.code = 6;
+        case SEMANTIC_NUMERIC_OPERATION_NOT_OVER_NUMBERS:
+            error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
+            error.fix = "Both must be Int or Double";
+            error.param_count = 3;
+            error.code = 6;
+        case SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS:
+            error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
+            error.fix = "Must be Int or Double or two Strings";
+            error.param_count = 3;
+            error.code = 6;
+        case SEMANTIC_EQUAL_NOT_EQUAL_TYPE_MISMATCH:
+            error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
+            error.fix = "Must be Int or Double or two identical data types";
+            error.param_count = 3;
+            error.code = 6;
+        case SEMANTIC_BINARY_OP_NOT_BOOL:
+            error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
+            error.fix = "Both must be Booleans";
+            error.param_count = 3;
+            error.code = 6;
+        case IF_WHILE_CONDITION_NOT_BOOL:
+            error.message = "Result of '%s' statement condition must be Boolean";
+            error.param_count = 1;
+            error.code = 6;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";

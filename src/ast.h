@@ -37,6 +37,9 @@ typedef enum {
     AST_RETURN,
     AST_TERM,
     AST_INTERPOLATED_STRING,
+
+    AST_FUNCALL,
+    AST_VAR_USE,
 } ASTNodeType;
 
 typedef enum {

@@ -225,9 +225,9 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         // Add one more line before functions
         if (node->type == AST_FUNCTION
             && (node->parent->program.extensions.last != NULL
-                ||  node->parent->program.functions.first != node)) {
+                || node->parent->program.functions.first != node)) {
             print_ast_indent(parent->parent);
-            fprintf(stderr, "\033[1;30m%s\033[0m",  "  │    ");
+            fprintf(stderr, "\033[1;30m%s\033[0m", "  │    ");
             fputc('\n', stderr);
         }
 
