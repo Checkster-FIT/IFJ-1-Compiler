@@ -1,6 +1,12 @@
 import ifj26.*
 
 def factorial(n: Int): Int =
+
+    abc = (
+        6 +
+        5 +
+    )
+
     var result = 1 + (n * 8)
     var i: Int = n
     while i > 1 do
@@ -30,6 +36,8 @@ def pi_string() =
 def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     var abc = 1; val _def = 65;
 
+    var a = a;
+
     while abc < 5 do
         abc = abc + abc;
     ()
@@ -44,7 +52,7 @@ def todo() =
     var todo: String = "todo";
     (5).toStr
 
-    var xyz = if abc == 1 then "One" else "Not one"
+//     var xyz = if abc == 1 then "One" else "Not one"
 
     abc = (
         6 +

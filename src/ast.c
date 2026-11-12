@@ -65,6 +65,7 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_PROGRAM:
             free_node_list(&node->program.functions);
+            free_node_list(&node->program.extensions);
             free_symtable(node->program.global_symtable);
             dispose_stack(node->program.block_stack);
             break;
@@ -75,7 +76,7 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_EXTENSION:
             free_node_list(&node->extension.functions);
-            free_node_list(&node->function.parameter_groups);
+            free_node_list(&node->extension.parameter_groups);
             free_symtable(node->extension.symtable);
             break;
         case AST_PARAMETER:
@@ -96,6 +97,7 @@ void free_ast_nodes(ASTNode* node)
         case AST_LITERAL:
             break;
         case AST_TERM:
+            free_node_list(&node->term.parameters);
             break;
         case AST_WHILE_DO:
             free_ast_nodes(node->while_do.condition);
@@ -116,6 +118,8 @@ void free_ast_nodes(ASTNode* node)
 
 void free_node_list(ASTNodeList* list)
 {
+    list->active = list->first;
+
     while (list->active) {
         ASTNode* next = list->active->next;
         free_ast_nodes(list->active);

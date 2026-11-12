@@ -26,8 +26,8 @@ int main()
     const int exit_code_parser = run_parser(ast, strings);
     run_generator(ast);
 
-    free_strings(strings);
     free_ast_nodes(ast);
+    free_strings(strings);
 
     return exit_code_parser;
 }

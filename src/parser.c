@@ -252,10 +252,13 @@ int parse_function(ParserContext* parser)
             .function = true,
             .main = is_main,
             .identifier = parser->accepted.attribute_string,
-            .parameters = init_dynamic_string()
         });
 
-    if (function->parameters == NULL)
+    if (!function)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Function symtable entry");
+
+    function->parameters = init_dynamic_string();
+    if (!function->parameters)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "Function symtable parameters");
 
     // - Create a new local symtable
@@ -1000,7 +1003,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
     while (true) {
         const PrecedenceElement last_elem = get_last_precedence_terminal(stack);
         PrecedenceElement* next_elem = create_next_precedence_terminal(parser, last_elem);
-        const PrecedenceElement* top_elem = top(stack);
+        PrecedenceElement* top_elem = top(stack);
 
         if (precedence_stack_finished(stack, next_elem->group, parser)) {
             if (expr_target != NULL)
@@ -1041,7 +1044,10 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                 continue;
             default:
                 free_ast_nodes(top(expression_stack));
-                free(top(stack));
+                while (top(stack)) {
+                    free(top(stack));
+                    pop(stack);
+                }
                 free(next_elem);
                 dispose_stack(stack);
                 dispose_stack(expression_stack);

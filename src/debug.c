@@ -257,7 +257,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
             fprintf(stderr, "%s: %s", entry->identifier, str_type(entry->data_type));
 
-            if (entry->parameters)
+            if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
             fprintf(stderr, "\n");
 
@@ -282,15 +282,18 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_PARAMETER:
             entry = get_closest_symtable_entry(node, node->parameter.identifier);
             fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
-            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            if (entry)
+                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             break;
 
         case AST_VAR_DEF:
             entry = get_closest_symtable_entry(node, node->vardef.identifier);
-            if (!entry->constant)
+            if (entry && !entry->constant)
                 fprintf(stderr, "[%sVar%s] ", color, reset);
-            else
+            else if (entry)
                 fprintf(stderr, "[%sVal%s] ", color, reset);
+            else
+                fprintf(stderr, "[%sVa?%s] ", color, reset);
 
             fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
@@ -344,10 +347,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_TERM:
             entry = get_closest_symtable_entry(node, node->term.identifier);
             fprintf(stderr, "[%sTerm%s]", color, reset);
-            fprintf(stderr, " %s: %s", entry->identifier, str_type(entry->data_type));
 
-            if (entry->parameters)
+            if (entry)
+                fprintf(stderr, " %s: %s", entry->identifier, str_type(entry->data_type));
+            if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
+
             fprintf(stderr, "\n");
 
             print_ast_recursively(node->term.parameters.first, &this);
@@ -356,7 +361,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_VAR_ASSIGN:
             entry = get_closest_symtable_entry(node, node->vardef.identifier);
             fprintf(stderr, "[%sV=E%s] ", color, reset);
-            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            if (entry)
+                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
             break;
 
