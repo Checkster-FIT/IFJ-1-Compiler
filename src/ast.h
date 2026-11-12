@@ -22,11 +22,18 @@ typedef enum {
     AST_FUNCTION,
     AST_EXTENSION,
     AST_EXPRESSION,
+    AST_PARAMETER_GROUP,
     AST_PARAMETER,
     AST_VAR_ASSIGN,
     AST_VAR_DEF,
     AST_LITERAL,
+
     AST_WHILE_DO,
+
+    AST_IF,
+    AST_THEN,
+    AST_ELSE,
+
     AST_RETURN,
     AST_TERM,
     AST_INTERPOLATED_STRING,
@@ -42,72 +49,98 @@ typedef enum {
 } ASTLiteralType;
 
 typedef struct {
-    ASTNode* first;
-    ASTNode* last;
-    ASTNode* active;
+    ASTNode *first;
+    ASTNode *last;
+    ASTNode *active;
 } ASTNodeList;
+
+typedef enum {
+    AST_TARGET_FUNCTION,
+    AST_TARGET_EXTENSION,
+} ASTTarget;
 
 // ====================================
 
 typedef struct {
     ASTNodeList functions;
     ASTNodeList extensions;
-    Symtable* global_symtable;
+    Symtable *global_symtable;
 
-    ASTNode* recent_node;
-    ASTNode* recent_function;
-    Stack* block_stack;
+    ASTNode *recent_node;
+    ASTNode *recent_function;
+    Stack *block_stack;
 } ASTProgram;
 
 typedef struct {
-    const char* identifier;
+    const char *identifier;
     ASTNodeList statements;
-    ASTNodeList parameters;
-    Symtable* symtable;
+    ASTNodeList parameter_groups;
+    Symtable *symtable;
 } ASTFunction;
 
 typedef struct {
-    ASTNode* condition;
+    ASTNodeList parameters;
+} ASTParamGroup;
+
+typedef struct {
+    ASTNode *condition;
     ASTNodeList statements;
-    Symtable* symtable;
+    Symtable *symtable;
 } ASTWhileDo;
 
 typedef struct {
+    ASTNode *condition;
+    ASTNode *then_node;
+    ASTNode *else_node;
+} ASTIf;
+
+typedef struct {
+    ASTNodeList statements;
+    Symtable *symtable;
+} ASTThen;
+
+typedef struct {
+    ASTNodeList statements;
+    Symtable *symtable;
+} ASTElse;
+
+typedef struct {
     ASTNodeList functions;
-    ASTNode* parameter;
-    Symtable* symtable;
+    ASTNodeList parameter_groups;
+    Symtable *symtable;
 } ASTExtension;
 
 typedef struct {
-    const char* identifier;
-    ASTNode* expression;
+    const char *identifier;
+    ASTNode *expression;
 } ASTVarDef;
 
 typedef struct {
-    ASTNode* expression;
+    ASTNode *expression;
 } ASTReturn;
 
 typedef struct {
-    ASTNode* left;
-    ASTNode* right;
+    ASTNode *left;
+    ASTNode *right;
     int operation;
 } ASTExpression;
 
 typedef struct {
-    const char* identifier;
+    const char *identifier;
 } ASTVariable;
 
 typedef struct {
-    const char* identifier;
+    const char *identifier;
 } ASTString;
 
 typedef struct {
     ASTLiteralType type;
+
     union {
         int val_integer;
         double val_double;
         bool val_bool;
-        const char* val_string;
+        const char *val_string;
     };
 } ASTLiteral;
 
@@ -116,30 +149,32 @@ typedef struct {
 } ASTInterpolatedString;
 
 typedef struct {
-    const char* identifier;
-    ASTNodeList parameters;
+    const char *identifier;
+    ASTNodeList arguments;
 } ASTTerm;
 
 typedef struct {
-    const char* identifier;
+    const char *identifier;
 } ASTParameter;
 
 typedef struct {
-    const char* target;
-    ASTNode* expression;
+    const char *target;
+    ASTNode *expression;
 } ASTAssignment;
 
 // ====================================
 
 struct ast_node {
     ASTNodeType type;
-    ASTNode* next;
+    ASTNode *next;
+    ASTNode *parent;
 
     union {
         ASTProgram program;
         ASTVarDef vardef;
         ASTFunction function;
         ASTExtension extension;
+        ASTParamGroup parameter_group;
         ASTParameter parameter;
         ASTVariable variable;
         ASTAssignment assignment;
@@ -149,6 +184,9 @@ struct ast_node {
         ASTReturn return_st;
         ASTTerm term;
         ASTInterpolatedString interpolated_string;
+        ASTIf if_statement;
+        ASTThen then_statement;
+        ASTElse else_statement;
     };
 };
 
@@ -177,31 +215,46 @@ typedef enum {
 
 // =====================================
 
-ASTNode* new_ast();
-void free_ast_nodes(ASTNode* node);
-void free_node_list(ASTNodeList* list);
+ASTNode *new_ast();
 
-ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);
-ASTNode* ast_add_ext_parameter(ASTNode* ast, const char* identifier);
-ASTNode* ast_add_ext_function(ASTNode* ast, const char* identifier, Symtable* symtable);
+void ast_list_add(ASTNodeList *list, ASTNode *node);
 
-ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable);
-ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier);
+void free_ast_nodes(ASTNode *node);
 
-ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
-ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
-ASTNode* ast_add_return(ASTNode* ast);
+void free_node_list(ASTNodeList *list);
 
-ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable);
+SymtableEntry *get_closest_symtable_entry(const ASTNode *node, const char *identifier);
 
-ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
-ASTNode* ast_new_expression(const ASTExpression expression);
-ASTNode* ast_new_literal(const ASTLiteral literal);
-ASTNode* ast_new_term(const char* identifier);
-ASTNode* ast_new_interpolated_string();
+ASTNodeList *get_top_statement_block(const ASTNode *ast);
 
-Symtable* create_local_symtable(ASTNode* ast);
+ASTNode *ast_add_extension(ASTNode * ast, Symtable * symtable);
 
-void ast_list_add(ASTNodeList* list, ASTNode* node);
+ASTNode *ast_add_function(ASTNode *ast, const char *identifier, Symtable *symtable, ASTTarget target);
+
+ASTNode *ast_add_parameter_group(ASTNode *ast, const ASTTarget target);
+
+ASTNode *ast_add_parameter(ASTNode *ast, const char *identifier, const ASTTarget target);
+
+ASTNode *ast_add_vardef(ASTNode *ast, const char *identifier);
+
+ASTNode *ast_add_assignment(ASTNode *ast, const char *identifier);
+
+ASTNode *ast_add_return(ASTNode *ast);
+
+ASTNode *ast_add_while_do(ASTNode * ast, Symtable * symtable);
+
+ASTNode *ast_add_if(ASTNode *ast);
+
+ASTNode *ast_add_if_branch(ASTNode *ast, ASTNodeType type, ASTNode *if_node, Symtable *symtable);
+
+ASTNode *ast_add_expression(ASTNode *ast, ASTNode *expression);
+
+ASTNode *ast_new_expression(const ASTExpression expression);
+
+ASTNode *ast_new_literal(const ASTLiteral literal);
+
+ASTNode *ast_new_term(const char *identifier);
+
+ASTNode *ast_new_interpolated_string();
 
 #endif // IFJ_1_COMPILER_AST_H

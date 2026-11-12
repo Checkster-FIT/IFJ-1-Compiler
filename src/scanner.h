@@ -117,9 +117,9 @@ typedef struct token {
     union {
         long attribute_int;
         double attribute_double;
-        const char* attribute_string;
+        const char *attribute_string;
         bool attribute_bool;
-        void* attribute_none;
+        void *attribute_none;
 
         enum error_enum attribute_error;
         enum attribute_keyword attribute_keyword;
@@ -129,7 +129,6 @@ typedef struct token {
 } Token;
 
 typedef enum {
-
     STATE_START, // initial state dispatcher
 
     // operators
@@ -217,22 +216,15 @@ typedef enum {
     STATE_STRING_INTERPOLATION_EXPRESSION,
     STATE_STRING_INTERPOLATION_ESCAPE,
     STATE_STRING_INTERPOLATION_END,
-
 } State;
-
-typedef struct {
-    char* chars;
-    size_t len;
-    size_t capacity;
-} ScannedString;
 
 typedef struct indent_el {
     int value;
-    struct indent_el* next;
+    struct indent_el *next;
 } IndentEl;
 
 typedef struct {
-    IndentEl* top;
+    IndentEl *top;
 } IndentStack;
 
 typedef struct {
@@ -242,8 +234,8 @@ typedef struct {
     // we need to store master/parent type of string interpolation
     // for return to correct type after processing expression inside the interpolated string
     int master_interpolated_string;
-    ScannedString* scanned_string;
-    Stack* indent_stack;
+    DynamicString *scanned_string;
+    Stack *indent_stack;
     bool pending_indent;
     int number_of_pending_dedents;
     char scanned_char_buffer;
@@ -253,8 +245,9 @@ typedef struct {
     bool scanning_variable_inside_string_interpolation;
     bool pending_eof;
     int line;
+    bool pending_dot;
 
-    AllocatedStrings* strings;
+    AllocatedStrings *strings;
 } ScannerContext;
 
 /**
@@ -264,7 +257,7 @@ typedef struct {
  * @param stream Input file stream to read from.
  * @return Token representing current lexeme.
  */
-Token get_token(ScannerContext* context, FILE* stream);
+Token get_token(ScannerContext * context, FILE * stream);
 
 /**
  * @brief Initializes whole scanner_context.
@@ -274,64 +267,12 @@ Token get_token(ScannerContext* context, FILE* stream);
  * @param scanner_context Pointer to the scanner context.
  * @return 0 on success, 1 on memory allocation fail.
  */
-int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings);
+int init_scanner(ScannerContext * scanner_context, AllocatedStrings * strings);
 
 /** Destroys and frees the whole scanner_context.
  * @param scanner_context Pointer to the scanner context.
  */
-void destroy_scanner(const ScannerContext* scanner_context);
-
-/**
- * @brief Allocates and initializes a dynamic string structure.
- *
- * @return Pointer to the allocated ScannedString, or NULL on malloc fail.
- */
-ScannedString* init_scanned_string();
-
-/**
- * @brief Doubles the capacity of the string buffer.
- *
- * @param string Pointer to the scanned string.
- * @return 0 on success, 1 on realloc fail.
- */
-int resize_scanned_string(ScannedString* string);
-
-/**
- * @brief Empties the dynamic string (without freeing memory).
- *
- * @param string Pointer to the scanned string.
- */
-void clear_scanned_string(ScannedString* string);
-
-/**
- * @brief Appends character to the string, resizing if necessary.
- * @param string Pointer to the scanned string.
- * @param scanned_char Character to append.
- * @return 0 on success, 1 on memory allocation fail.
- */
-int scanned_string_append(ScannedString* string, char scanned_char);
-
-/**
- * @brief Removes the last character from the string.
- *
- * @param string Pointer to the scanned string.
- */
-void scanned_string_remove_last(ScannedString* string);
-
-/**
- * @brief Returns the last character in the string.
- *
- * @param string Pointer to the scanned string.
- * @return The last character, or '\0' if the string is empty.
- */
-char scanned_string_top(const ScannedString* string);
-
-/**
- * @brief Frees the string structure and its buffer.
- *
- * @param string Pointer to the scanned string.
- */
-void dispose_scanned_string(ScannedString* string);
+void destroy_scanner(const ScannerContext *scanner_context);
 
 /**
  * @brief Compares scanned string with the list of keywords for match.
@@ -339,7 +280,7 @@ void dispose_scanned_string(ScannedString* string);
  * @param string Pointer to the scanned string.
  * @return -2 on NULL string pointer, IS_IDENTIFIER when the scanned string is not in the list of keywords, index of the keyword on match.
  */
-int check_identifier_for_kw(ScannedString* string);
+int check_identifier_for_kw(DynamicString * string);
 
 /**
  * @brief Compares current indent value with values on stack. And returns corresponding macro.
@@ -379,6 +320,6 @@ int check_identifier_for_kw(ScannedString* string);
  * @param first_call Whether the function is being called by the scanner or recursively by the function itself.
  * @return INDENTATION, DEDENTATION, NO_INDENTATION or INVALID_INDENTATION based on specification.
  */
-int check_indentation(ScannerContext* context, int current_indent, bool first_call);
+int check_indentation(ScannerContext *context, int current_indent, bool first_call);
 
 #endif // IFJ_1_COMPILER_SCANNER_H

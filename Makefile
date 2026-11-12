@@ -58,7 +58,7 @@ boolthen control lambdas algebdt extkw lists funexp interpolateds paramlists val
 
 valgrind: $(SRC_DIR)/*.c
 	$(CC) $(CFLAGS) -g $^ -o $(MAIN_EXEC)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC) < $(CODE_EXAMPLE)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(MAIN_EXEC) < $(CODE_CUSTOM_EXAMPLE)
 
 clean:
 	@rm -fv $(MAIN_EXEC)

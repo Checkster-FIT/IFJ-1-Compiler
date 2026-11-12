@@ -35,7 +35,6 @@ typedef struct branch {
 void print_ast(ASTNode* root);
 void print_ast_indent(const Branch* branch);
 int print_ast_recursively(ASTNode* node, Branch* parent);
-const SymtableEntry* get_scoped_symtable_entry(const Branch* branch, const char* identifier);
 
 void log_precedence_stack(const ParserContext* parser, const Stack* stack);
 

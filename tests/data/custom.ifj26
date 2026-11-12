@@ -30,6 +30,8 @@ def pi_string() =
 def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     var abc = 1; val _def = 65;
 
+    var a = a;
+
     while abc < 5 do
         abc = abc + abc;
     ()
@@ -41,16 +43,18 @@ def square(i: Int) = i*i
 def add(a: Int, b: Int) = a+b;
 
 def todo() =
+    var todo: String = "todo";
     (5).toStr
 
-    var xyz = if abc == 1 then "One" else "Not one"
+//     var xyz = if abc == 1 then "One" else "Not one"
 
-    abc = (
-        6 +
-        5 +
-    )
+//     abc = (
+//         6 +
+//         5 +
+//     )
 
+    var i = 5;
     if i < 0 || i > 50 then
         return 0;
-    else if (i + n) == -9 then
+    else if (i + add(i, 8) == -9) then
         return 5

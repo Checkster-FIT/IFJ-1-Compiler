@@ -28,8 +28,8 @@ int main()
     run_generator(ast);
     generate_program(ast);
 
-    free_strings(strings);
     free_ast_nodes(ast);
+    free_strings(strings);
 
     return exit_code_parser;
 }
