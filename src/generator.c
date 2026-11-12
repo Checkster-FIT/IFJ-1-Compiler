@@ -49,7 +49,7 @@ void generate_function(ASTNode* node)
     printf("PUSHFRAME\n");
 
     generate_local_variables(node->function.symtable);
-    generate_parameters(node->function.parameters.first);
+    generate_parameters(node->function.parameter_groups.first);
     generate_statements(node->function.statements.first);
 
     printf("POPFRAME\n");
@@ -219,7 +219,6 @@ void generate_expression(ASTNode* node)
             }
             break;
         case AST_FUNCTION:
-            char* name = node->function.identifier;
             break;
         default:
             fprintf(stderr, "generate_expression: accessed wrong node type\n");
@@ -256,7 +255,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             break;
         case AST_FUNCTION:
             printf("CREATEFRAME\n");
-            ASTNode* arg = statement->function.parameters.first;
+            ASTNode* arg = statement->function.parameter_groups.first;
             while (arg != NULL) {
                 generate_expression(arg);
                 arg = arg->next;
@@ -270,6 +269,26 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             if (!is_last) {
                 printf("POPS LF@$discard\n");
             }
+            break;
+        case AST_IF:
+            static int if_counter = 0;
+            if_counter += 1;
+            int current_if = if_counter;
+            printf("PUSHS bool@false\n");
+            generate_expression(statement->if_statement.condition);
+            printf("JUMPIFEQS if_else_%d\n", current_if);
+            generate_statements(statement->if_statement.then_node);
+            printf("JUMP if_end_%d\n", current_if);
+            printf("LABEL if_else_%d\n", current_if);
+            if (statement->if_statement.else_node != NULL)
+                generate_statements(statement->if_statement.else_node);
+            printf("LABEL if_end_%d\n", current_if);
+            break;
+        case AST_ELSE:
+            generate_statements(statement->if_statement.else_node);
+            break;
+        case AST_THEN:
+            generate_statements(statement->if_statement.then_node);
             break;
         default:
             fprintf(stderr, "generate_statements_switch: accessed wrong statement type %d\n", statement->type);

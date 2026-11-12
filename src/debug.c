@@ -513,7 +513,7 @@ const char* str_token(const Token* token, const TokenStringType mode)
         case ERROR:
             snprintf(num_to_str_buffer, BUFFER_SIZE, "%i", token->attribute_error);
             break;
-        default:;
+        default: ;
     }
 
     const char* attribute_map[] = {
