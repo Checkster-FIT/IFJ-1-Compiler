@@ -191,8 +191,8 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .next = NULL,
         .parent = ast,
         .extension = {
-            .functions = { },
-            .parameter_groups = { },
+            .functions = {},
+            .parameter_groups = {},
             .symtable = symtable,
         },
     };
@@ -216,8 +216,8 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
         .parent = NULL,
         .function = {
             .identifier = identifier,
-            .statements = { },
-            .parameter_groups = { },
+            .statements = {},
+            .parameter_groups = {},
             .symtable = symtable,
         },
     };
@@ -249,7 +249,7 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
         .next = NULL,
         .parent = NULL,
         .parameter_group = {
-            .parameters = { },
+            .parameters = {},
         },
     };
 
@@ -373,7 +373,7 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
         .next = NULL,
         .while_do = {
             .condition = NULL,
-            .statements = { },
+            .statements = {},
             .symtable = symtable },
     };
 
@@ -421,7 +421,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             .next = NULL,
             .then_statement = {
                 .symtable = symtable,
-                .statements = { },
+                .statements = {},
             },
         };
         if_node->if_statement.then_node = node;
@@ -431,7 +431,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             .next = NULL,
             .else_statement = {
                 .symtable = symtable,
-                .statements = { },
+                .statements = {},
             },
         };
         if_node->if_statement.else_node = node;
@@ -454,6 +454,60 @@ ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
 
 // ===============================================
 
+Symtable* get_node_symtable(const ASTNode* node)
+{
+    switch (node->type) {
+        case AST_PROGRAM:
+            return node->program.global_symtable;
+        case AST_FUNCTION:
+            return node->function.symtable;
+        case AST_EXTENSION:
+            return node->extension.symtable;
+        case AST_WHILE_DO:
+            return node->while_do.symtable;
+        case AST_THEN:
+            return node->then_statement.symtable;
+        case AST_ELSE:
+            return node->else_statement.symtable;
+        default:
+            return NULL;
+    }
+}
+
+SymtableEntry* get_closest_defined_symtable_entry(const ASTNode* node, const char* identifier)
+{
+    if (node == NULL)
+        return NULL;
+
+    const ASTNode* current = node->parent;
+
+    while (current != NULL) {
+        const Symtable* symtable = get_node_symtable(current);
+
+        if (symtable == NULL) {
+            current = current->parent;
+            continue;
+        }
+
+        const TNode* search_result = search(symtable, identifier);
+
+        if (search_result == NULL || search_result->value == NULL) {
+            current = current->parent;
+            continue;
+        }
+
+        // Skip undefined entries
+        if (((SymtableEntry*)search_result->value)->defined == false) {
+            current = current->parent;
+            continue;
+        }
+
+        return search_result->value;
+    }
+
+    return NULL;
+}
+
 SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* identifier)
 {
     if (node == NULL)
@@ -462,30 +516,7 @@ SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* ident
     const ASTNode* current = node->parent;
 
     while (current != NULL) {
-
-        const Symtable* symtable = NULL;
-        switch (current->type) {
-            case AST_PROGRAM:
-                symtable = current->program.global_symtable;
-                break;
-            case AST_FUNCTION:
-                symtable = current->function.symtable;
-                break;
-            case AST_EXTENSION:
-                symtable = current->extension.symtable;
-                break;
-            case AST_WHILE_DO:
-                symtable = current->while_do.symtable;
-                break;
-            case AST_THEN:
-                symtable = current->then_statement.symtable;
-                break;
-            case AST_ELSE:
-                symtable = current->else_statement.symtable;
-                break;
-            default:
-                break;
-        }
+        const Symtable* symtable = get_node_symtable(current);
 
         if (symtable == NULL) {
             current = current->parent;
@@ -558,7 +589,7 @@ ASTNode* ast_new_interpolated_string()
         .next = NULL,
         .parent = NULL,
         .interpolated_string = {
-            .expressions = { },
+            .expressions = {},
         },
     };
 

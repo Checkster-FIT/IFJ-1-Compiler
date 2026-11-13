@@ -225,7 +225,10 @@ ASTNode* new_ast();
 void ast_list_add(ASTNodeList* list, ASTNode* node);
 void free_ast_nodes(ASTNode* node);
 void free_node_list(ASTNodeList* list);
+
+Symtable* get_node_symtable(const ASTNode* node);
 SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* identifier);
+SymtableEntry* get_closest_defined_symtable_entry(const ASTNode* node, const char* identifier);
 ASTNodeList* get_top_statement_block(const ASTNode* ast);
 
 ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);

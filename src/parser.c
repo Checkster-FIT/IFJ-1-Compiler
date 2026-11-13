@@ -258,6 +258,7 @@ int parse_function(ParserContext* parser)
         (SymtableEntry) {
             .defined = true,
             .function = true,
+            .constant = true,
             .main = is_main,
             .identifier = parser->accepted.attribute_string,
         });
@@ -536,7 +537,7 @@ int parse_statement(ParserContext* parser)
     }
 
     // <statement> -> <EXPR>
-    ASTNode* expr_node;
+    ASTNode* expr_node = NULL;
     if (!parse_expression(parser, &expr_node))
         return FAILED;
 
@@ -550,7 +551,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     // <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
     log_ast_start(parser);
     SymtableEntry vardef = {
-        .defined = true,
+        .defined = false,
         .function = false,
         .data_type = '?'
     };
@@ -1587,7 +1588,7 @@ int get_line(const ParserContext* parser)
 
 int failed(ParserContext* parser, const int err, ...)
 {
-    va_list args = { };
+    va_list args = {};
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);
