@@ -19,24 +19,26 @@ typedef struct ast_node ASTNode;
 typedef enum {
     AST_NONE,
     AST_PROGRAM,
+
     AST_FUNCTION,
     AST_EXTENSION,
-    AST_EXPRESSION,
     AST_PARAMETER_GROUP,
     AST_PARAMETER,
+
+    AST_EXPRESSION,
+    AST_TERM,
+    AST_LITERAL,
+    AST_INTERPOLATED_STRING,
+    AST_CONVERSION,
+
     AST_VAR_ASSIGN,
     AST_VAR_DEF,
-    AST_LITERAL,
+    AST_RETURN,
 
     AST_WHILE_DO,
-
     AST_IF,
     AST_THEN,
     AST_ELSE,
-
-    AST_RETURN,
-    AST_TERM,
-    AST_INTERPOLATED_STRING,
 
     AST_FUNCALL,
     AST_VAR_USE,
@@ -126,11 +128,13 @@ typedef struct {
     ASTNode* left;
     ASTNode* right;
     int operation;
+    char result_type;
 } ASTExpression;
 
 typedef struct {
-    const char* identifier;
-} ASTVariable;
+    char result_type;
+    ASTNode* expression;
+} ASTConversion;
 
 typedef struct {
     const char* identifier;
@@ -178,7 +182,6 @@ struct ast_node {
         ASTExtension extension;
         ASTParamGroup parameter_group;
         ASTParameter parameter;
-        ASTVariable variable;
         ASTAssignment assignment;
         ASTExpression expression;
         ASTLiteral literal;
@@ -189,6 +192,7 @@ struct ast_node {
         ASTIf if_statement;
         ASTThen then_statement;
         ASTElse else_statement;
+        ASTConversion conversion;
     };
 };
 
@@ -238,6 +242,8 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
 ASTNode* ast_new_expression(const ASTExpression expression);
+
+ASTNode* ast_insert_conversion(ASTNode* node, char new_type);
 
 ASTNode* ast_new_literal(const ASTLiteral literal);
 ASTNode* ast_new_term(const char* identifier);

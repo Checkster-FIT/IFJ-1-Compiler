@@ -123,6 +123,9 @@ void free_ast_nodes(ASTNode* node)
             free_node_list(&node->else_statement.statements);
             free_symtable(node->else_statement.symtable);
             break;
+        case AST_CONVERSION:
+            free_ast_nodes(node->conversion.expression);
+            break;
     }
 
     // fprintf(stderr,"Freed: %i\n", node->type);
@@ -580,3 +583,25 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
 }
 
 // ========================================
+
+ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
+{
+    ASTNode* new_node = malloc(sizeof(ASTNode));
+
+    if (new_node == NULL)
+        return NULL;
+
+    *new_node = *node;
+
+    *node = (ASTNode) {
+        .type = AST_CONVERSION,
+        .next = NULL,
+        .parent = new_node->parent,
+        .conversion = {
+            .result_type = new_type,
+            .expression = new_node,
+        },
+    };
+
+    return node;
+}

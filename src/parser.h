@@ -25,6 +25,8 @@ typedef struct {
     Token next;
     Token accepted;
 
+    ASTNode* ast;
+
     ScannerContext scanner;
     int prev_line;
     int future_line;
@@ -48,7 +50,12 @@ typedef struct {
     bool debug_prefix_ast;
     int debug_print_remaining;
 
-    ASTNode* ast;
+    // Testing information
+    bool mockup_scanner;
+    Token* mockup_tokens;
+    int mockup_token_count;
+    int mockup_token_index;
+
 } ParserContext;
 
 typedef enum {
@@ -80,9 +87,10 @@ typedef struct {
 
 // -----------------------------------------
 ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings* strings);
-int run_parser(ASTNode* ast, AllocatedStrings* strings);
+int run_parser(ASTNode* ast, AllocatedStrings* strings, ParserContext* external_context);
 int destroy_parser(const ParserContext* parser);
 
+Token retrieve_next_token(ParserContext* parser);
 // -----------------------------------------
 void next(ParserContext* parser);
 bool check_future(const enum type_enum type, ParserContext* parser);
