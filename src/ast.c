@@ -630,9 +630,11 @@ ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
         .parent = new_node->parent,
         .conversion = {
             .result_type = new_type,
-            .expression = new_node,
+            .expression = NULL,
         },
     };
+
+    node->conversion.expression = new_node;
 
     return node;
 }

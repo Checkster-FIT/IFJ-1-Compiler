@@ -1015,7 +1015,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
         /* [.]              */ { '?', '<', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' }
     };
 
-    ASTNode* term_node;
+    ASTNode* term_node = NULL;
 
     Stack* stack = init_stack();
     Stack* expression_stack = init_stack();
@@ -1047,8 +1047,10 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
 
         switch (table[last_elem.group][next_elem->group]) {
             case '<':
-                if (!stack_push_before_expression(stack, (PrecedenceElement) { .group = '<' }))
+                if (!stack_push_before_expression(stack, (PrecedenceElement) { .group = '<' })) {
+                    free(next_elem);
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                }
 
                 if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB) {
                     next_elem->group = P_UNARY;
@@ -1056,16 +1058,22 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                     next_elem->operation = next_elem->operation == OP_SUB ? OP_UNARY_MINUS : next_elem->operation;
                 }
 
-                if (push(stack, next_elem) == 1)
+                if (push(stack, next_elem) == 1) {
+                    free(next_elem);
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                }
                 break;
             case '=':
-                if (push(stack, next_elem) == 1)
+                if (push(stack, next_elem) == 1) {
+                    free(next_elem);
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
+                }
                 break;
             case '>':
-                if (!apply_expression_rule(stack, term_node, expression_stack, parser))
+                if (!apply_expression_rule(stack, term_node, expression_stack, parser)) {
+                    free(next_elem);
                     return FAILED;
+                }
                 free(next_elem);
                 continue;
             default:
