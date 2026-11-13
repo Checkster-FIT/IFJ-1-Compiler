@@ -53,8 +53,8 @@ typedef struct {
     // Testing information
     bool mockup_scanner;
     Token* mockup_tokens;
-    int mockup_token_count;
-    int mockup_token_index;
+    size_t mockup_token_count;
+    size_t mockup_token_index;
 
 } ParserContext;
 

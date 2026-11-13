@@ -310,8 +310,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                 fprintf(stderr, "[%sVal%s] ", color, reset);
             else
                 fprintf(stderr, "[%sV??%s] ", color, reset);
-
-            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            if (entry)
+                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
             break;
 

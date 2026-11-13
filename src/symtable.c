@@ -56,7 +56,7 @@ Symtable* add_built_in_entries(Symtable* symtable)
     add_built_in_function(symtable, "toStr", "#a", 's');
     add_built_in_function(symtable, "toInt", "#d", 'i');
     add_built_in_function(symtable, "strLength", "#s", 'i');
-    add_built_in_function(symtable, "subStr", "#sii", 'i');
+    add_built_in_function(symtable, "subStr", "#sii", 's');
     add_built_in_function(symtable, "ord", "#si", 'i');
     add_built_in_function(symtable, "chr", "#i", 's');
 
