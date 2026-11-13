@@ -191,8 +191,8 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .next = NULL,
         .parent = ast,
         .extension = {
-            .functions = {},
-            .parameter_groups = {},
+            .functions = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -216,8 +216,8 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
         .parent = NULL,
         .function = {
             .identifier = identifier,
-            .statements = {},
-            .parameter_groups = {},
+            .statements = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -249,7 +249,7 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
         .next = NULL,
         .parent = NULL,
         .parameter_group = {
-            .parameters = {},
+            .parameters = { },
         },
     };
 
@@ -373,7 +373,7 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
         .next = NULL,
         .while_do = {
             .condition = NULL,
-            .statements = {},
+            .statements = { },
             .symtable = symtable },
     };
 
@@ -421,7 +421,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             .next = NULL,
             .then_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.then_node = node;
@@ -431,7 +431,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             .next = NULL,
             .else_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.else_node = node;
@@ -502,7 +502,13 @@ SymtableEntry* get_closest_defined_symtable_entry(const ASTNode* node, const cha
             continue;
         }
 
-        return search_result->value;
+        SymtableEntry* entry = search_result->value;
+        if (entry->function || entry->defined)
+            return entry;
+
+        current = current->parent;
+
+        // return search_result->value;
     }
 
     return NULL;
@@ -589,7 +595,7 @@ ASTNode* ast_new_interpolated_string()
         .next = NULL,
         .parent = NULL,
         .interpolated_string = {
-            .expressions = {},
+            .expressions = { },
         },
     };
 

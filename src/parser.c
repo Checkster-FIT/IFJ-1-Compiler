@@ -1588,7 +1588,7 @@ int get_line(const ParserContext* parser)
 
 int failed(ParserContext* parser, const int err, ...)
 {
-    va_list args = {};
+    va_list args = { };
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);

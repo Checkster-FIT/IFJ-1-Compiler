@@ -317,7 +317,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 3;
             error.code = 6;
             break;
-        case IF_WHILE_CONDITION_NOT_BOOL:
+        case SEMANTIC_IF_WHILE_CONDITION_NOT_BOOL:
             error.message = "Result of '%s' statement condition must be Boolean";
             error.param_count = 1;
             error.code = 6;
@@ -327,9 +327,10 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 2;
             error.code = 6;
             break;
-        case SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN:
-            error.message = "Function or variable must be initialised before use";
-            error.param_count = 0;
+        case SEMANTIC_USE_OF_UNDEFINED_VAL_FUN:
+            error.message = "Cannot resolve '%s'";
+            error.fix = "Function or variable must be defined before use";
+            error.param_count = 1;
             error.code = 6;
             break;
         case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
@@ -374,6 +375,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Return type of function with @main can only be Unit";
             error.param_count = 0;
             error.code = 6;
+            break;
+        case SEMANTIC_WRITE_INTO_CONST_OR_FUN:
+            error.message = "Cannot assign value to function '%s'";
+            error.param_count = 1;
+            error.code = 7;
             break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:

@@ -77,9 +77,9 @@ typedef enum error_enum {
     SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS,
     SEMANTIC_EQUAL_NOT_EQUAL_TYPE_MISMATCH,
     SEMANTIC_BINARY_OP_NOT_BOOL,
-    IF_WHILE_CONDITION_NOT_BOOL,
+    SEMANTIC_IF_WHILE_CONDITION_NOT_BOOL,
     SEMANTIC_NOT_MATCHING_VAR_TYPE,
-    SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN,
+    SEMANTIC_USE_OF_UNDEFINED_VAL_FUN,
     SEMANTIC_FUNCALL_PARAMETER_MISMATCH,
     SEMANTIC_FUNCALL_PARAMETER_TYPE_MISMATCH,
     SEMANTIC_ARGUMENT_PASSED_TO_VARIABLE,
@@ -88,6 +88,7 @@ typedef enum error_enum {
     SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE,
     SEMANTIC_MAIN_WITH_PARAMETERS,
     SEMANTIC_MAIN_NOT_UNIT,
+    SEMANTIC_WRITE_INTO_CONST_OR_FUN,
 
     // Internal error
     MEMORY_ALLOCATION_ERROR,
@@ -122,6 +123,7 @@ ErrorMessage get_error_by_id(enum error_enum error_id);
  * @return the exit code for the given error message
  */
 int print_error(int error_id, int line, ...);
+
 int va_print_error(int error_id, int line, va_list args);
 
 /**
