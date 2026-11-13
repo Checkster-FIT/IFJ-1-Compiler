@@ -257,6 +257,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 0;
             error.code = 2;
             break;
+        case PARSER_INVALID_FUNCTION_DEF:
+            error.message = "Expected 'def' keyword after main function annotation";
+            error.param_count = 0;
+            error.code = 2;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";

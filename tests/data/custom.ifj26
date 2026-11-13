@@ -20,7 +20,8 @@ def factorial(n: Int): Int =
 def pi_string() =
     3.14159265359.toStr
 
-@main def runFoo(): Unit =
+@main
+def runFoo(): Unit =
     val n = readInt()
     val result = factorial(n)
     print(result)

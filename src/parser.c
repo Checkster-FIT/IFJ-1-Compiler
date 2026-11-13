@@ -247,7 +247,7 @@ int parse_function(ParserContext* parser)
         accept_next(LINE_FEED, parser);
 
     if (!accept_next_keyword(DEF_KW, parser))
-        return FAILED;
+        return failed(parser, PARSER_INVALID_FUNCTION_DEF);
 
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
@@ -1077,7 +1077,10 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                 free(next_elem);
                 continue;
             default:
-                free_ast_nodes(top(expression_stack));
+                while (top(expression_stack)) {
+                    free_ast_nodes(top(expression_stack));
+                    pop(expression_stack);
+                }
                 while (top(stack)) {
                     free(top(stack));
                     pop(stack);
@@ -1085,6 +1088,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                 free(next_elem);
                 dispose_stack(stack);
                 dispose_stack(expression_stack);
+
                 return failed(parser, PARSER_INVALID_EXPRESSION_USE,
                     str_token(&parser->next, GET_ATTRIBUTE));
         }
