@@ -13,6 +13,7 @@
 int handle_block(ASTNodeList list, char* result_type)
 {
     int result = 0;
+    *result_type = 'u';
 
     ASTNode* statement = list.first;
 
@@ -33,6 +34,8 @@ int handle_statement(ASTNode* statement_node, char* result_type)
 
     switch (statement_node->type) {
         case AST_IF:
+            char then_t = 'u';
+            char else_t = 'u';
             result = handle_expression(statement_node->if_statement.condition, result_type);
             if (result)
                 return result;
@@ -47,11 +50,25 @@ int handle_statement(ASTNode* statement_node, char* result_type)
             if (result)
                 return result;
 
+            then_t = *result_type;
+
             if (else_n) {
                 result = handle_block(else_n->else_statement.statements, result_type);
                 if (result)
                     return result;
-            }
+
+                else_t = *result_type;
+            } else
+                else_t = 'u';
+
+            if (then_t == else_t && then_t == 'r')
+                *result_type = 'r';
+
+            else if (then_t == else_t && then_t == 'u')
+                *result_type = 'u';
+
+            else
+                *result_type = 'e';
 
             return 0;
 
@@ -67,6 +84,7 @@ int handle_statement(ASTNode* statement_node, char* result_type)
             if (result)
                 return result;
 
+            *result_type = 'u';
             return 0;
 
         case AST_THEN:
@@ -85,56 +103,121 @@ int handle_statement(ASTNode* statement_node, char* result_type)
 
         case AST_VAR_DEF:
             entry = get_closest_symtable_entry(statement_node, statement_node->vardef.identifier);
+            if (!entry)
+                return print_error(SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN, 0);
             result = handle_expression(statement_node->vardef.expression, result_type);
             if (result)
                 return result;
             if (!entry->data_type)
                 entry->data_type = *result_type;
             else if (entry->data_type != *result_type) {
-                return print_error(SEMANTIC_VARIABLE_OR_FUNCTION_REDEFINITION, 0);
+                return print_error(SEMANTIC_NOT_MATCHING_VAR_TYPE, 0, *result_type, entry->data_type);
             }
 
+            *result_type = 'u';
             return 0;
 
         case AST_VAR_ASSIGN:
-            entry = get_closest_symtable_entry(statement_node, statement_node->variable.identifier);
+            entry = get_closest_symtable_entry(statement_node, statement_node->assignment.target);
+            if (!entry)
+                return print_error(SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN, 0);
             result = handle_expression(statement_node->assignment.expression, result_type);
             if (result)
                 return result;
-            if (!entry->data_type)
-                entry->data_type = *result_type;
-            else if (entry->data_type != *result_type) {
-                return print_error(SEMANTIC_VARIABLE_OR_FUNCTION_REDEFINITION, 0);
+            if (entry->data_type != *result_type) {
+                return print_error(SEMANTIC_NOT_MATCHING_VAR_TYPE, 0, entry->data_type, *result_type);
             }
 
+            *result_type = 'u';
             return 0;
 
         case AST_RETURN:
-            result = handle_expression(statement_node->return_st.expression, result_type);
-            if (result)
-                return result;
-
             ASTNode* node = statement_node->parent;
-
             while (node->type != AST_FUNCTION)
                 node = node->parent;
 
             entry = get_closest_symtable_entry(node, node->function.identifier);
+            if (!entry)
+                return print_error(SEMANTIC_STANDALONE_RETURN, 0);
 
-            if (entry->data_type == 'u') {
-                *result_type = 'u';
+            ASTNode* expr = statement_node->return_st.expression;
+
+            if (!expr) {
+                if (entry->data_type != 'u')
+                    return print_error(SEMANTIC_RETURN_NOT_ALLOWED, 0, entry->identifier, entry->data_type);
+
+                *result_type = 'r';
                 return 0;
             }
 
-            if (*result_type != entry->data_type)
+            result = handle_expression(statement_node->return_st.expression, result_type);
+            if (result)
+                return result;
+
+            if (entry->data_type == 'u') {
+                *result_type = 'r';
+                return 0;
+            }
+
+            if (!entry->data_type)
+                return print_error(SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE, 0, entry->identifier);
+
+            if (entry->data_type != *result_type)
                 return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, 0);
 
+            *result_type = 'r';
             return 0;
 
+
+
         case AST_LITERAL:
+            *result_type = statement_node->literal.type;
+            return 0;
+
         case AST_EXPRESSION:
-        case AST_TERM:
             return handle_expression(statement_node, result_type);
+
+        case AST_TERM:
+            entry = get_closest_symtable_entry(statement_node, statement_node->term.identifier);
+            if (!entry)
+                return print_error(SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN, 0);
+            if (entry->function) {
+                char* param_string = entry->parameters->chars;
+                int i = 0;
+
+                for (ASTNode* group = statement_node->term.arguments.first; group; group = group->next) {
+                    if (param_string[i] != '#')
+                        return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, 0);
+                    i++;
+
+                    for (ASTNode* arg = group->parameter_group.parameters.first; arg; arg = arg->next) {
+                        if (param_string[i] == '#' || param_string[i] == '\0')
+                            return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, 0);
+
+                        result = handle_expression(arg, result_type);
+                        if (result)
+                            return result;
+
+                        if (*result_type != param_string[i])
+                            return print_error(SEMANTIC_FUNCALL_PARAMETER_TYPE_MISMATCH, 0);
+                        i++;
+                    }
+                }
+                if (param_string[i] != '\0')
+                    return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, 0);
+
+                *result_type = entry->data_type;
+                statement_node->type = AST_FUNCALL;
+                return 0;
+            }
+
+            ASTNode* par = statement_node->term.arguments.first->parameter_group.parameters.first;
+            if (par)
+                return print_error(SEMANTIC_ARGUMENT_PASSED_TO_VARIABLE, 0, par->parameter.identifier, entry->identifier);
+
+            *result_type = entry->data_type;
+            statement_node->type = AST_VAR_USE;
+            return 0;
 
         case AST_INTERPOLATED_STRING:
             result = handle_block(statement_node->interpolated_string.expressions, result_type);
@@ -142,6 +225,14 @@ int handle_statement(ASTNode* statement_node, char* result_type)
                 return result;
 
             *result_type = 's';
+            return 0;
+
+        case AST_FUNCALL:
+        case AST_VAR_USE:
+            entry = get_closest_symtable_entry(statement_node, statement_node->term.identifier);
+            if (!entry)
+                return print_error(SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN, 0);
+            *result_type = entry->data_type;
             return 0;
 
         default:
@@ -155,6 +246,11 @@ int handle_expression(ASTNode* node, char* result_type)
 {
     int result = 0;
     char right_result_type;
+    char* op = "";
+
+    if (node->type != AST_EXPRESSION)
+        return handle_statement(node, result_type);
+
     int oper = node->expression.operation;
 
     switch (oper) {
@@ -173,7 +269,7 @@ int handle_expression(ASTNode* node, char* result_type)
             if (result)
                 return result;
 
-            if (*result_type != 'i' && *result_type != 'f')
+            if (*result_type != 'i' && *result_type != 'd')
                 return print_error(SEMANTIC_UNARY_OPERATION_NOT_OVER_NUMBER, 0, "+", *result_type);
 
             return 0;
@@ -183,7 +279,7 @@ int handle_expression(ASTNode* node, char* result_type)
             if (result)
                 return result;
 
-            if (*result_type != 'i' && *result_type != 'f')
+            if (*result_type != 'i' && *result_type != 'd')
                 return print_error(SEMANTIC_UNARY_OPERATION_NOT_OVER_NUMBER, 0, "-", *result_type);
 
             return 0;
@@ -192,12 +288,6 @@ int handle_expression(ASTNode* node, char* result_type)
         case OP_DIV:
         case OP_ADD:
         case OP_SUB:
-        case OP_LESS:
-        case OP_LESS_EQUAL:
-        case OP_GREATER:
-        case OP_GREATER_EQUAL:
-        case OP_EQUAL:
-        case OP_NOT_EQUAL:
             result = handle_expression(node->expression.left, result_type);
             if (result)
                 return result;
@@ -222,22 +312,10 @@ int handle_expression(ASTNode* node, char* result_type)
                 return 0;
             }
 
-            // <, >, ==, ... *result_type = 'b'
-            if (oper != OP_MUL && oper != OP_DIV && oper != OP_SUB) {
-                if (*result_type == 's' && right_result_type == 's') {
-                    if (oper != OP_ADD)
-                        *result_type = 'b';
+            if (oper == OP_ADD && *result_type == 's' && right_result_type == 's')
+                return 0;
 
-                    return 0;
-                }
-
-                if ((oper == OP_EQUAL || oper == OP_NOT_EQUAL) && *result_type == right_result_type) {
-                    *result_type = 'b';
-                    return 0;
-                }
-            }
-
-            char* op = "";
+            op = "";
             switch (oper) {
                 case OP_MUL:
                     op = "*";
@@ -248,13 +326,54 @@ int handle_expression(ASTNode* node, char* result_type)
                 case OP_SUB:
                     op = "-";
                     break;
+                case OP_ADD:
+                    op = "+";
+                    return print_error(SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS, 0, op, *result_type, right_result_type);
                 default:
                     break;
             }
 
-            if (oper == OP_MUL || oper == OP_DIV || oper == OP_SUB)
-                return print_error(SEMANTIC_NUMERIC_OPERATION_NOT_OVER_NUMBERS, 0, op, *result_type, right_result_type);
+            return print_error(SEMANTIC_NUMERIC_OPERATION_NOT_OVER_NUMBERS, 0, op, *result_type, right_result_type);
 
+        case OP_LESS:
+        case OP_LESS_EQUAL:
+        case OP_GREATER:
+        case OP_GREATER_EQUAL:
+            result = handle_expression(node->expression.left, result_type);
+            if (result)
+                return result;
+            result = handle_expression(node->expression.right, &right_result_type);
+            if (result)
+                return result;
+
+            if (*result_type == 'd' && right_result_type == 'd') {
+                *result_type = 'b';
+                return 0;
+            }
+
+            if (*result_type == 'i' && right_result_type == 'i') {
+                *result_type = 'b';
+                return 0;
+            }
+
+            if (*result_type == 'i' && right_result_type == 'd') {
+                // TODO: vytvorit pozemek
+                *result_type = 'b';
+                return 0;
+            }
+
+            if (*result_type == 'd' && right_result_type == 'i') {
+                // TODO: vytvorit pozemek
+                *result_type = 'b';
+                return 0;
+            }
+
+            if (*result_type == 's' && right_result_type == 's') {
+                *result_type = 'b';
+                return 0;
+            }
+
+            op = "";
             switch (oper) {
                 case OP_LESS:
                     op = "<";
@@ -272,9 +391,35 @@ int handle_expression(ASTNode* node, char* result_type)
                     break;
             }
 
-            if (oper != OP_EQUAL && oper != OP_NOT_EQUAL)
-                return print_error(SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS, 0, op, *result_type, right_result_type);
+            return print_error(SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS, 0, op, *result_type, right_result_type);
 
+        case OP_EQUAL:
+        case OP_NOT_EQUAL:
+            result = handle_expression(node->expression.left, result_type);
+            if (result)
+                return result;
+            result = handle_expression(node->expression.right, &right_result_type);
+            if (result)
+                return result;
+
+            if (*result_type == right_result_type) {
+                *result_type = 'b';
+                return 0;
+            }
+
+            if (*result_type == 'i' && right_result_type == 'd') {
+                // TODO: vytvorit pozemek
+                *result_type = 'b';
+                return 0;
+            }
+
+            if (*result_type == 'd' && right_result_type == 'i') {
+                // TODO: vytvorit pozemek
+                *result_type = 'b';
+                return 0;
+            }
+
+            op = "";
             switch (oper) {
                 case OP_EQUAL:
                     op = "==";
@@ -307,7 +452,7 @@ int handle_expression(ASTNode* node, char* result_type)
             return 0;
 
         default:
-            return result;
+            break;
     }
 
     return result;
@@ -316,14 +461,10 @@ int handle_expression(ASTNode* node, char* result_type)
 bool is_main(ASTNode* fun_node)
 {
     SymtableEntry* entry = get_closest_symtable_entry(fun_node, fun_node->function.identifier);
-    if (entry->main)
-        return true;
-
-    return false;
+    return entry->main;
 }
 
 /** TODO:
- * GO ON WITH THIS: change ASTTerm to function or expression
  * extension handling
  * errors should receive full data type name, not just i, s, d,...
  */
@@ -331,7 +472,7 @@ int run_semantic(ASTNode* ast)
 {
 
     int result = 0;
-    char return_type = 'e';
+    char return_type = 'u';
 
     if (ast->type != AST_PROGRAM) {
         return print_error(CORRUPTED_MEMORY, 0);
@@ -349,16 +490,25 @@ int run_semantic(ASTNode* ast)
 
         SymtableEntry* entry = get_closest_symtable_entry(fun_node, fun_node->function.identifier);
 
-        if (!entry->data_type)
-            entry->data_type = return_type;
+        if (return_type == 'e')
+            return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, 0);
 
-        // ignore found return type when declared as Unit
-        if (return_type != entry->data_type && entry->data_type != 'u')
+        if (!entry->data_type) {
+            entry->data_type = return_type;
+        }
+
+        if (return_type != entry->data_type && return_type != 'r' && entry->data_type != 'u')
             return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, 0);
 
         if (is_main(fun_node)) {
             if (main_found)
                 return print_error(SEMANTIC_MULTIPLE_MAIN, 0);
+
+            if (entry->parameters->len != 0)
+                return print_error(SEMANTIC_MAIN_WITH_PARAMETERS, 0);
+
+            if (entry->data_type != 'u')
+                return print_error(SEMANTIC_MAIN_NOT_UNIT, 0);
 
             main_found = true;
         }

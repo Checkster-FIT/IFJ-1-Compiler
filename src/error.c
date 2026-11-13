@@ -286,35 +286,95 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.fix = "Negation can only be performed on Boolean data type";
             error.param_count = 1;
             error.code = 6;
+            break;
         case SEMANTIC_UNARY_OPERATION_NOT_OVER_NUMBER:
             error.message = "Unable to perform unary '%s' operator on type '%s'";
             error.fix = "Must be Int or Double";
             error.param_count = 2;
             error.code = 6;
+            break;
         case SEMANTIC_NUMERIC_OPERATION_NOT_OVER_NUMBERS:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
             error.fix = "Both must be Int or Double";
             error.param_count = 3;
             error.code = 6;
+            break;
         case SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
             error.fix = "Must be Int or Double or two Strings";
             error.param_count = 3;
             error.code = 6;
+            break;
         case SEMANTIC_EQUAL_NOT_EQUAL_TYPE_MISMATCH:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
             error.fix = "Must be Int or Double or two identical data types";
             error.param_count = 3;
             error.code = 6;
+            break;
         case SEMANTIC_BINARY_OP_NOT_BOOL:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
             error.fix = "Both must be Booleans";
             error.param_count = 3;
             error.code = 6;
+            break;
         case IF_WHILE_CONDITION_NOT_BOOL:
             error.message = "Result of '%s' statement condition must be Boolean";
             error.param_count = 1;
             error.code = 6;
+            break;
+        case SEMANTIC_NOT_MATCHING_VAR_TYPE:
+            error.message = "Unable to assign '%s' value to variable of type '%s'",
+            error.param_count = 2;
+            error.code = 6;
+            break;
+        case SEMANTIC_USE_OF_UNINITIALISED_VAL_FUN:
+            error.message = "Function or variable must be initialised before use";
+            error.param_count = 0;
+            error.code = 6;
+            break;
+        case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
+            error.message = "Mismatch in number or parameters or group of parameters on function call";
+            error.param_count = 0;
+            error.code = 5;
+            break;
+        case SEMANTIC_FUNCALL_PARAMETER_TYPE_MISMATCH:
+            error.message = "Type mismatch on function call parameter types";
+            error.param_count = 0;
+            error.code = 5;
+            break;
+        case SEMANTIC_ARGUMENT_PASSED_TO_VARIABLE:
+            error.message = "Variables take no arguments - cannot pass '%s' to '%s'";
+            error.param_count = 2;
+            error.code = 10;
+            break;
+        case SEMANTIC_STANDALONE_RETURN:
+            error.message = "Standalone return was found";
+            error.fix = "Return can only be placed inside a function";
+            error.param_count = 0;
+            error.code = 10;
+            break;
+        case SEMANTIC_RETURN_NOT_ALLOWED:
+            error.message = "Unable to use return with no expression in function '%s' which returns '%s'";
+            error.fix = "Return with no expression is only allowed inside function returning Unit type";
+            error.param_count = 2;
+            error.code = 6;
+            break;
+        case SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE:
+            error.message = "Unable to use return in function '%s' as it has no explicit return type";
+            error.fix = "Return can only be used inside function with explicit return type";
+            error.param_count = 1;
+            error.code = 10;
+            break;
+        case SEMANTIC_MAIN_WITH_PARAMETERS:
+            error.message = "Function with @main cannot accept any parameters";
+            error.param_count = 0;
+            error.code = 5;
+            break;
+        case SEMANTIC_MAIN_NOT_UNIT:
+            error.message = "Return type of function with @main can only be Unit";
+            error.param_count = 0;
+            error.code = 6;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
