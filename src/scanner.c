@@ -1062,7 +1062,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c >= '0' && c <= '9')
                     state = STATE_DOUBLE_DECIMAL_NUMBER;
 
-                    // dot notation (e.x. 12.toInt)
+                // dot notation (e.x. 12.toInt)
                 else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                     dynamic_string_remove_last(context->scanned_string); // remove .
 
@@ -1478,6 +1478,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c == '/') {
                     state = STATE_ANOTHER_BLOCK_COMMENT_START;
                 } else if (c == '\n') {
+                    context->line += 1;
                     context->lf_inside_block_comment = true;
                     state = STATE_BLOCK_COMMENT_START;
                 } else if (c == '*') {
