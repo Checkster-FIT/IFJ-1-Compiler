@@ -53,11 +53,11 @@ ParserContext *init_parser(ParserContext *parser, ASTNode *ast, AllocatedStrings
     parser->expressions_nested = 0;
 
     // Semantic analysis
-    parser->last_type = '?';
+    parser->last_type = '\0';
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = true; // TODO: Disable debug
+    parser->debug = false; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
@@ -261,6 +261,12 @@ int parse_function(ParserContext *parser) {
         .
         main = is_main,
         .
+        data_type = '\0',
+        .
+        builtin = false,
+        .
+        parameters = NULL,
+        .
         identifier = parser->accepted.attribute_string,
     }
     )
@@ -316,7 +322,7 @@ int parse_type_specifier(ParserContext *parser) {
         return accept_next(DECLARATION_SIGN, parser) && parse_type(parser);
 
     // <type_specifier> -> 3
-    parser->last_type = '?';
+    parser->last_type = '\0';
     return CORRECT;
 }
 
@@ -407,7 +413,7 @@ int parse_param(ParserContext *parser, SymtableEntry *entry) {
         .function = false,
         .constant = true,
         .identifier = parser->accepted.attribute_string,
-        .data_type = '?'
+        .data_type = '\0',
     };
 
     if (!accept_next(DECLARATION_SIGN, parser))
@@ -558,7 +564,7 @@ int parse_statement_variable_definition(ParserContext *parser) {
     SymtableEntry vardef = {
         .defined = false,
         .function = false,
-        .data_type = '?'
+        .data_type = '\0',
     };
 
     if (!accept_next_keyword(VAR_KW, parser) && !accept_next_keyword(VAL_KW, parser))
@@ -823,7 +829,6 @@ int parse_term(ParserContext *parser, ASTNode **term_target) {
     // <term> -> <string> <dot_call>
     else if (check_next_string_any(parser)) {
         status = parse_string(parser, term_target);
-        (*term_target)->line = get_line(parser);
     }
 
     // <term> -> <fun_call> <dot_call>
@@ -854,6 +859,7 @@ int parse_string(ParserContext *parser, ASTNode **term_target) {
         }
         )
         ;
+        (*term_target)->line = get_line(parser);
         return CORRECT;
     }
 
@@ -861,6 +867,7 @@ int parse_string(ParserContext *parser, ASTNode **term_target) {
     if (check_next(STRING_INTERPOLATION, parser)
         || check_next(STRING_INTERPOLATION_END, parser)) {
         *term_target = ast_new_interpolated_string();
+        (*term_target)->line = get_line(parser);
         return parse_interpolated_string(parser, *term_target);
     }
 
@@ -868,6 +875,7 @@ int parse_string(ParserContext *parser, ASTNode **term_target) {
     if (check_next(MULTILINE_STRING_INTERPOLATION, parser)
         || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
         *term_target = ast_new_interpolated_string();
+        (*term_target)->line = get_line(parser);
         return parse_multiline_interpolated_string(parser, *term_target);
     }
 
@@ -947,6 +955,7 @@ int parse_multiline_interpolated_string(ParserContext *parser, ASTNode *target_s
     }
 
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
+    const int tmp_line = get_line(parser);
     if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
         // Empty interpolated string that are not END can be discarded
         if (*parser->accepted.attribute_string == '\0')
@@ -961,7 +970,7 @@ int parse_multiline_interpolated_string(ParserContext *parser, ASTNode *target_s
         }
         )
         ;
-        string->line = get_line(parser);
+        string->line = tmp_line;
         string->parent = target_string_node;
         ast_list_add(&target_string_node->interpolated_string.expressions, string);
         return parse_multiline_interpolated_string(parser, target_string_node);
@@ -989,7 +998,12 @@ int parse_function_call(ParserContext *parser, ASTNode **term_target) {
 int parse_function_call_group_list(ParserContext *parser, ASTNode **term_target) {
     // <fun_call_group_list> -> ( <fun_call_param_first> ) <fun_call_group_list>
     if (accept_next(LEFT_BRACKET, parser)) {
-        if (!parse_function_call_parameter_first(parser, term_target))
+        ASTNode *arg_group = ast_add_argument_group(parser->ast, *term_target);
+        if (arg_group == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Node");
+        arg_group->line = get_line(parser);
+
+        if (!parse_function_call_parameter_first(parser, &arg_group))
             return FAILED;
 
         if (!accept_next(RIGHT_BRACKET, parser))
@@ -1015,7 +1029,7 @@ int parse_function_call_parameter_first(ParserContext *parser, ASTNode **term_ta
     if (!parse_expression(parser, &expression_result))
         return FAILED;
     expression_result->parent = *term_target;
-    ast_list_add(&(*term_target)->term.arguments, expression_result);
+    ast_list_add(&(*term_target)->argument_group.arguments, expression_result);
 
     parser->parameter_expression = tmp_parameter_expression;
 
@@ -1032,7 +1046,7 @@ int parse_function_call_parameter_list(ParserContext *parser, ASTNode **term_tar
         if (!parse_expression(parser, &expression_result))
             return FAILED;
         expression_result->parent = *term_target;
-        ast_list_add(&(*term_target)->term.arguments, expression_result);
+        ast_list_add(&(*term_target)->argument_group.arguments, expression_result);
 
         parser->parameter_expression = tmp_parameter_expression;
 
@@ -1138,6 +1152,8 @@ int parse_expression(ParserContext *parser, ASTNode **expr_target) {
                     free(top(stack));
                     pop(stack);
                 }
+                if (last_elem.group == P_TERM && term_node != NULL)
+                    free_ast_nodes(term_node);
                 free(next_elem);
                 dispose_stack(stack);
                 dispose_stack(expression_stack);
@@ -1644,6 +1660,13 @@ bool accept_next_operator(const enum attribute_operation_type operation, ParserC
 int get_line(const ParserContext *parser) {
     if (check_next(LINE_FEED, parser))
         return parser->prev_line;
+
+    if (check_next(MULTILINE_STRING, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+        if (parser->scanner.line >= parser->prev_line)
+            return parser->prev_line;
+    }
 
     if (parser->future_line != -1)
         return parser->future_line;

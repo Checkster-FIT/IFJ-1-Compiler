@@ -98,7 +98,7 @@ void free_ast_nodes(ASTNode* node)
         case AST_LITERAL:
             break;
         case AST_TERM:
-            free_node_list(&node->term.arguments);
+            free_node_list(&node->term.argument_groups);
             break;
         case AST_WHILE_DO:
             free_ast_nodes(node->while_do.condition);
@@ -126,6 +126,9 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_CONVERSION:
             free_ast_nodes(node->conversion.expression);
+            break;
+        case AST_ARGUMENT_GROUP:
+            free_node_list(&node->argument_group.arguments);
             break;
     }
 
@@ -470,6 +473,30 @@ ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
     return expression;
 }
 
+ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode){
+        .type = AST_ARGUMENT_GROUP,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .argument_group = {
+            .arguments = {},
+        },
+    };
+
+    node->parent = funcall_node;
+    ast_list_add(&funcall_node->term.argument_groups, node);
+
+    ast->program.recent_node = node;
+    return node;
+}
+
 // ===============================================
 
 Symtable* get_node_symtable(const ASTNode* node)
@@ -520,7 +547,13 @@ SymtableEntry* get_closest_defined_symtable_entry(const ASTNode* node, const cha
             continue;
         }
 
-        return search_result->value;
+        SymtableEntry* entry = search_result->value;
+        if (entry->function || entry->defined)
+            return entry;
+
+        current = current->parent;
+
+        // return search_result->value;
     }
 
     return NULL;
@@ -639,25 +672,27 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
 
 ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
 {
-    ASTNode* new_node = malloc(sizeof(ASTNode));
+    ASTNode* child_node = malloc(sizeof(ASTNode));
 
-    if (new_node == NULL)
+    if (child_node == NULL)
         return NULL;
 
-    *new_node = *node;
+    *child_node = *node;
 
     *node = (ASTNode){
         .type = AST_CONVERSION,
-        .next = NULL,
-        .parent = new_node->parent,
-        .line = node->line,
+        .next = child_node->next,
+        .parent = child_node->parent,
+        .line = child_node->line,
         .conversion = {
             .result_type = new_type,
             .expression = NULL,
         },
     };
 
-    node->conversion.expression = new_node;
+    child_node->next = NULL;
+    child_node->parent = node;
+    node->conversion.expression = child_node;
 
     return node;
 }

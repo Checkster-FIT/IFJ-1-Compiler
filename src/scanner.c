@@ -338,13 +338,14 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(CORRUPTED_MEMORY, LINE, state);
+                    token.attribute_error = print_error(CORRUPTED_MEMORY, LINE);
                     return token;
                 }
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
                         // STRING
+
 
             
             case STATE_STRING_WHICH:
@@ -559,6 +560,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
                         // INTERPOLATED STRING
+
 
             
             case STATE_CHARACTER_S:
@@ -993,7 +995,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                         token.attribute_bool = false;
                     } else if (status == -2) {
                         token.type = ERROR;
-                        token.attribute_error = print_error(CORRUPTED_MEMORY, LINE, state);
+                        token.attribute_error = print_error(CORRUPTED_MEMORY, LINE);
                         return token;
                     } else {
                         token.type = KEYWORD;
@@ -1100,6 +1102,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                     context->pending_dot = true;
                     RETURN_TOKEN_AND_SET_READ_BUFFER // read this c again
+
 
                 
                 } else {
@@ -1314,7 +1317,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     token.attribute_compare_type = LESS_EQUAL;
                 } else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(CORRUPTED_MEMORY, LINE, state);
+                    token.attribute_error = print_error(CORRUPTED_MEMORY, LINE);
                     return token;
                 }
 
