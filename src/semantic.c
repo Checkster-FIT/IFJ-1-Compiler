@@ -654,7 +654,11 @@ bool is_main(ASTNode* fun_node)
 }
 
 /** TODO:
- * extension handling - change used function in ast based on type the function is used on (from twice to i#twice), implicit conversion to double
+ * ext, valmem handling:
+ *  change used function in ast based on type the function is used on (from twice to i#twice),
+ *  implicit conversion to double
+ *  check if type is applicable for this function + check if `Any` function type is available in the symtable
+ *   (check for i#toString if not found, check for a#toString)
  * propagate found return types to AST
  */
 int run_semantic(ASTNode* ast)
