@@ -292,8 +292,12 @@ int handle_statement(ASTNode* statement_node, char* result_type)
                 if (param_string[i] != '\0')
                     return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
 
+                if (entry->builtin)
+                    statement_node->type = AST_BUILTIN_FUNCALL;
+                else
+                    statement_node->type = AST_FUNCALL;
+
                 *result_type = entry->data_type;
-                statement_node->type = AST_FUNCALL;
                 return 0;
             }
 
@@ -313,6 +317,7 @@ int handle_statement(ASTNode* statement_node, char* result_type)
             *result_type = 's';
             return 0;
 
+        case AST_BUILTIN_FUNCALL:
         case AST_FUNCALL:
         case AST_VAR_USE:
             entry = get_closest_defined_symtable_entry(statement_node, statement_node->term.identifier);
@@ -569,9 +574,7 @@ bool is_main(ASTNode* fun_node)
 
 /** TODO:
  * extension handling
- * errors should receive full data type name, not just i, s, d,...
  * return type of function called before its definition
- * `foo()` handling
  */
 int run_semantic(ASTNode* ast)
 {

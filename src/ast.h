@@ -42,7 +42,7 @@ typedef enum {
     AST_ELSE,
 
     AST_FUNCALL,
-    AST_FUNCALL_BUILT_IN,
+    AST_BUILTIN_FUNCALL,
     AST_VAR_USE,
 } ASTNodeType;
 
