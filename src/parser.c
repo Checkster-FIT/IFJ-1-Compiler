@@ -54,7 +54,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->expressions_nested = 0;
 
     // Semantic analysis
-    parser->last_type = '?';
+    parser->last_type = '\0';
     parser->inside_extension = false;
 
     // Debug settings
@@ -263,6 +263,9 @@ int parse_function(ParserContext* parser)
             .function = true,
             .constant = true,
             .main = is_main,
+            .data_type = '\0',
+            .builtin = false,
+            .parameters = NULL,
             .identifier = parser->accepted.attribute_string,
         });
 
@@ -317,7 +320,7 @@ int parse_type_specifier(ParserContext* parser)
         return accept_next(DECLARATION_SIGN, parser) && parse_type(parser);
 
     // <type_specifier> -> 3
-    parser->last_type = '?';
+    parser->last_type = '\0';
     return CORRECT;
 }
 
@@ -413,7 +416,7 @@ int parse_param(ParserContext* parser, SymtableEntry* entry)
         .function = false,
         .constant = true,
         .identifier = parser->accepted.attribute_string,
-        .data_type = '?'
+        .data_type = '\0',
     };
 
     if (!accept_next(DECLARATION_SIGN, parser))
@@ -573,7 +576,7 @@ int parse_statement_variable_definition(ParserContext* parser)
     SymtableEntry vardef = {
         .defined = false,
         .function = false,
-        .data_type = '?'
+        .data_type = '\0',
     };
 
     if (!accept_next_keyword(VAR_KW, parser) && !accept_next_keyword(VAL_KW, parser))
