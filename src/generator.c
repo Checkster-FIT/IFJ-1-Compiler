@@ -12,5 +12,6 @@
 
 int run_generator(ASTNode* ast)
 {
+    (void)ast;
     return 0;
 }
