@@ -386,6 +386,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 1;
             error.code = 7;
             break;
+        case SEMANTIC_RECURSION_WITHOUT_TYPE_DEF:
+            error.message = "Cannot perform recursive call of function '%s' as it has no declared return type";
+            error.fix = "Add return type to function declaration";
+            error.param_count = 1;
+            error.code = 6;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";

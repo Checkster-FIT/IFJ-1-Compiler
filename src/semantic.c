@@ -140,7 +140,6 @@ int handle_statement(ASTNode* statement_node, char* result_type)
                 *result_type = 'd';
             }
 
-            printf("%c", entry->data_type);
             if (entry->data_type != *result_type)
                 return print_error(SEMANTIC_NOT_MATCHING_VAR_TYPE, statement_node->line, type_full_name(*result_type), type_full_name(entry->data_type));
 
@@ -259,6 +258,10 @@ int handle_statement(ASTNode* statement_node, char* result_type)
             if (!entry)
                 return print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, statement_node->term.identifier);
             if (entry->function) {
+                // recursion with on function with no declared type, e.x. `f(): = \n f()`
+                if (!entry->data_type)
+                    return print_error(SEMANTIC_RECURSION_WITHOUT_TYPE_DEF, statement_node->line, entry->identifier);
+
                 char* param_string = entry->parameters->chars;
                 int i = 0;
 
@@ -401,6 +404,7 @@ int handle_expression(ASTNode* node, char* result_type)
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
                 *result_type = 'd';
+                node->expression.result_type = 'd';
                 return 0;
             }
 
@@ -409,6 +413,7 @@ int handle_expression(ASTNode* node, char* result_type)
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
                 *result_type = 'd';
+                node->expression.result_type = 'd';
                 return 0;
             }
 
@@ -448,11 +453,13 @@ int handle_expression(ASTNode* node, char* result_type)
 
             if (*result_type == 'd' && right_result_type == 'd') {
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
             if (*result_type == 'i' && right_result_type == 'i') {
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
@@ -461,6 +468,7 @@ int handle_expression(ASTNode* node, char* result_type)
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
@@ -469,11 +477,13 @@ int handle_expression(ASTNode* node, char* result_type)
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
             if (*result_type == 's' && right_result_type == 's') {
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
@@ -508,6 +518,7 @@ int handle_expression(ASTNode* node, char* result_type)
 
             if (*result_type == right_result_type) {
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
@@ -516,6 +527,7 @@ int handle_expression(ASTNode* node, char* result_type)
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
@@ -524,6 +536,7 @@ int handle_expression(ASTNode* node, char* result_type)
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
                 *result_type = 'b';
+                node->expression.result_type = 'b';
                 return 0;
             }
 
@@ -574,7 +587,6 @@ bool is_main(ASTNode* fun_node)
 
 /** TODO:
  * extension handling
- * return type of function called before its definition
  */
 int run_semantic(ASTNode* ast)
 {
