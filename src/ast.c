@@ -98,7 +98,7 @@ void free_ast_nodes(ASTNode* node)
         case AST_LITERAL:
             break;
         case AST_TERM:
-            free_node_list(&node->term.arguments);
+            free_node_list(&node->term.argument_groups);
             break;
         case AST_WHILE_DO:
             free_ast_nodes(node->while_do.condition);
@@ -126,6 +126,9 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_CONVERSION:
             free_ast_nodes(node->conversion.expression);
+            break;
+        case AST_ARGUMENT_GROUP:
+            free_node_list(&node->argument_group.arguments);
             break;
     }
 
@@ -468,6 +471,30 @@ ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
 
     ast->program.recent_node = expression;
     return expression;
+}
+
+ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
+
+    if (node == NULL)
+        return NULL;
+
+    *node = (ASTNode) {
+        .type = AST_ARGUMENT_GROUP,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .argument_group = {
+            .arguments = {},
+        },
+    };
+
+    node->parent = funcall_node;
+    ast_list_add(&funcall_node->term.argument_groups, node);
+
+    ast->program.recent_node = node;
+    return node;
 }
 
 // ===============================================

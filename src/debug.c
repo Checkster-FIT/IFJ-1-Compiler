@@ -215,14 +215,15 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
     parent->last = !node->next && !parent->followed;
 
-    // if (node->parent)
-    //     fprintf(stderr, "%p", node->parent);
-    // else
-    //     fprintf(stderr, "0x????????????");
+    const bool print_parent = false;
+    if (print_parent && node->parent)
+        fprintf(stderr, "%p ", node->parent);
+    else if (print_parent)
+        fprintf(stderr, "0x???????????? ");
 
     const bool print_line = true;
     if (print_line && node-> line != 0)
-        fprintf(stderr, "%03d", node->line);
+        fprintf(stderr, "\033[1;30m%03d\033[0m", node->line);
     else if (print_line)
         fprintf(stderr, "\033[1;30m000\033[0m");
 
@@ -236,8 +237,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             fprintf(stderr, "\033[1;30m%s\033[0m", "  │    ");
             fputc('\n', stderr);
 
+            if (print_parent)
+                fprintf(stderr, "%p ", node->parent);
             if (print_line)
-                fprintf(stderr, "%03d", node->line);
+                fprintf(stderr, "\033[1;30m%03d\033[0m", node->line);
         }
 
         print_ast_indent(parent->parent);
@@ -247,7 +250,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     char* color = "\033[1;34m";
     char* color_secondary = "\033[1;32m";
     char* reset = "\033[0m";
-    const SymtableEntry* entry;
+    const SymtableEntry* entry = NULL;
 
     Branch this = {
         .parent = parent,
@@ -274,8 +277,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_FUNCTION:
             entry = get_closest_symtable_entry(node, node->function.identifier);
             fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
-            fprintf(stderr, "%s: %s", entry->identifier, str_type(entry->data_type));
-
+            if (entry)
+                fprintf(stderr, "%s: %s", entry->identifier, str_type(entry->data_type));
             if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
             if (entry && entry->main)
@@ -301,7 +304,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_PARAMETER_GROUP:
-            fprintf(stderr, "[%sParGroup%s] \n", color_secondary, reset);
+            fprintf(stderr, "[%sParams%s] \n", color_secondary, reset);
             print_ast_recursively(node->parameter_group.parameters.first, &this);
             break;
         case AST_PARAMETER:
@@ -326,11 +329,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             break;
         case AST_EXPRESSION:
-            if (node->expression.operation == OP_UNARY_MINUS
-                || node->expression.operation == OP_UNARY_PLUS
-                || node->expression.operation == OP_NOT)
-                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
-            else if (node->expression.operation != OP_NONE)
+            if (node->expression.operation != OP_NONE)
                 fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
             else
                 fprintf(stderr, "[%s?%s]\n", color, reset);
@@ -380,7 +379,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             fprintf(stderr, "\n");
 
-            print_ast_recursively(node->term.arguments.first, &this);
+            print_ast_recursively(node->term.argument_groups.first, &this);
             break;
 
         case AST_VAR_ASSIGN:
@@ -432,6 +431,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             fprintf(stderr, "[%sConv%s] ", color, reset);
             fprintf(stderr, "<%c>\n", node->conversion.result_type);
             print_ast_recursively(node->vardef.expression, &this);
+            break;
+        case AST_ARGUMENT_GROUP:
+            fprintf(stderr, "[%sArgs%s] \n", color, reset);
+            print_ast_recursively(node->argument_group.arguments.first, &this);
             break;
     }
     print_ast_recursively(node->next, parent);

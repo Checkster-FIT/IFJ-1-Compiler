@@ -943,7 +943,7 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_s
     }
 
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
-    int tmp_line = get_line(parser);
+    const int tmp_line = get_line(parser);
     if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
 
         // Empty interpolated string that are not END can be discarded
@@ -985,7 +985,12 @@ int parse_function_call_group_list(ParserContext* parser, ASTNode** term_target)
     // <fun_call_group_list> -> ( <fun_call_param_first> ) <fun_call_group_list>
     if (accept_next(LEFT_BRACKET, parser)) {
 
-        if (!parse_function_call_parameter_first(parser, term_target))
+        ASTNode* arg_group = ast_add_argument_group(parser->ast, *term_target);
+        if (arg_group == NULL)
+            return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Node");
+        arg_group->line = get_line(parser);
+
+        if (!parse_function_call_parameter_first(parser, &arg_group))
             return FAILED;
 
         if (!accept_next(RIGHT_BRACKET, parser))
@@ -1012,7 +1017,7 @@ int parse_function_call_parameter_first(ParserContext* parser, ASTNode** term_ta
     if (!parse_expression(parser, &expression_result))
         return FAILED;
     expression_result->parent = *term_target;
-    ast_list_add(&(*term_target)->term.arguments, expression_result);
+    ast_list_add(&(*term_target)->argument_group.arguments, expression_result);
 
     parser->parameter_expression = tmp_parameter_expression;
 
@@ -1031,7 +1036,7 @@ int parse_function_call_parameter_list(ParserContext* parser, ASTNode** term_tar
         if (!parse_expression(parser, &expression_result))
             return FAILED;
         expression_result->parent = *term_target;
-        ast_list_add(&(*term_target)->term.arguments, expression_result);
+        ast_list_add(&(*term_target)->argument_group.arguments, expression_result);
 
         parser->parameter_expression = tmp_parameter_expression;
 
