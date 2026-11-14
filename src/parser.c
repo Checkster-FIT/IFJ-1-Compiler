@@ -831,7 +831,6 @@ int parse_term(ParserContext* parser, ASTNode** term_target)
     // <term> -> <string> <dot_call>
     else if (check_next_string_any(parser)) {
         status = parse_string(parser, term_target);
-        (*term_target)->line = get_line(parser);
     }
 
     // <term> -> <fun_call> <dot_call>
@@ -858,6 +857,7 @@ int parse_string(ParserContext* parser, ASTNode** term_target)
             .type = AST_STRING,
             .val_string = parser->accepted.attribute_string,
         });
+        (*term_target)->line = get_line(parser);
         return CORRECT;
     }
 
@@ -866,6 +866,7 @@ int parse_string(ParserContext* parser, ASTNode** term_target)
         || check_next(STRING_INTERPOLATION_END, parser)) {
 
         *term_target = ast_new_interpolated_string();
+        (*term_target)->line = get_line(parser);
         return parse_interpolated_string(parser, *term_target);
     }
 
@@ -874,6 +875,7 @@ int parse_string(ParserContext* parser, ASTNode** term_target)
         || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
 
         *term_target = ast_new_interpolated_string();
+        (*term_target)->line = get_line(parser);
         return parse_multiline_interpolated_string(parser, *term_target);
     }
 
@@ -941,6 +943,7 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_s
     }
 
     // <multiline_interpolated_string> -> [STRING_INTERPOLATION] <multiline_interpolated_string>
+    int tmp_line = get_line(parser);
     if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
 
         // Empty interpolated string that are not END can be discarded
@@ -951,7 +954,7 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_s
             .type = AST_STRING,
             .val_string = parser->accepted.attribute_string,
         });
-        string->line = get_line(parser);
+        string->line = tmp_line;
         string->parent = target_string_node;
         ast_list_add(&target_string_node->interpolated_string.expressions, string);
         return parse_multiline_interpolated_string(parser, target_string_node);
@@ -1640,6 +1643,14 @@ int get_line(const ParserContext* parser)
 {
     if (check_next(LINE_FEED, parser))
         return parser->prev_line;
+
+    if (check_next(MULTILINE_STRING, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION, parser)
+        || check_next(MULTILINE_STRING_INTERPOLATION_END, parser)) {
+
+        if (parser->scanner.line >= parser->prev_line)
+            return parser->prev_line;
+    }
 
     if (parser->future_line != -1)
         return parser->future_line;
