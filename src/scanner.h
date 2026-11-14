@@ -236,7 +236,7 @@ typedef struct {
     int master_interpolated_string;
     DynamicString *scanned_string;
     Stack *indent_stack;
-    bool pending_indent;
+    int pending_indent;
     int number_of_pending_dedents;
     char scanned_char_buffer;
     bool read_buffer; // will be set to true when scanner has no transition and the processed lexeme is valid

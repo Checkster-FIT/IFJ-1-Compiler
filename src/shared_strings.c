@@ -13,13 +13,18 @@
 AllocatedStrings *new_strings() {
     AllocatedStrings *identifiers = malloc(sizeof(AllocatedStrings));
 
-    if (identifiers == NULL)
-        print_error(MEMORY_ALLOCATION_ERROR, 0);
+    if (identifiers == NULL) {
+        print_error(MEMORY_ALLOCATION_ERROR, 0, "Identifiers");
+        return NULL;
+    }
 
     identifiers->tree = tree_init(rb_tree_strcmp);
 
-    if (identifiers->tree == NULL)
-        print_error(MEMORY_ALLOCATION_ERROR, 0);
+    if (identifiers->tree == NULL) {
+        free(identifiers);
+        print_error(MEMORY_ALLOCATION_ERROR, 0, "Identifiers");
+        return NULL;
+    }
 
     return identifiers;
 }
@@ -49,6 +54,8 @@ char *add_string(const AllocatedStrings *strings, const char *str) {
         return node->value; // String already exists
 
     char *
+
+
     
     new = malloc(length);
     if (new == NULL)

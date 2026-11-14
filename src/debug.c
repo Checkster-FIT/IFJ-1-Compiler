@@ -19,7 +19,7 @@ void log_parsed(ParserContext* parser)
     const char* color = "\033[1;30m";
 
     // Accepted tokens (Recursive descent)
-    if (parser->exit_code == 0) {
+    if (parser->exit_code == 0 && parser->token_error == 0) {
         prefix = "OK ";
         color = "\033[1;32m";
         // Skipped tokens
@@ -135,7 +135,7 @@ void log_precedence_stack(const ParserContext* parser, const Stack* stack)
 
 void print_line(ParserContext* parser)
 {
-    if (parser->exit_code != 0)
+    if (parser->exit_code != 0 || parser->token_error != 0)
         return;
 
     const char* divider = "-----------------------";
@@ -220,6 +220,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     // else
     //     fprintf(stderr, "0x????????????");
 
+    const bool print_line = true;
+    if (print_line && node->line != 0)
+        fprintf(stderr, "%03d", node->line);
+    else if (print_line)
+        fprintf(stderr, "\033[1;30m000\033[0m");
+
     if (parent->parent) {
 
         // Add one more line before functions
@@ -229,6 +235,9 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_indent(parent->parent);
             fprintf(stderr, "\033[1;30m%s\033[0m", "  │    ");
             fputc('\n', stderr);
+
+            if (print_line)
+                fprintf(stderr, "%03d", node->line);
         }
 
         print_ast_indent(parent->parent);
@@ -310,8 +319,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                 fprintf(stderr, "[%sVal%s] ", color, reset);
             else
                 fprintf(stderr, "[%sV??%s] ", color, reset);
-
-            fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+            if (entry)
+                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
             break;
 
@@ -418,6 +427,11 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_ELSE:
             fprintf(stderr, "[%sElse%s] \n", color_secondary, reset);
             print_ast_recursively(node->else_statement.statements.first, &this);
+            break;
+        case AST_CONVERSION:
+            fprintf(stderr, "[%sConv%s] ", color, reset);
+            fprintf(stderr, "<%c>\n", node->conversion.result_type);
+            print_ast_recursively(node->vardef.expression, &this);
             break;
     }
     print_ast_recursively(node->next, parent);

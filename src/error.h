@@ -59,6 +59,7 @@ typedef enum error_enum {
     PARSER_COND_STATEMENT_UNCLOSED,
     PARSER_INVALID_EXPRESSION_USE,
     PARSER_INVALID_EXPRESSION_FORMAT,
+    PARSER_INVALID_FUNCTION_DEF,
 
     PARSER_RULE_INCOMPLETE,
     PARSER_RULE_INCORRECT_CALL,
@@ -76,8 +77,8 @@ typedef enum error_enum {
 
 typedef struct {
     ErrorEnum id;
-    char* message;
-    char* fix;
+    char *message;
+    char *fix;
     int code;
     int param_count;
 } ErrorMessage;
@@ -99,6 +100,7 @@ ErrorMessage get_error_by_id(enum error_enum error_id);
  * @return the exit code for the given error message
  */
 int print_error(int error_id, int line, ...);
+
 int va_print_error(int error_id, int line, va_list args);
 
 /**
@@ -106,6 +108,6 @@ int va_print_error(int error_id, int line, va_list args);
  * @param exit_code the error exit code
  * @return the error type string ("Syntax error", "Semantic error", ...)
  */
-char* get_error_type_str(int exit_code);
+char *get_error_type_str(int exit_code);
 
 #endif // IFJ_1_COMPILER_ERROR_H

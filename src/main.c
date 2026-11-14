@@ -23,10 +23,8 @@ int main()
         return EXIT_CODE_INTERNAL_ERROR;
     }
 
-    const int exit_code_parser = run_parser(ast, strings);
-
+    const int exit_code_parser = run_parser(ast, strings, NULL);
     run_generator(ast);
-    generate_program(ast);
 
     free_ast_nodes(ast);
     free_strings(strings);
