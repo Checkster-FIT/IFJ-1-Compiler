@@ -222,7 +222,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         fprintf(stderr, "0x???????????? ");
 
     const bool print_line = true;
-    if (print_line && node-> line != 0)
+    if (print_line && node->line != 0)
         fprintf(stderr, "\033[1;30m%03d\033[0m", node->line);
     else if (print_line)
         fprintf(stderr, "\033[1;30m000\033[0m");

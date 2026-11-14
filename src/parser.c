@@ -1148,7 +1148,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
 
                 if (parser->next.type != ERROR) {
                     return failed(parser, PARSER_INVALID_EXPRESSION_USE,
-                    str_token(&parser->next, GET_ATTRIBUTE));
+                        str_token(&parser->next, GET_ATTRIBUTE));
                 }
                 return FAILED;
         }

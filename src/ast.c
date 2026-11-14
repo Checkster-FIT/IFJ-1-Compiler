@@ -486,7 +486,7 @@ ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node)
         .parent = NULL,
         .line = 0,
         .argument_group = {
-            .arguments = {},
+            .arguments = { },
         },
     };
 

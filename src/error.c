@@ -329,7 +329,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         case SEMANTIC_NOT_MATCHING_VAR_TYPE:
             error.message = "Unable to assign '%s' value to variable of type '%s'",
-                error.param_count = 2;
+            error.param_count = 2;
             error.code = 6;
             break;
         case SEMANTIC_USE_OF_UNDEFINED_VAL_FUN:
@@ -349,8 +349,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 5;
             break;
         case SEMANTIC_ARGUMENT_PASSED_TO_VARIABLE:
-            error.message = "Variables take no arguments - cannot pass '%s' to '%s'";
-            error.param_count = 2;
+            error.message = "Variables take no arguments - cannot pass arguments to '%s'";
+            error.param_count = 1;
             error.code = 10;
             break;
         case SEMANTIC_STANDALONE_RETURN:
