@@ -490,7 +490,10 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c == '"')
                     state = STATE_STRING_MULTILINE_END_1;
-                else if (c != EOF && c != '"')
+                else if (c == '\n') {
+                    context->line += 1;
+                    state = STATE_STRING_MULTILINE_START;
+                } else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     token.type = ERROR;
@@ -633,6 +636,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
+                } else if (c == '\n') {
+                    context->line += 1;
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 } else
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
 
@@ -1056,7 +1062,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c >= '0' && c <= '9')
                     state = STATE_DOUBLE_DECIMAL_NUMBER;
 
-                // dot notation (e.x. 12.toInt)
+                    // dot notation (e.x. 12.toInt)
                 else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                     dynamic_string_remove_last(context->scanned_string); // remove .
 
