@@ -672,25 +672,27 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
 
 ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
 {
-    ASTNode* new_node = malloc(sizeof(ASTNode));
+    ASTNode* child_node = malloc(sizeof(ASTNode));
 
-    if (new_node == NULL)
+    if (child_node == NULL)
         return NULL;
 
-    *new_node = *node;
+    *child_node = *node;
 
     *node = (ASTNode) {
         .type = AST_CONVERSION,
-        .next = NULL,
-        .parent = new_node->parent,
-        .line = node->line,
+        .next = child_node->next,
+        .parent = child_node->parent,
+        .line = child_node->line,
         .conversion = {
             .result_type = new_type,
             .expression = NULL,
         },
     };
 
-    node->conversion.expression = new_node;
+    child_node->next = NULL;
+    child_node->parent = node;
+    node->conversion.expression = child_node;
 
     return node;
 }
