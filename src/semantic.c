@@ -216,6 +216,7 @@ int handle_statement(ASTNode* statement_node, char* result_type)
             if (!entry->data_type)
                 return print_error(SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE, statement_node->line, entry->identifier);
 
+            // compare return type with declared type
             if (entry->data_type != *result_type)
                 return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, statement_node->line);
 
@@ -572,11 +573,78 @@ int handle_expression(ASTNode* node, char* result_type)
 
             return 0;
 
+        case OP_DOT:
+            result = handle_expression(node->expression.left, result_type);
+            if (result)
+                return result;
+            result = handle_expression(node->expression.right, &right_result_type);
+            if (result)
+                return result;
+
+            // check if suitable for dot notation (matching types)
+            if (*result_type != right_result_type)
+                return print_error(SEMANTIC_DOT_NOTATION_TYPE_MISMATCH, node->line, type_full_name(*result_type), type_full_name(right_result_type));
+
+            return 0;
+
         default:
             break;
     }
 
     return result;
+}
+
+int handle_function(ASTNode* node, char* result_type, bool* main_found)
+{
+    int result = 0;
+
+    SymtableEntry* entry = get_closest_symtable_entry(node, node->function.identifier);
+
+    result = handle_block(node->function.statements, result_type);
+    if (result)
+        return result;
+
+    // when else and if types don't match, 'e' is propagated, but it's valid for Unit function
+    if (*result_type == 'e' && entry->data_type != 'u')
+        return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, node->line);
+
+    if (!entry->data_type) {
+        entry->data_type = *result_type;
+    }
+
+    // e.x. `def f(): Double = \n 3+3`
+    if (*result_type == 'i' && entry->data_type == 'd') {
+        ASTNode* new = ast_insert_conversion(node->function.statements.last, 'd');
+        if (!new)
+            return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
+        *result_type = 'd';
+    }
+
+    // --- type mismatch check ---
+    // e.x. f(): Int = \n return ()
+    // Unit function performs semantic analysis and result_type is ignored
+    // return data type is already checked in AST_RETURN, so only 'r' is propagated here
+    if (*result_type != entry->data_type && *result_type != 'r' && entry->data_type != 'u')
+        return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, node->line);
+
+    if (is_main(node)) {
+        if (*main_found)
+            return print_error(SEMANTIC_MULTIPLE_MAIN, node->line);
+
+        if (entry->parameters->len != 1) // `#` = no args
+            return print_error(SEMANTIC_MAIN_WITH_PARAMETERS, node->line);
+
+        if (entry->data_type != 'u')
+            return print_error(SEMANTIC_MAIN_NOT_UNIT, node->line);
+
+        // solved by parser
+        // if (entry->extension) // extension function cannot be entry function
+        //     return print_error(SEMANTIC_MAIN_F_IN_EXT, node->line, entry->identifier);
+
+        *main_found = true;
+    }
+
+    return 0;
 }
 
 bool is_main(ASTNode* fun_node)
@@ -586,61 +654,45 @@ bool is_main(ASTNode* fun_node)
 }
 
 /** TODO:
- * extension handling
+ * extension handling - change used function in ast based on type the function is used on (from twice to i#twice), implicit conversion to double
+ * propagate found return types to AST
  */
 int run_semantic(ASTNode* ast)
 {
-
     int result = 0;
     char return_type = 'u';
+    ASTNode* fun_node = NULL;
+    bool main_found = false;
 
     if (ast->type != AST_PROGRAM) {
         return print_error(CORRUPTED_MEMORY, 0);
     }
 
-    ASTNode* fun_node = ast->program.functions.first;
+    ASTNode* ext_node = ast->program.extensions.first;
 
-    bool main_found = false;
+    // cycle through extensions
+    while (ext_node) {
 
-    // go through functions
+        fun_node = ext_node->extension.functions.first;
+
+        // cycle through ext functions
+        while (fun_node) {
+            result = handle_function(fun_node, &return_type, &main_found);
+            if (result)
+                return result;
+
+            fun_node = fun_node->next;
+        }
+        ext_node = ext_node->next;
+    }
+
+    fun_node = ast->program.functions.first;
+
+    // cycle through normal functions
     while (fun_node) {
-        result = handle_block(fun_node->function.statements, &return_type);
+        result = handle_function(fun_node, &return_type, &main_found);
         if (result)
             return result;
-
-        SymtableEntry* entry = get_closest_symtable_entry(fun_node, fun_node->function.identifier);
-
-        // when else and if types don't match, 'e' is propagated, but it's valid for Unit function
-        if (return_type == 'e' && entry->data_type != 'u')
-            return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, fun_node->line);
-
-        if (!entry->data_type) {
-            entry->data_type = return_type;
-        }
-
-        // e.x. `def f(): Double = \n 3+3`
-        if (return_type == 'i' && entry->data_type == 'd') {
-            ASTNode* new = ast_insert_conversion(fun_node->function.statements.last, 'd');
-            if (!new)
-                return print_error(MEMORY_ALLOCATION_ERROR, fun_node->line, "conversion node");
-            return_type = 'd';
-        }
-
-        if (return_type != entry->data_type && return_type != 'r' && entry->data_type != 'u')
-            return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, fun_node->line);
-
-        if (is_main(fun_node)) {
-            if (main_found)
-                return print_error(SEMANTIC_MULTIPLE_MAIN, fun_node->line);
-
-            if (entry->parameters->len != 1) // `#` = no args
-                return print_error(SEMANTIC_MAIN_WITH_PARAMETERS, fun_node->line);
-
-            if (entry->data_type != 'u')
-                return print_error(SEMANTIC_MAIN_NOT_UNIT, fun_node->line);
-
-            main_found = true;
-        }
 
         fun_node = fun_node->next;
     }

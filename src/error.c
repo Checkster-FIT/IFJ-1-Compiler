@@ -392,6 +392,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 1;
             error.code = 6;
             break;
+        case SEMANTIC_DOT_NOTATION_TYPE_MISMATCH:
+            error.message = "Unable to perform dot notation on mismatching types. Left side type: '%s', right side type: '%s'";
+            error.param_count = 3;
+            error.code = 6;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
