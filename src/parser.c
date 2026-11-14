@@ -264,7 +264,9 @@ int parse_function(ParserContext* parser, const char extension_type)
         dynamic_string_append(ext_identifier, extension_type);
         dynamic_string_append(ext_identifier, '#');
         dynamic_string_append_str(ext_identifier, identifier);
-        identifier = ext_identifier->chars;
+
+        identifier = add_string_copy(parser->strings, ext_identifier->chars);
+        dispose_dynamic_string(ext_identifier);
     }
 
     // Bypass extension symtable

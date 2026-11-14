@@ -48,7 +48,7 @@ void free_allocated_strings(const TNode* node)
     free((void*)node);
 }
 
-char* add_string(const AllocatedStrings* strings, const char* str)
+char* add_string_copy(const AllocatedStrings* strings, const char* str)
 {
     const size_t length = strlen(str) + 1;
 
