@@ -171,6 +171,7 @@ struct ast_node {
     ASTNodeType type;
     ASTNode* next;
     ASTNode* parent;
+    int line;
 
     union {
         ASTProgram program;
@@ -241,11 +242,11 @@ ASTNode* ast_add_if(ASTNode* ast);
 ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Symtable* symtable);
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
-ASTNode* ast_new_expression(const ASTExpression expression);
+ASTNode* ast_new_expression(ASTExpression expression);
 
 ASTNode* ast_insert_conversion(ASTNode* node, char new_type);
 
-ASTNode* ast_new_literal(const ASTLiteral literal);
+ASTNode* ast_new_literal(ASTLiteral literal);
 ASTNode* ast_new_term(const char* identifier);
 ASTNode* ast_new_interpolated_string();
 

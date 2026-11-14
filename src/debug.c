@@ -19,7 +19,7 @@ void log_parsed(ParserContext* parser)
     const char* color = "\033[1;30m";
 
     // Accepted tokens (Recursive descent)
-    if (parser->exit_code == 0) {
+    if (parser->exit_code == 0 && parser->token_error == 0) {
         prefix = "OK ";
         color = "\033[1;32m";
         // Skipped tokens
@@ -135,7 +135,7 @@ void log_precedence_stack(const ParserContext* parser, const Stack* stack)
 
 void print_line(ParserContext* parser)
 {
-    if (parser->exit_code != 0)
+    if (parser->exit_code != 0 || parser->token_error != 0)
         return;
 
     const char* divider = "-----------------------";
@@ -220,6 +220,12 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     // else
     //     fprintf(stderr, "0x????????????");
 
+    const bool print_line = true;
+    if (print_line && node-> line != 0)
+        fprintf(stderr, "%03d", node->line);
+    else if (print_line)
+        fprintf(stderr, "\033[1;30m000\033[0m");
+
     if (parent->parent) {
 
         // Add one more line before functions
@@ -229,6 +235,9 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             print_ast_indent(parent->parent);
             fprintf(stderr, "\033[1;30m%s\033[0m", "  │    ");
             fputc('\n', stderr);
+
+            if (print_line)
+                fprintf(stderr, "%03d", node->line);
         }
 
         print_ast_indent(parent->parent);

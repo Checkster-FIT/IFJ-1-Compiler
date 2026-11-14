@@ -29,6 +29,7 @@ ASTNode* new_ast()
         .type = AST_PROGRAM,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .program = {
             .functions = {
                 .first = NULL,
@@ -190,6 +191,7 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .type = AST_EXTENSION,
         .next = NULL,
         .parent = ast,
+        .line = 0,
         .extension = {
             .functions = {},
             .parameter_groups = {},
@@ -214,6 +216,7 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
         .type = AST_FUNCTION,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .function = {
             .identifier = identifier,
             .statements = {},
@@ -248,6 +251,7 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
         .type = AST_PARAMETER_GROUP,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .parameter_group = {
             .parameters = {},
         },
@@ -276,6 +280,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget
         .type = AST_PARAMETER,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .parameter = {
             .identifier = identifier,
         },
@@ -303,6 +308,7 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
     *node = (ASTNode) {
         .type = AST_VAR_DEF,
         .next = NULL,
+        .line = 0,
         .vardef = {
             .identifier = identifier,
             .expression = NULL,
@@ -326,6 +332,8 @@ ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
     *node = (ASTNode) {
         .type = AST_VAR_ASSIGN,
         .next = NULL,
+        .line = 0,
+        .parent = NULL,
         .assignment = {
             .target = identifier,
             .expression = NULL,
@@ -349,6 +357,8 @@ ASTNode* ast_add_return(ASTNode* ast)
     *node = (ASTNode) {
         .type = AST_RETURN,
         .next = NULL,
+        .line = 0,
+        .parent = NULL,
         .return_st = {
             .expression = NULL,
         },
@@ -371,6 +381,8 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
     *node = (ASTNode) {
         .type = AST_WHILE_DO,
         .next = NULL,
+        .line = 0,
+        .parent = NULL,
         .while_do = {
             .condition = NULL,
             .statements = {},
@@ -395,6 +407,8 @@ ASTNode* ast_add_if(ASTNode* ast)
     *node = (ASTNode) {
         .type = AST_IF,
         .next = NULL,
+        .line = 0,
+        .parent = NULL,
         .if_statement = {
             .condition = NULL,
             .then_node = NULL,
@@ -419,6 +433,8 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
         *node = (ASTNode) {
             .type = AST_THEN,
             .next = NULL,
+            .line = 0,
+            .parent = NULL,
             .then_statement = {
                 .symtable = symtable,
                 .statements = {},
@@ -429,6 +445,8 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
         *node = (ASTNode) {
             .type = AST_ELSE,
             .next = NULL,
+            .line = 0,
+            .parent = NULL,
             .else_statement = {
                 .symtable = symtable,
                 .statements = {},
@@ -549,6 +567,7 @@ ASTNode* ast_new_expression(const ASTExpression expression)
         .type = AST_EXPRESSION,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .expression = {
             .left = expression.left,
             .right = expression.right,
@@ -569,6 +588,7 @@ ASTNode* ast_new_term(const char* identifier)
         .type = AST_TERM,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .term = {
             .identifier = identifier,
         },
@@ -588,6 +608,7 @@ ASTNode* ast_new_interpolated_string()
         .type = AST_INTERPOLATED_STRING,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .interpolated_string = {
             .expressions = {},
         },
@@ -607,6 +628,7 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
         .type = AST_LITERAL,
         .next = NULL,
         .parent = NULL,
+        .line = 0,
         .literal = literal
     };
 
@@ -628,6 +650,7 @@ ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
         .type = AST_CONVERSION,
         .next = NULL,
         .parent = new_node->parent,
+        .line = node->line,
         .conversion = {
             .result_type = new_type,
             .expression = NULL,
