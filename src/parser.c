@@ -58,7 +58,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = false; // TODO: Disable debug
+    parser->debug = true; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
@@ -779,6 +779,10 @@ int parse_construct_else(ParserContext* parser)
 
     if (!accept_next_keyword(ELSE_KW, parser))
         return FAILED;
+
+    // Else-if
+    if (check_next_keyword(IF_KW, parser))
+        return parse_construct_if_then(parser);
 
     const bool indented = accept_next(LINE_FEED, parser);
 

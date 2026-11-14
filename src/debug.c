@@ -330,9 +330,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
         case AST_EXPRESSION:
             if (node->expression.operation != OP_NONE)
-                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
+                fprintf(stderr, "[%s%s%s]", color, str_operation(node->expression.operation), reset);
             else
-                fprintf(stderr, "[%s?%s]\n", color, reset);
+                fprintf(stderr, "[%s?%s]", color, reset);
+            fprintf(stderr, ": %s\n", str_type(node->expression.result_type));
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
