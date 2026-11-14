@@ -17,12 +17,16 @@ void generate_program(ASTNode* root);
 
 void generate_function(ASTNode* root);
 
+void generate_nested_local_variables(ASTNode* node);
+
 void generate_local_variables(Symtable* root);
 
 void generate_parameters(ASTNodeList* parameter_group);
 
-void generate_expresssion(ASTNode* expression);
+void generate_arguments(ASTNodeList* arguments);
 
-void generate_statements(ASTNode* statement);
+void generate_expression(ASTNode* expression);
+
+void generate_statements(ASTNode* statement, bool is_function_body);
 
 #endif // IFJ_1_COMPILER_GENERATOR_H

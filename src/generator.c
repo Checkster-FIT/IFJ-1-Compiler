@@ -10,6 +10,7 @@
 #include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int run_generator(ASTNode* ast)
 {
@@ -47,13 +48,39 @@ void generate_function(ASTNode* node)
 
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
+    printf("DEFVAR LF@$discard\n");
 
     generate_local_variables(node->function.symtable);
+    generate_nested_local_variables(node->function.statements.first);
     generate_parameters(&node->function.parameter_groups);
-    generate_statements(node->function.statements.first);
+    generate_statements(node->function.statements.first, true);
 
     printf("POPFRAME\n");
     printf("RETURN\n\n");
+}
+
+void generate_nested_local_variables(ASTNode* node)
+{
+    while (node != NULL) {
+        if (node->type == AST_IF) {
+            if (node->if_statement.then_node != NULL) {
+                generate_local_variables(node->if_statement.then_node->then_statement.symtable);
+                ASTNode* then_statement = node->if_statement.then_node->then_statement.statements.first;
+                generate_nested_local_variables(then_statement);
+            }
+            if (node->if_statement.else_node != NULL) {
+                generate_local_variables(node->if_statement.else_node->else_statement.symtable);
+                ASTNode* else_statement = node->if_statement.else_node->else_statement.statements.first;
+                generate_nested_local_variables(else_statement);
+            }
+        }
+        if (node->type == AST_WHILE_DO) {
+            generate_local_variables(node->while_do.symtable);
+            ASTNode* while_do_statement = node->while_do.statements.first;
+            generate_nested_local_variables(while_do_statement);
+        }
+        node = node->next;
+    }
 }
 
 void generate_local_variables_recursive(TNode* node)
@@ -75,7 +102,6 @@ void generate_local_variables(Symtable* symtable)
     if (symtable->root == NULL) {
         return;
     }
-    printf("DEFVAR LF@$discard\n");
     generate_local_variables_recursive(symtable->root);
 }
 
@@ -109,6 +135,22 @@ void generate_parameters(ASTNodeList* param_group_list)
     generate_parameter_groups(param_group_list->first);
 }
 
+void generate_arguments(ASTNodeList* arguments)
+{
+    if (arguments == NULL) {
+        return;
+    }
+    ASTNode* argument_group = arguments->first;
+    while (argument_group != NULL) {
+        ASTNode* argument = argument_group->argument_group.arguments.first;
+        while (argument != NULL) {
+            generate_expression(argument);
+            argument = argument->next;
+        }
+        argument_group = argument_group->next;
+    }
+}
+
 void generate_expression(ASTNode* node)
 {
     if (node == NULL) {
@@ -132,7 +174,18 @@ void generate_expression(ASTNode* node)
                     break;
                 case AST_STRING:
                     type = "string";
-                    printf("PUSHS %s@%s\n", type, node->literal.val_string);
+                    int i = 0;
+                    unsigned char* string = (unsigned char*)node->literal.val_string;
+                    printf("PUSHS %s@", type);
+                    while (string[i] != '\0') {
+                        if (string[i] <= 32 || string[i] == 35 || string[i] == 92) {
+                            printf("\\%03d", string[i]);
+                        } else {
+                            printf("%c", string[i]);
+                        }
+                        i++;
+                    }
+                    printf("\n");
                     break;
                 case AST_UNIT:
                     printf("PUSHS nil@nil\n");
@@ -143,6 +196,7 @@ void generate_expression(ASTNode* node)
             }
             break;
         case AST_TERM:
+        case AST_VAR_USE:
             printf("PUSHS LF@%s\n", node->term.identifier);
             break;
         case AST_EXPRESSION:
@@ -241,6 +295,42 @@ void generate_expression(ASTNode* node)
             break;
         case AST_FUNCTION:
             break;
+        case AST_FUNCALL:
+            generate_arguments(&node->term.argument_groups);
+            printf("CREATEFRAME\n");
+            printf("CALL %s\n", node->term.identifier);
+            break;
+        case AST_BUILTIN_FUNCALL: {
+            if (node->term.identifier != NULL) {
+                if (strcmp(node->term.identifier, "print") == 0) {
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            printf("POPS LF@$discard\n");
+                            printf("WRITE LF@$discard\n");
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("PUSHS nil@nil\n");
+                } else if (strcmp(node->term.identifier, "readInt") == 0) {
+                    printf("READ LF@$discard int\n");
+                    printf("PUSHS LF@$discard\n");
+                } else if (strcmp(node->term.identifier, "readDouble") == 0) {
+                    printf("READ LF@$discard float\n");
+                    printf("PUSHS LF@$discard\n");
+                } else if (strcmp(node->term.identifier, "readLine") == 0) {
+                    printf("READ LF@$discard string\n");
+                    printf("PUSHS LF@$discard\n");
+                } else if (strcmp(node->term.identifier, "readBool") == 0) {
+                    printf("READ LF@$discard bool\n");
+                    printf("PUSHS LF@$discard\n");
+                }
+            }
+            break;
+        }
         default:
             fprintf(stderr, "generate_expression: accessed wrong node type\n");
             exit(99);
@@ -265,7 +355,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             printf("PUSHS bool@false\n");
             generate_expression(statement->while_do.condition);
             printf("JUMPIFEQS while_end_%d\n", while_counter);
-            generate_statements(statement->while_do.statements.first);
+            generate_statements(statement->while_do.statements.first, false);
             printf("JUMP while_start_%d\n", while_counter);
             printf("LABEL while_end_%d\n", while_counter);
             break;
@@ -286,6 +376,9 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             break;
         case AST_TERM:
         case AST_EXPRESSION:
+        case AST_FUNCALL:
+        case AST_BUILTIN_FUNCALL:
+        case AST_VAR_USE:
             generate_expression(statement);
             if (!is_last) {
                 printf("POPS LF@$discard\n");
@@ -298,18 +391,18 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             printf("PUSHS bool@false\n");
             generate_expression(statement->if_statement.condition);
             printf("JUMPIFEQS if_else_%d\n", current_if);
-            generate_statements(statement->if_statement.then_node);
+            generate_statements(statement->if_statement.then_node, false);
             printf("JUMP if_end_%d\n", current_if);
             printf("LABEL if_else_%d\n", current_if);
             if (statement->if_statement.else_node != NULL)
-                generate_statements(statement->if_statement.else_node);
+                generate_statements(statement->if_statement.else_node, false);
             printf("LABEL if_end_%d\n", current_if);
             break;
         case AST_ELSE:
-            generate_statements(statement->if_statement.else_node);
+            generate_statements(statement->if_statement.else_node, false);
             break;
         case AST_THEN:
-            generate_statements(statement->if_statement.then_node);
+            generate_statements(statement->if_statement.then_node, false);
             break;
         default:
             fprintf(stderr, "generate_statements_switch: accessed wrong statement type %d\n", statement->type);
@@ -317,11 +410,11 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
     }
 }
 
-void generate_statements(ASTNode* statement)
+void generate_statements(ASTNode* statement, bool is_function_body)
 {
     bool is_last = false;
     while (statement != NULL) {
-        if (statement->next == NULL) {
+        if (statement->next == NULL && is_function_body == true) {
             is_last = true;
         }
         generate_statements_switch(statement, is_last);
