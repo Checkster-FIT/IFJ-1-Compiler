@@ -333,7 +333,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                 fprintf(stderr, "[%s%s%s]", color, str_operation(node->expression.operation), reset);
             else
                 fprintf(stderr, "[%s?%s]", color, reset);
-            fprintf(stderr, ": %s\n", str_type(node->expression.result_type));
+            fprintf(stderr, " : %s\n", str_type(node->expression.result_type));
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
@@ -437,12 +437,15 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             else if (node->type == AST_VAR_USE)
                 fprintf(stderr, "[%sUse%s]", color, reset);
 
+            fprintf(stderr, " %s", node->term.identifier);
             if (entry)
-                fprintf(stderr, " %s: %s", entry->identifier, str_type(entry->data_type));
+                fprintf(stderr, ": %s", str_type(entry->data_type));
             if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
             if (node->type == AST_BUILTIN_FUNCALL)
                 fprintf(stderr, " (built-in)");
+            if (entry && entry->extension)
+                fprintf(stderr, " (extension)");
             fprintf(stderr, "\n");
 
             print_ast_recursively(node->term.argument_groups.first, &this);

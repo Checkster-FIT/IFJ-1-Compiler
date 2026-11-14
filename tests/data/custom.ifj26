@@ -1,9 +1,12 @@
 import ifj26.*
 
+extension (value: Int)
+  def twice: Int = value * 2
+
+extension (value: Double)
+  def twice: Double = value * 2
+
 def factorial(n: Int): Int =
-    factorial()
-    factorial()()
-    factorial(a)()(b)
 
     var result = 1 + (n * 8)
     var i: Int = n
@@ -35,21 +38,19 @@ def runFoo(): Unit =
 def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     var abc = 1; val _def = 65;
 
-    var a = a;
-
     while abc < 5 do
         abc = abc + abc;
     ()
 
-    val function = square(add(2, 3))
+//     val function = square(add(2, 3))
     return ()
 
 def square(i: Int) = i*i
 def add(a: Int, b: Int) = a+b;
 
-def todo() =
+def todo(): Int =
     var todo: String = "todo";
-    (5).toStr
+//     (5).toStr
 
 //     var xyz = if abc == 1 then "One" else "Not one"
 
@@ -68,3 +69,5 @@ def todo() =
             return -4
     if i != 0 then
         return -4
+
+    return 5

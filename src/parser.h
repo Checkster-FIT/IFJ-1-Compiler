@@ -26,6 +26,7 @@ typedef struct {
     Token accepted;
 
     ASTNode* ast;
+    AllocatedStrings* strings;
 
     ScannerContext scanner;
     int prev_line;
@@ -110,8 +111,8 @@ int parse_header(ParserContext* parser);
 int parse_body(ParserContext* parser);
 
 int parse_extension(ParserContext* parser);
-int parse_extension_body(ParserContext* parser);
-int parse_function(ParserContext* parser);
+int parse_extension_body(ParserContext* parser, char extension_type);
+int parse_function(ParserContext* parser, char extension_type);
 int parse_function_body(ParserContext* parser);
 
 int parse_statement_list(ParserContext* parser);
@@ -134,7 +135,7 @@ int parse_type(ParserContext* parser);
 int parse_param_group_list(ParserContext* parser, SymtableEntry* entry);
 int parse_param_list_first(ParserContext* parser, SymtableEntry* entry);
 int parse_param_list(ParserContext* parser, SymtableEntry* entry);
-int parse_param(ParserContext* parser, SymtableEntry* entry);
+int parse_param(ParserContext* parser, const SymtableEntry* entry);
 
 // -----------------------------------------
 PrecedenceElement* create_next_precedence_terminal(const ParserContext* parser, PrecedenceElement last_elem);

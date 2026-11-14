@@ -263,6 +263,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 2;
             break;
         // Semantic error
+        case SEMANTIC_INVALID_REDEFINITION:
+            error.message = "Multiple definitions found for '%s'";
+            error.param_count = 0;
+            error.code = 4;
+            break;
         case SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE:
             error.message = "Function declaration does not match function return value data type";
             error.param_count = 0;
