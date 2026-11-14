@@ -324,7 +324,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         case SEMANTIC_NOT_MATCHING_VAR_TYPE:
             error.message = "Unable to assign '%s' value to variable of type '%s'",
-            error.param_count = 2;
+                error.param_count = 2;
             error.code = 6;
             break;
         case SEMANTIC_USE_OF_UNDEFINED_VAL_FUN:
@@ -334,8 +334,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 6;
             break;
         case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
-            error.message = "Mismatch in number or parameters or group of parameters on function call";
-            error.param_count = 0;
+            error.message = "Mismatch in number of parameters or group of parameters on function '%s' call";
+            error.param_count = 2;
             error.code = 5;
             break;
         case SEMANTIC_FUNCALL_PARAMETER_TYPE_MISMATCH:
@@ -448,7 +448,7 @@ char* get_error_type_str(const int exit_code)
 
 int print_error(const int error_id, const int line, ...)
 {
-    va_list args = { };
+    va_list args = {};
     va_start(args, line);
 
     const int code = va_print_error(error_id, line, args);
@@ -467,11 +467,11 @@ int va_print_error(const int error_id, const int line, va_list args)
 
     // Create the format with or without the fix
     const char* format = "\033[1;31m[%s] on line %i: \n"
-                         "     | %s\n"
-                         "     | %s\033[0m\n";
+        "     | %s\n"
+        "     | %s\033[0m\n";
     if (strlen(error.fix) <= 0)
         format = "\033[1;31m[%s] on line %i: \n"
-                 "     | %s\033[0m\n";
+            "     | %s\033[0m\n";
 
     snprintf(
         error_message,
