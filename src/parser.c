@@ -1137,6 +1137,8 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
                     free(top(stack));
                     pop(stack);
                 }
+                if (last_elem.group == P_TERM && term_node != NULL)
+                    free_ast_nodes(term_node);
                 free(next_elem);
                 dispose_stack(stack);
                 dispose_stack(expression_stack);
