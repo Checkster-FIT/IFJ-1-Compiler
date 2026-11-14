@@ -65,11 +65,10 @@ Symtable* add_built_in_entries(Symtable* symtable)
     add_built_in_function(symtable, "readBoolean", "#", 'b');
 
     // VAL-MEM
-    add_built_in_function(symtable, "floor", "", 'd');
-    add_built_in_function(symtable, "toString", "", 's');
-    add_built_in_function(symtable, "length", "", 'i');
-    // add_built_in_function(symtable, "toInt", "", 'i'); // ?????
-
+    add_built_in_function(symtable, "a#toString", "", 's');
+    add_built_in_function(symtable, "d#toInt", "", 'i');
+    add_built_in_function(symtable, "d#floor", "", 'd');
+    add_built_in_function(symtable, "s#length", "", 'i');
     return symtable;
 }
 
