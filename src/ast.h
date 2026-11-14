@@ -27,6 +27,7 @@ typedef enum {
 
     AST_EXPRESSION,
     AST_TERM,
+    AST_ARGUMENT_GROUP,
     AST_LITERAL,
     AST_INTERPOLATED_STRING,
     AST_CONVERSION,
@@ -156,8 +157,12 @@ typedef struct {
 
 typedef struct {
     const char* identifier;
-    ASTNodeList arguments;
+    ASTNodeList argument_groups;
 } ASTTerm;
+
+typedef struct {
+    ASTNodeList arguments;
+} ASTArgumentGroup;
 
 typedef struct {
     const char* identifier;
@@ -174,6 +179,7 @@ struct ast_node {
     ASTNodeType type;
     ASTNode* next;
     ASTNode* parent;
+    int line;
 
     union {
         ASTProgram program;
@@ -188,6 +194,7 @@ struct ast_node {
         ASTWhileDo while_do;
         ASTReturn return_st;
         ASTTerm term;
+        ASTArgumentGroup argument_group;
         ASTInterpolatedString interpolated_string;
         ASTIf if_statement;
         ASTThen then_statement;
@@ -233,8 +240,8 @@ ASTNodeList* get_top_statement_block(const ASTNode* ast);
 
 ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable);
 ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable, ASTTarget target);
-ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target);
-ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget target);
+ASTNode* ast_add_parameter_group(ASTNode* ast, ASTTarget target);
+ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, ASTTarget target);
 ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier);
 ASTNode* ast_add_return(ASTNode* ast);
@@ -244,11 +251,12 @@ ASTNode* ast_add_if(ASTNode* ast);
 ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Symtable* symtable);
 
 ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression);
-ASTNode* ast_new_expression(const ASTExpression expression);
+ASTNode* ast_new_expression(ASTExpression expression);
+ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node);
 
 ASTNode* ast_insert_conversion(ASTNode* node, char new_type);
 
-ASTNode* ast_new_literal(const ASTLiteral literal);
+ASTNode* ast_new_literal(ASTLiteral literal);
 ASTNode* ast_new_term(const char* identifier);
 ASTNode* ast_new_interpolated_string();
 

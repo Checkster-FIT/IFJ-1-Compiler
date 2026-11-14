@@ -61,7 +61,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->master_interpolated_string = NO_INTERPOLATION;
     scanner_context->scanned_string = scanned_string;
     scanner_context->indent_stack = indent_stack;
-    scanner_context->pending_indent = false;
+    scanner_context->pending_indent = 0;
     scanner_context->number_of_pending_dedents = 0;
     scanner_context->scanned_char_buffer = '\0';
     scanner_context->read_buffer = false;
@@ -141,8 +141,9 @@ Token get_token(ScannerContext* context, FILE* stream)
     }
 
     if (context->pending_indent) {
-        context->pending_indent = false;
         token.type = INDENT;
+        token.attribute_int = context->pending_indent;
+        context->pending_indent = 0;
         return token;
     }
 
@@ -489,7 +490,10 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 if (c == '"')
                     state = STATE_STRING_MULTILINE_END_1;
-                else if (c != EOF && c != '"')
+                else if (c == '\n') {
+                    context->line += 1;
+                    state = STATE_STRING_MULTILINE_START;
+                } else if (c != EOF && c != '"')
                     state = STATE_STRING_MULTILINE_START;
                 else {
                     token.type = ERROR;
@@ -632,6 +636,9 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file", context->scanned_string->chars);
                     return token;
+                } else if (c == '\n') {
+                    context->line += 1;
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 } else
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
 
@@ -1072,9 +1079,7 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                     context->pending_dot = true;
                     RETURN_TOKEN_AND_SET_READ_BUFFER // read this c again
-                }
-
-                else {
+                } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_DOUBLE_INVALID_DECIMAL_POINT, LINE, context->scanned_string->chars);
                     return token;
@@ -1429,7 +1434,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                     }
 
                     if (status == INDENTATION)
-                        context->pending_indent = true; // return INDENT token on the next get_token() call
+                        context->pending_indent = indent_value; // return INDENT token on the next get_token() call
 
                     // dedentation is already handled by check_indentation()
 
@@ -1473,6 +1478,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 if (c == '/') {
                     state = STATE_ANOTHER_BLOCK_COMMENT_START;
                 } else if (c == '\n') {
+                    context->line += 1;
                     context->lf_inside_block_comment = true;
                     state = STATE_BLOCK_COMMENT_START;
                 } else if (c == '*') {

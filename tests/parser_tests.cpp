@@ -368,7 +368,7 @@ TEST_F(parser, var_def)
     ASSERT_EQ(var_expr_node->type, AST_TERM);
     ASSERT_EQ(var_expr_node->next, nullptr);
     ASSERT_EQ(var_expr_node->parent, var_node);
-    ASSERT_EQ(var_expr_node->term.arguments.first, nullptr);
+    ASSERT_EQ(var_expr_node->term.argument_groups.first, nullptr);
     ASSERT_STREQ(var_expr_node->term.identifier, "str");
 
     // ----------------------------------------------------
@@ -377,6 +377,6 @@ TEST_F(parser, var_def)
     ASSERT_EQ(val_expr_node->type, AST_TERM);
     ASSERT_EQ(val_expr_node->next, nullptr);
     ASSERT_EQ(val_expr_node->parent, val_node);
-    ASSERT_EQ(val_expr_node->term.arguments.first, nullptr);
+    ASSERT_EQ(val_expr_node->term.argument_groups.first, nullptr);
     ASSERT_STREQ(val_expr_node->term.identifier, "str");
 }

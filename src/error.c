@@ -257,6 +257,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 0;
             error.code = 2;
             break;
+        case PARSER_INVALID_FUNCTION_DEF:
+            error.message = "Expected 'def' keyword after main function annotation";
+            error.param_count = 0;
+            error.code = 2;
+            break;
         // Semantic error
         case SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE:
             error.message = "Function declaration does not match function return value data type";
@@ -393,8 +398,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 99;
             break;
         case CORRUPTED_MEMORY:
-            error.message = "An error has occurred when trying to read from internal memory";
-            error.param_count = 0;
+            error.message = "An error has occurred when trying to read from memory in state: '%i'";
+            error.param_count = 1;
             error.code = 99;
             break;
         // Program errors
@@ -448,7 +453,7 @@ char* get_error_type_str(const int exit_code)
 
 int print_error(const int error_id, const int line, ...)
 {
-    va_list args = {};
+    va_list args = { };
     va_start(args, line);
 
     const int code = va_print_error(error_id, line, args);
@@ -467,11 +472,11 @@ int va_print_error(const int error_id, const int line, va_list args)
 
     // Create the format with or without the fix
     const char* format = "\033[1;31m[%s] on line %i: \n"
-        "     | %s\n"
-        "     | %s\033[0m\n";
+                         "     | %s\n"
+                         "     | %s\033[0m\n";
     if (strlen(error.fix) <= 0)
         format = "\033[1;31m[%s] on line %i: \n"
-            "     | %s\033[0m\n";
+                 "     | %s\033[0m\n";
 
     snprintf(
         error_message,
