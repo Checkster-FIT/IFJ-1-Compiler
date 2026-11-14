@@ -5,6 +5,7 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
+#include "debug.h"
 #include "generator.h"
 #include "parser.h"
 #include "semantic.h"
@@ -23,13 +24,32 @@ int main()
         return EXIT_CODE_INTERNAL_ERROR;
     }
 
+    // Syntax analysis
     const int exit_code_parser = run_parser(ast, strings, NULL);
-    const int exit_code_semantic = run_semantic(ast);
+    if (exit_code_parser != 0) {
+        free_ast_nodes(ast);
+        free_strings(strings);
+        return exit_code_parser;
+    }
 
+    // Semantic analysis
+    const int exit_code_semantic = run_semantic(ast);
+    if (exit_code_semantic != 0) {
+        // TODO: Remove debug print
+        print_ast(ast);
+
+        free_ast_nodes(ast);
+        free_strings(strings);
+        return exit_code_semantic;
+    }
+
+    // TODO: Remove debug print
+    print_ast(ast);
+
+    // Code generation
     run_generator(ast);
 
     free_ast_nodes(ast);
     free_strings(strings);
-
-    return exit_code_parser || exit_code_semantic;
+    return 0;
 }

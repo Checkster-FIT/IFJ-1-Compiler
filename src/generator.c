@@ -12,8 +12,5 @@
 
 int run_generator(ASTNode* ast)
 {
-    fputc('\n', stderr);
-    print_ast(ast);
-
     return 0;
 }
