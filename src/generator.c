@@ -79,18 +79,34 @@ void generate_local_variables(Symtable* symtable)
     generate_local_variables_recursive(symtable->root);
 }
 
-void generate_parameters(ASTNodeList* param_group)
+void generate_parameter(ASTNode* param_node)
 {
-    if (param_group == NULL) {
+    if (param_node == NULL) {
         return;
     }
-    ASTNode* param = param_group->first;
-    while (param != NULL) {
-        if (param->parameter.identifier != NULL) {
-            printf("POPS LF@%s\n", param->parameter.identifier);
-        }
-        param = param->next;
+
+    generate_parameter(param_node->next);
+
+    if (param_node->parameter.identifier != NULL) {
+        printf("POPS LF@%s\n", param_node->parameter.identifier);
     }
+}
+
+void generate_parameter_groups(ASTNode* group_node)
+{
+    if (group_node == NULL) {
+        return;
+    }
+    generate_parameter_groups(group_node->next);
+    generate_parameter(group_node->parameter_group.parameters.first);
+}
+
+void generate_parameters(ASTNodeList* param_group_list)
+{
+    if (param_group_list == NULL) {
+        return;
+    }
+    generate_parameter_groups(param_group_list->first);
 }
 
 void generate_expression(ASTNode* node)
