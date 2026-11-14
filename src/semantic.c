@@ -140,7 +140,6 @@ int handle_statement(ASTNode* statement_node, char* result_type)
                 *result_type = 'd';
             }
 
-            // printf("%c", entry->data_type);
             if (entry->data_type != *result_type)
                 return print_error(SEMANTIC_NOT_MATCHING_VAR_TYPE, statement_node->line, type_full_name(*result_type), type_full_name(entry->data_type));
 
