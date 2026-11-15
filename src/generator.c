@@ -55,8 +55,13 @@ void generate_function(ASTNode* node)
     generate_parameters(&node->function.parameter_groups);
     generate_statements(node->function.statements.first, true);
 
-    printf("POPFRAME\n");
-    printf("RETURN\n\n");
+    SymtableEntry* main = symtable_main_search(node->parent->program.global_symtable);
+    if (strcmp(main->identifier, node->function.identifier) == 0) {
+        printf("EXIT int@0\n\n");
+    } else {
+        printf("POPFRAME\n");
+        printf("RETURN\n\n");
+    }
 }
 
 void generate_nested_local_variables(ASTNode* node)
