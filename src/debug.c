@@ -330,9 +330,10 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
         case AST_EXPRESSION:
             if (node->expression.operation != OP_NONE)
-                fprintf(stderr, "[%s%s%s]\n", color, str_operation(node->expression.operation), reset);
+                fprintf(stderr, "[%s%s%s]", color, str_operation(node->expression.operation), reset);
             else
-                fprintf(stderr, "[%s?%s]\n", color, reset);
+                fprintf(stderr, "[%s?%s]", color, reset);
+            fprintf(stderr, " : %s\n", str_type(node->expression.result_type));
             this.followed = node->expression.right != NULL;
             print_ast_recursively(node->expression.left, &this);
             this.followed = false;
@@ -366,20 +367,6 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
                     fprintf(stderr, "[%s...%s]\n", color, reset);
                     break;
             }
-            break;
-
-        case AST_TERM:
-            entry = get_closest_symtable_entry(node, node->term.identifier);
-            fprintf(stderr, "[%sTerm%s]", color, reset);
-
-            if (entry)
-                fprintf(stderr, " %s: %s", entry->identifier, str_type(entry->data_type));
-            if (entry && entry->parameters)
-                fprintf(stderr, " <%s>", entry->parameters->chars);
-
-            fprintf(stderr, "\n");
-
-            print_ast_recursively(node->term.argument_groups.first, &this);
             break;
 
         case AST_VAR_ASSIGN:
@@ -430,11 +417,38 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         case AST_CONVERSION:
             fprintf(stderr, "[%sConv%s] ", color, reset);
             fprintf(stderr, "<%c>\n", node->conversion.result_type);
-            print_ast_recursively(node->vardef.expression, &this);
+            print_ast_recursively(node->conversion.expression, &this);
             break;
         case AST_ARGUMENT_GROUP:
             fprintf(stderr, "[%sArgs%s] \n", color, reset);
             print_ast_recursively(node->argument_group.arguments.first, &this);
+            break;
+
+        case AST_TERM:
+        case AST_BUILTIN_FUNCALL:
+        case AST_FUNCALL:
+        case AST_VAR_USE:
+            entry = get_closest_symtable_entry(node, node->term.identifier);
+
+            if (node->type == AST_TERM)
+                fprintf(stderr, "[%sTerm%s]", color, reset);
+            else if (node->type == AST_FUNCALL || node->type == AST_BUILTIN_FUNCALL)
+                fprintf(stderr, "[%sCall%s]", color, reset);
+            else if (node->type == AST_VAR_USE)
+                fprintf(stderr, "[%sUse%s]", color, reset);
+
+            fprintf(stderr, " %s", node->term.identifier);
+            if (entry)
+                fprintf(stderr, ": %s", str_type(entry->data_type));
+            if (entry && entry->parameters)
+                fprintf(stderr, " <%s>", entry->parameters->chars);
+            if (node->type == AST_BUILTIN_FUNCALL)
+                fprintf(stderr, " (built-in)");
+            if (entry && entry->extension)
+                fprintf(stderr, " (extension)");
+            fprintf(stderr, "\n");
+
+            print_ast_recursively(node->term.argument_groups.first, &this);
             break;
     }
     print_ast_recursively(node->next, parent);

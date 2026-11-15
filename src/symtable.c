@@ -26,6 +26,7 @@ SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const
         .function = true,
         .defined = true,
         .builtin = true,
+        .extension = false,
         .constant = true,
         .main = false,
         .identifier = identifier,
@@ -64,11 +65,10 @@ Symtable* add_built_in_entries(Symtable* symtable)
     add_built_in_function(symtable, "readBoolean", "#", 'b');
 
     // VAL-MEM
-    add_built_in_function(symtable, "floor", "", 'd');
-    add_built_in_function(symtable, "toString", "", 's');
-    add_built_in_function(symtable, "length", "", 'i');
-    // add_built_in_function(symtable, "toInt", "", 'i'); // ?????
-
+    add_built_in_function(symtable, "a#toString", "", 's');
+    add_built_in_function(symtable, "d#toInt", "", 'i');
+    add_built_in_function(symtable, "d#floor", "", 'd');
+    add_built_in_function(symtable, "s#length", "", 'i');
     return symtable;
 }
 
@@ -103,7 +103,6 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
     SymtableEntry* data = malloc(sizeof(SymtableEntry));
 
     if (data == NULL) {
-        print_error(MEMORY_ALLOCATION_ERROR, -1);
         return NULL;
     }
 
@@ -112,9 +111,16 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
     if (data->parameters != NULL) {
         data->parameters = init_dynamic_string();
         if (data->parameters == NULL) {
-            print_error(MEMORY_ALLOCATION_ERROR, -1);
             return NULL;
         }
+    }
+
+    // Redefinition check
+    data->error = false;
+    const TNode* result = search(symtable, entry.identifier);
+    if (result != NULL && ((SymtableEntry*)result->value)->defined) {
+        data->error = true;
+        return data;
     }
 
     if (tree_insert(symtable, entry.identifier, data) == NULL)

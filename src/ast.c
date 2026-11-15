@@ -97,6 +97,9 @@ void free_ast_nodes(ASTNode* node)
             break;
         case AST_LITERAL:
             break;
+        case AST_FUNCALL:
+        case AST_BUILTIN_FUNCALL:
+        case AST_VAR_USE:
         case AST_TERM:
             free_node_list(&node->term.argument_groups);
             break;

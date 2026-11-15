@@ -264,6 +264,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.code = 2;
             break;
         // Semantic error
+        case SEMANTIC_INVALID_REDEFINITION:
+            error.message = "Multiple definitions found for '%s'";
+            error.param_count = 0;
+            error.code = 4;
+            break;
         case SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE:
             error.message = "Function declaration does not match function return value data type";
             error.param_count = 0;
@@ -386,6 +391,18 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.message = "Cannot assign value to function '%s'";
             error.param_count = 1;
             error.code = 7;
+            break;
+        case SEMANTIC_RECURSION_WITHOUT_TYPE_DEF:
+            error.message = "Cannot perform recursive call of function '%s' as it has no declared return type";
+            error.fix = "Add return type to function declaration";
+            error.param_count = 1;
+            error.code = 6;
+            break;
+        case SEMANTIC_DOT_NOTATION_TYPE_MISMATCH:
+            error.message =
+                    "Unable to perform dot notation on mismatching types. Left side type: '%s', right side type: '%s'";
+            error.param_count = 3;
+            error.code = 6;
             break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:

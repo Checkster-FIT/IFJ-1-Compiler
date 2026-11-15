@@ -457,7 +457,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 dynamic_string_remove_last(context->scanned_string);
                 token.type = STRING;
 
-                str = add_string(context->strings, context->scanned_string->chars);
+                str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned string");
@@ -478,7 +478,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     continue;
                 }
 
-                str = add_string(context->strings, "");
+                str = add_string_copy(context->strings, "");
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned string");
@@ -547,7 +547,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 token.type = MULTILINE_STRING;
 
-                str = add_string(context->strings, context->scanned_string->chars);
+                str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned multiline string");
@@ -572,7 +572,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = IDENTIFIER;
 
-                    str = add_string(context->strings, context->scanned_string->chars);
+                    str = add_string_copy(context->strings, context->scanned_string->chars);
                     if (token.attribute_string == NULL) {
                         token.type = ERROR;
                         token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "identifier");
@@ -625,7 +625,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 context->interpolation = NO_INTERPOLATION;
                 context->master_interpolated_string = NO_INTERPOLATION;
                 token.type = STRING;
-                str = add_string(context->strings, "");
+                str = add_string_copy(context->strings, "");
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
@@ -720,7 +720,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     // pointer to the whole string before $
                     token.type = MULTILINE_STRING_INTERPOLATION;
 
-                    str = add_string(context->strings, context->scanned_string->chars);
+                    str = add_string_copy(context->strings, context->scanned_string->chars);
                     if (str == NULL) {
                         token.type = ERROR;
                         token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE,
@@ -746,7 +746,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 token.type = MULTILINE_STRING_INTERPOLATION;
                 // pointer to the whole string before {
-                str = add_string(context->strings, context->scanned_string->chars);
+                str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error =
@@ -796,7 +796,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 token.type = MULTILINE_STRING_INTERPOLATION_END;
 
-                str = add_string(context->strings, context->scanned_string->chars);
+                str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error =
@@ -844,7 +844,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     // pointer to the whole string before $
                     token.type = STRING_INTERPOLATION;
 
-                    str = add_string(context->strings, context->scanned_string->chars);
+                    str = add_string_copy(context->strings, context->scanned_string->chars);
                     if (str == NULL) {
                         token.type = ERROR;
                         token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
@@ -868,7 +868,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 token.type = STRING_INTERPOLATION;
                 // pointer to the whole string before {
-                str = add_string(context->strings, context->scanned_string->chars);
+                str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
@@ -890,7 +890,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 token.type = STRING_INTERPOLATION_END;
 
                 // pointer to the whole string before "
-                str = add_string(context->strings, context->scanned_string->chars);
+                str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
                     token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "string interpolation");
@@ -979,7 +979,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     status = check_identifier_for_kw(context->scanned_string);
                     if (status == IS_IDENTIFIER) {
                         token.type = IDENTIFIER;
-                        str = add_string(context->strings, context->scanned_string->chars);
+                        str = add_string_copy(context->strings, context->scanned_string->chars);
                         if (str == NULL) {
                             token.type = ERROR;
                             token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "identifier");
@@ -1384,7 +1384,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = MAIN_IDENTIFIER;
 
-                    str = add_string(context->strings, context->scanned_string->chars);
+                    str = add_string_copy(context->strings, context->scanned_string->chars);
                     if (str == NULL) {
                         token.type = ERROR;
                         token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "main identifier");

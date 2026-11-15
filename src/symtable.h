@@ -20,9 +20,11 @@ typedef struct {
 
     bool defined;
     bool builtin;
+    bool extension;
     bool function;
     bool constant;
     bool main;
+    bool error;
 } SymtableEntry;
 
 typedef RBTree Symtable;

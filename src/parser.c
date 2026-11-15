@@ -33,7 +33,8 @@ ParserContext *init_parser(ParserContext *parser, ASTNode *ast, AllocatedStrings
         return NULL;
     }
 
-    parser->ast = ast;
+    parser->strings = strings,
+            parser->ast = ast;
     push(parser->symtable_stack, ast->program.global_symtable);
     add_built_in_entries(ast->program.global_symtable);
 
@@ -169,7 +170,7 @@ int parse_body(ParserContext *parser) {
     // <body> -> <function> <body>
     // <body> -> @main <function> <body>
     if (check_next_keyword(DEF_KW, parser) || check_next(MAIN_IDENTIFIER, parser))
-        return parse_function(parser) && parse_body(parser);
+        return parse_function(parser, '\0') && parse_body(parser);
 
     const char *invalid = str_token(&parser->next, GET_ATTRIBUTE);
     return failed(parser, PARSER_GLOBAL_SCOPE_INVALID, invalid);
@@ -203,6 +204,7 @@ int parse_extension(ParserContext *parser) {
     group_node->line = get_line(parser);
     if (!parse_param(parser, NULL))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
+    char ext_type = parser->last_type;
 
     if (!accept_next(RIGHT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
@@ -213,10 +215,10 @@ int parse_extension(ParserContext *parser) {
     if (!accept_next(INDENT, parser))
         return failed(parser, PARSER_EXT_MISSING_INDENT);
 
-    return parse_extension_body(parser);
+    return parse_extension_body(parser, ext_type);
 }
 
-int parse_extension_body(ParserContext *parser) {
+int parse_extension_body(ParserContext *parser, const char extension_type) {
     // <extension_body> -> [DEDENT]
     if (accept_next(DEDENT, parser)) {
         pop(parser->symtable_stack);
@@ -225,14 +227,14 @@ int parse_extension_body(ParserContext *parser) {
 
     // <extension_body> -> <function> + <extension_body>
     if (check_next_keyword(DEF_KW, parser))
-        return parse_function(parser) && parse_extension_body(parser);
+        return parse_function(parser, extension_type) && parse_extension_body(parser, extension_type);
 
     return failed(parser, PARSER_EXT_BLOCK_INVALID);
 }
 
 // -------------
 
-int parse_function(ParserContext *parser) {
+int parse_function(ParserContext *parser, const char extension_type) {
     log_ast_start(parser);
     // <function> -> def [IDENTIFIER] <param_group_list> <type_specifier> = <function_body>
 
@@ -246,6 +248,18 @@ int parse_function(ParserContext *parser) {
 
     if (!accept_next(IDENTIFIER, parser))
         return failed(parser, PARSER_INVALID_FUNCTION);
+
+    // Identifier
+    const char *identifier = parser->accepted.attribute_string;
+    if (extension_type != '\0') {
+        DynamicString *ext_identifier = init_dynamic_string();
+        dynamic_string_append(ext_identifier, extension_type);
+        dynamic_string_append(ext_identifier, '#');
+        dynamic_string_append_str(ext_identifier, identifier);
+
+        identifier = add_string_copy(parser->strings, ext_identifier->chars);
+        dispose_dynamic_string(ext_identifier);
+    }
 
     // Bypass extension symtable
     Symtable *global_symtable = parser->ast->program.global_symtable;
@@ -265,15 +279,19 @@ int parse_function(ParserContext *parser) {
         .
         builtin = false,
         .
+        extension = (extension_type != '\0'),
+        .
         parameters = NULL,
         .
-        identifier = parser->accepted.attribute_string,
+        identifier = identifier,
     }
     )
     ;
 
     if (!function)
-        return failed(parser, MEMORY_ALLOCATION_ERROR, "Function symtable entry");
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Symtable entry");
+    if (function->error)
+        return failed(parser, SEMANTIC_INVALID_REDEFINITION, function->identifier);
 
     function->parameters = init_dynamic_string();
     if (!function->parameters)
@@ -401,7 +419,7 @@ int parse_param_list(ParserContext *parser, SymtableEntry *entry) {
     return CORRECT;
 }
 
-int parse_param(ParserContext *parser, SymtableEntry *entry) {
+int parse_param(ParserContext *parser, const SymtableEntry *entry) {
     // <param> -> [IDENTIFIER] : <type>
     log_ast_start(parser);
 
@@ -442,7 +460,12 @@ int parse_param(ParserContext *parser, SymtableEntry *entry) {
     log_ast_end(parser);
 
     // Symtable - Parameter
-    symtable_add_entry(top(parser->symtable_stack), parameter);
+    SymtableEntry *param_entry = symtable_add_entry(top(parser->symtable_stack), parameter);
+    if (!param_entry)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Symtable entry");
+    if (param_entry->error)
+        return failed(parser, SEMANTIC_INVALID_REDEFINITION, param_entry->identifier);
+
     return CORRECT;
 }
 
@@ -578,7 +601,12 @@ int parse_statement_variable_definition(ParserContext *parser) {
     if (!parse_type_specifier(parser))
         return FAILED;
     vardef.data_type = parser->last_type;
-    symtable_add_entry(top(parser->symtable_stack), vardef);
+
+    SymtableEntry *vardef_entry = symtable_add_entry(top(parser->symtable_stack), vardef);
+    if (!vardef_entry)
+        return failed(parser, MEMORY_ALLOCATION_ERROR, "Symtable entry");
+    if (vardef_entry->error)
+        return failed(parser, SEMANTIC_INVALID_REDEFINITION, vardef_entry->identifier);
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
@@ -760,6 +788,10 @@ int parse_construct_else(ParserContext *parser) {
 
     if (!accept_next_keyword(ELSE_KW, parser))
         return FAILED;
+
+    // Else-if
+    if (check_next_keyword(IF_KW, parser))
+        return parse_construct_if_then(parser);
 
     const bool indented = accept_next(LINE_FEED, parser);
 

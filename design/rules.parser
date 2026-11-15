@@ -65,6 +65,7 @@
 
             <c_while> -> while <EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
             <c_if_then> -> if <EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
+            <c_else> -> else <c_if_then>
             <c_else> -> else [LF*] [INDENT*] <statement_list> [DEDENT*]
             <c_for> -> ???
 

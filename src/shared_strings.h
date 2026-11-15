@@ -25,7 +25,7 @@ void free_strings(AllocatedStrings *strings);
 
 void free_allocated_strings(const TNode *node);
 
-char *add_string(const AllocatedStrings *strings, const char *str);
+char *add_string_copy(const AllocatedStrings *strings, const char *str);
 
 /**
  * @brief Allocates and initializes a dynamic string structure.
