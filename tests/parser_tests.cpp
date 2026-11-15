@@ -25,22 +25,27 @@ protected:
     {
         return { .type = type };
     }
+
     static Token token(const type_enum type, const char* value)
     {
         return { .type = type, .attribute_string = value };
     }
+
     static Token token(const type_enum type, const int value)
     {
         return { .type = type, .attribute_int = value };
     }
+
     static Token token(const type_enum type, const double value)
     {
         return { .type = type, .attribute_double = value };
     }
+
     static Token token(const type_enum type, const enum attribute_keyword keyword)
     {
         return { .type = type, .attribute_keyword = keyword };
     }
+
     static Token token(const type_enum type, const enum attribute_operation_type operation)
     {
         return { .type = type, .attribute_operation_type = operation };
@@ -102,6 +107,8 @@ protected:
     }
 };
 
+// ==================================================================
+
 TEST_F(parser, header_only)
 {
     set_parser({
@@ -117,7 +124,10 @@ TEST_F(parser, header_only)
 
     // ----------------------------------------------------
     EXPECT_EQ(nullptr, ast->program.functions.first);
+    EXPECT_EQ(0, ast->program.functions.count);
     EXPECT_EQ(nullptr, ast->program.extensions.first);
+    EXPECT_EQ(0, ast->program.extensions.count);
+
     EXPECT_EQ(nullptr, ast->program.recent_function);
     EXPECT_EQ(nullptr, ast->program.recent_node);
 }
@@ -130,7 +140,9 @@ TEST_F(parser, empty)
     // ----------------------------------------------------
     EXPECT_EQ(nullptr, ast->parent);
     EXPECT_EQ(nullptr, ast->program.functions.first);
+    EXPECT_EQ(0, ast->program.functions.count);
     EXPECT_EQ(nullptr, ast->program.extensions.first);
+    EXPECT_EQ(0, ast->program.extensions.count);
     EXPECT_EQ(nullptr, ast->program.recent_function);
     EXPECT_EQ(nullptr, ast->program.recent_node);
 }
@@ -158,7 +170,9 @@ TEST_F(parser, function_expression)
     EXPECT_STREQ(function_node->function.identifier, "function");
     EXPECT_EQ(function_node, ast->program.functions.last);
     EXPECT_EQ(function_node, ast->program.recent_function);
+    EXPECT_EQ(1, ast->program.functions.count);
 
+    EXPECT_EQ(0, ast->program.extensions.count);
     EXPECT_EQ(nullptr, ast->program.extensions.first);
 }
 
@@ -195,6 +209,7 @@ TEST_F(parser, function_indent_param)
     EXPECT_STREQ(function_node->function.identifier, "_example_fun2");
     EXPECT_EQ(function_node, ast->program.functions.last);
     EXPECT_EQ(function_node, ast->program.recent_function);
+    EXPECT_EQ(1, ast->program.functions.count);
 
     // ----------------------------------------------------
     ASTNode* param_group_node = function_node->function.parameter_groups.first;
@@ -202,12 +217,14 @@ TEST_F(parser, function_indent_param)
     ASSERT_EQ(param_group_node->type, AST_PARAMETER_GROUP);
 
     EXPECT_EQ(param_group_node, function_node->function.parameter_groups.last);
+    EXPECT_EQ(1, function_node->function.parameter_groups.count);
 
     // ----------------------------------------------------
     ASTNode* parameter_node = param_group_node->parameter_group.parameters.first;
     ASSERT_NE(parameter_node, nullptr);
     ASSERT_EQ(parameter_node->type, AST_PARAMETER);
 
+    EXPECT_EQ(1, param_group_node->parameter_group.parameters.count);
     EXPECT_EQ(parameter_node, param_group_node->parameter_group.parameters.last);
     EXPECT_STREQ(parameter_node->parameter.identifier, "param1");
 
@@ -277,6 +294,7 @@ TEST_F(parser, built_in_functions)
 
     // ----------------------------------------------------
     ASTNode* function_node = ast->program.functions.first;
+    ASSERT_EQ(ast->program.functions.count, 1);
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
     ASSERT_STREQ(function_node->function.identifier, "user_defined");
@@ -295,15 +313,16 @@ TEST_F(parser, built_in_functions)
 
     check_built_in_functions(function_node, "readBoolean", 'b', "#");
 
-    // check_built_in_functions(function_node, "toString", 's', "");
-    // check_built_in_functions(function_node, "toInt", 'i', "");
-    // check_built_in_functions(function_node, "floor", 'd', "");
-    // check_built_in_functions(function_node, "length", 'i', "");
+    check_built_in_functions(function_node, "a#toString", 's', "");
+    check_built_in_functions(function_node, "d#toInt", 'i', "");
+    check_built_in_functions(function_node, "d#floor", 'd', "");
+    check_built_in_functions(function_node, "s#length", 'i', "");
 }
 
 TEST_F(parser, var_def)
 {
     set_prepared_parser({
+        // Function definition
         token(MAIN_IDENTIFIER),
         token(KEYWORD, DEF_KW),
         token(IDENTIFIER, "var_def_function"),
@@ -317,6 +336,7 @@ TEST_F(parser, var_def)
         token(ASSIGNMENT),
         token(LINE_FEED),
         token(INDENT),
+        // Function body
         token(KEYWORD, VAR_KW),
         token(IDENTIFIER, "variable"),
         token(ASSIGNMENT),
@@ -333,6 +353,7 @@ TEST_F(parser, var_def)
     ASSERT_EQ(0, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
+
     ASTNode* function_node = ast->program.functions.first;
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
@@ -342,6 +363,9 @@ TEST_F(parser, var_def)
     EXPECT_STREQ(function_node->function.identifier, "var_def_function");
     EXPECT_EQ(function_node, ast->program.functions.last);
     EXPECT_EQ(function_node, ast->program.recent_function);
+
+    ASSERT_EQ(1, ast->program.functions.count);
+    ASSERT_EQ(2, function_node->function.statements.count);
 
     // ----------------------------------------------------
     ASTNode* var_node = function_node->function.statements.first;
@@ -379,4 +403,208 @@ TEST_F(parser, var_def)
     ASSERT_EQ(val_expr_node->parent, val_node);
     ASSERT_EQ(val_expr_node->term.argument_groups.first, nullptr);
     ASSERT_STREQ(val_expr_node->term.identifier, "str");
+}
+
+TEST_F(parser, var_def_function_call)
+{
+    set_prepared_parser({
+        // Function definition
+        token(MAIN_IDENTIFIER),
+        token(KEYWORD, DEF_KW),
+        token(IDENTIFIER, "var_def_function"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "str"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, STRING_KW),
+        token(RIGHT_BRACKET),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, INT_KW),
+        token(ASSIGNMENT),
+        token(LINE_FEED),
+        token(INDENT),
+        // Function body
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "variable"),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "call"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "str"),
+        token(RIGHT_BRACKET),
+        token(LINE_FEED),
+        token(KEYWORD, VAL_KW),
+        token(IDENTIFIER, "value"),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "call_2"),
+        token(LEFT_BRACKET),
+        token(RIGHT_BRACKET),
+        token(LINE_FEED),
+        token(DEDENT),
+    });
+
+    ASSERT_EQ(0, run_parser(ast, strings, &context));
+    ASSERT_EQ(1, ast->program.functions.count);
+    ASSERT_EQ(2, ast->program.functions.first->function.statements.count);
+}
+
+TEST_F(parser, var_def_invalid)
+{
+    set_prepared_parser({
+        // Function definition
+        token(MAIN_IDENTIFIER),
+        token(KEYWORD, DEF_KW),
+        token(IDENTIFIER, "var_def_function"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "str"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, STRING_KW),
+        token(RIGHT_BRACKET),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, INT_KW),
+        token(ASSIGNMENT),
+        token(LINE_FEED),
+        token(INDENT),
+        // Function body
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "variable"),
+        token(LINE_FEED),
+        token(KEYWORD, VAL_KW),
+        token(IDENTIFIER, "value"),
+        token(LINE_FEED),
+        token(DEDENT),
+    });
+
+    ASSERT_EQ(2, run_parser(ast, strings, &context));
+}
+
+TEST_F(parser, semicolon)
+{
+    set_prepared_parser({
+        // Function definition
+        token(MAIN_IDENTIFIER),
+        token(KEYWORD, DEF_KW),
+        token(IDENTIFIER, "var_def_function"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "str"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, STRING_KW),
+        token(RIGHT_BRACKET),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, INT_KW),
+        token(ASSIGNMENT),
+        token(LINE_FEED),
+        token(INDENT),
+        // Function body
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "variable"),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "str"),
+        token(SEMICOLON),
+        token(KEYWORD, VAL_KW),
+        token(IDENTIFIER, "value"),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "str"),
+        token(SEMICOLON),
+        token(LINE_FEED),
+        // token(SEMICOLON),  // TODO: Empty expression?
+        token(DEDENT),
+    });
+
+    ASSERT_EQ(0, run_parser(ast, strings, &context));
+    ASSERT_EQ(1, ast->program.functions.count);
+    ASSERT_EQ(2, ast->program.functions.first->function.statements.count);
+}
+
+TEST_F(parser, if_then_else)
+{
+    set_prepared_parser({
+        // Function definition
+        token(MAIN_IDENTIFIER),
+        token(KEYWORD, DEF_KW),
+        token(IDENTIFIER, "if_then_else_function"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "bool"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, BOOLEAN_KW),
+        token(RIGHT_BRACKET),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, INT_KW),
+        token(ASSIGNMENT),
+        token(LINE_FEED),
+        token(INDENT),
+        // Function body
+        token(KEYWORD, IF_KW),
+        token(IDENTIFIER, "bool"),
+        token(KEYWORD, THEN_KW),
+        token(LINE_FEED),
+        token(INDENT),
+        token(INTEGER, 50),
+        token(LINE_FEED),
+        token(DEDENT),
+        token(KEYWORD, ELSE_KW),
+        token(LINE_FEED),
+        token(INDENT),
+        token(INTEGER, 100),
+        token(LINE_FEED),
+        token(DEDENT),
+        token(DEDENT),
+    });
+
+    ASSERT_EQ(0, run_parser(ast, strings, &context));
+    ASSERT_EQ(1, ast->program.functions.count);
+    ASSERT_EQ(1, ast->program.functions.first->function.statements.count);
+
+    // ----------------------------------------------------
+    ASTNode* function_node = ast->program.functions.first;
+    ASSERT_NE(function_node, nullptr);
+    ASSERT_EQ(function_node->type, AST_FUNCTION);
+    ASSERT_EQ(function_node->next, nullptr);
+    ASSERT_EQ(function_node->parent, ast);
+
+    EXPECT_STREQ(function_node->function.identifier, "if_then_else_function");
+    EXPECT_EQ(function_node, ast->program.functions.last);
+    EXPECT_EQ(function_node, ast->program.recent_function);
+
+    // ----------------------------------------------------
+    ASTNode* if_node = function_node->function.statements.first;
+    ASSERT_NE(if_node, nullptr);
+    ASSERT_EQ(if_node->type, AST_IF);
+    ASSERT_EQ(if_node->next, nullptr);
+    ASSERT_EQ(if_node->parent, function_node);
+
+    ASSERT_NE(if_node->if_statement.condition, nullptr);
+    ASSERT_NE(if_node->if_statement.then_node, nullptr);
+    ASSERT_NE(if_node->if_statement.else_node, nullptr);
+
+    ASTNode* condition_node = if_node->if_statement.condition;
+    ASTNode* then_node = if_node->if_statement.then_node;
+    ASTNode* else_node = if_node->if_statement.else_node;
+
+    ASSERT_EQ(condition_node->parent, if_node);
+    ASSERT_EQ(then_node->parent, if_node);
+    ASSERT_EQ(else_node->parent, if_node);
+
+    ASSERT_EQ(condition_node->type, AST_TERM);
+    EXPECT_EQ(condition_node->term.argument_groups.count, 0);
+    EXPECT_STREQ(condition_node->term.identifier, "bool");
+
+    ASSERT_EQ(then_node->type, AST_THEN);
+    EXPECT_EQ(then_node->then_statement.statements.count, 1);
+    ASSERT_NE(then_node->then_statement.symtable, nullptr);
+
+    ASTNode* statement_1 = then_node->then_statement.statements.first;
+    ASSERT_NE(statement_1, nullptr);
+    EXPECT_EQ(statement_1->type, AST_LITERAL);
+    EXPECT_EQ(statement_1->literal.type, AST_INTEGER);
+    EXPECT_EQ(statement_1->literal.val_integer, 50);
+
+    ASSERT_EQ(else_node->type, AST_ELSE);
+    EXPECT_EQ(else_node->else_statement.statements.count, 1);
+    ASSERT_NE(else_node->else_statement.symtable, nullptr);
+
+    ASTNode* statement_2 = else_node->else_statement.statements.first;
+    ASSERT_NE(statement_2, nullptr);
+    EXPECT_EQ(statement_2->type, AST_LITERAL);
+    EXPECT_EQ(statement_2->literal.type, AST_INTEGER);
+    EXPECT_EQ(statement_2->literal.val_integer, 100);
+
 }
