@@ -1058,3 +1058,325 @@ TEST_F(analysis, while_statement_branch_scopes)
 
     EXPECT_EQ(exit_code(), 0);
 }
+
+// ===========================================================
+
+TEST_F(analysis, expressions)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(parameter: Int) =
+            var variable: Double = 0.001;
+            -variable + max(parameter, 50.0) * (parameter - 0.5)
+
+        def max(x: Double, y: Double): Double =
+            if x >= y then
+                return x;
+            else
+                return y;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_incompatible_types_string_arithmetic)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(parameter: Int) =
+            var variable: Double = 0.001;
+            "string" + variable
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_incompatible_types_boolean_arithmetic)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(parameter: Int) =
+            var variable: Double = 0.001;
+            true + variable
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_incompatible_types_int_logic)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(parameter: Int) =
+            var variable: Double = 0.001;
+            true && variable
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_valid_division_by_zero)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something() =
+            5.0 / 0.0
+            6 / 0.0
+            7.0 / 0
+            8 / 0
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_implicit_float_conversion)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def add() = 5 + 5.5
+        def sub() = 5 - 5.5
+        def mul() = 5 * 5.5
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_implicit_float_conversion_check)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def add() = 5 + 5.1
+        def sub() = 5 - 5.2
+        def mul() = 5 * 5.3
+
+        def check(): Int = add() + sub() + mul();
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_regular_int_check)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def add() = 5 + 1
+        def sub() = 5 - 2
+        def mul() = 5 * 3
+
+        def check(): Int = add() + sub() + mul();
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_int_division_check)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def div() = 10 / 3
+        def check(): Int = div();
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_int_float_division_check)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def div1() = 10 / 3.0
+        def div2() = 10.0 / 3
+        def check(): Int = div1() + div2();
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_unary_op)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def positive(n: Int) = +n;
+        def negative(n: Int) = -n;
+
+        def d_positive(x: Double) = +x;
+        def d_negative(x: Double) = -x;
+
+        def check(): Int = positive(1) + negative(1)
+        def double_check1(): Double = d_positive(1.0)
+        def double_check2(): Double = d_negative(1.0)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_unary_op_invalid_string_plus)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(str: String) = +str;
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_unary_op_invalid_string_minus)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(str: String) = -str;
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_string_concatenation)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(a: String, b: String): String = a + b;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_string_invalid_type_concatenation)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(a: String) =
+            var x: String = a + 1.0;
+            var y: String = a + 1;
+            var y: String = a + true;
+            var y: String = a + ();
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, expressions_comparison)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(x: Int, y: Int, z: Double) =
+            var b1: Boolean = x < y
+            var b2: Boolean = x > y
+            var b3: Boolean = x <= y
+            var b4: Boolean = x >= y
+            var bc1: Boolean = x < z
+            var bc2: Boolean = x > z
+            var bc3: Boolean = x <= z
+            var bc4: Boolean = x >= z
+
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_comparison_strings)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(a: String, b: String) =
+            var b1: Boolean = a > b
+            var b2: Boolean = a < b
+            var b3: Boolean = a <= b
+            var b4: Boolean = a >= b
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+
+TEST_F(analysis, expressions_equality)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(x: Int, y: Int, z: Double) =
+            var b1: Boolean = x == y
+            var b2: Boolean = x != y
+            var b3: Boolean = x == 5
+            var b4: Boolean = x != 4
+            var bc1: Boolean = x == z
+            var bc2: Boolean = x != z
+            var bd3: Boolean = z == 5.0
+            var bd4: Boolean = z != 4.0
+            var bb: Boolean = b1 == b2
+            var uu: Boolean = () == ()
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, expressions_comparison_invalid_chaining)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(x: Int, y: Int, z: Double) =
+            var b1: Boolean = x > y < z
+    )");
+
+    EXPECT_EQ(exit_code(), 2);
+}
+
+TEST_F(analysis, expressions_equality_invalid_chaining)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(x: Int, y: Int, z: Double) =
+            var b1: Boolean = x != y == z
+    )");
+
+    EXPECT_EQ(exit_code(), 2);
+}
+
+TEST_F(analysis, expressions_combined_boolean)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(x: Int, y: Int, z: Double) =
+            var b1: Boolean = x > 5 != y < z
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}

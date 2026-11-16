@@ -309,42 +309,42 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         case SEMANTIC_NEGATION_OF_NON_BOOL_TYPE:
             error.message = "Unable to perform unary negation on type '%s'";
-            error.fix = "Negation can only be performed on Boolean data type";
+            error.fix = "Negation can only be performed on the 'Boolean' data type";
             error.param_count = 1;
             error.code = 6;
             break;
         case SEMANTIC_UNARY_OPERATION_NOT_OVER_NUMBER:
             error.message = "Unable to perform unary '%s' operator on type '%s'";
-            error.fix = "Must be Int or Double";
+            error.fix = "Operand must be of type 'Int' or 'Double'";
             error.param_count = 2;
             error.code = 6;
             break;
         case SEMANTIC_NUMERIC_OPERATION_NOT_OVER_NUMBERS:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
-            error.fix = "Both must be Int or Double";
+            error.fix = "Both operands must be of type 'Int' or 'Double'";
             error.param_count = 3;
             error.code = 6;
             break;
         case SEMANTIC_NOT_OVER_NUMBERS_OR_STRINGS:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
-            error.fix = "Must be Int or Double or two Strings";
+            error.fix = "Operands must be combination of 'Int' and 'Double', or two 'String' operands";
             error.param_count = 3;
             error.code = 6;
             break;
         case SEMANTIC_EQUAL_NOT_EQUAL_TYPE_MISMATCH:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
-            error.fix = "Must be Int or Double or two identical data types";
+            error.fix = "Operands must be 'Int' or 'Double' or two identical data types";
             error.param_count = 3;
             error.code = 6;
             break;
         case SEMANTIC_BINARY_OP_NOT_BOOL:
             error.message = "Unable to perform '%s' operation on type '%s' and '%s'";
-            error.fix = "Both must be Booleans";
+            error.fix = "Both operands must be of type 'Boolean'";
             error.param_count = 3;
             error.code = 6;
             break;
         case SEMANTIC_IF_WHILE_CONDITION_NOT_BOOL:
-            error.message = "Result of '%s' statement condition must be Boolean";
+            error.message = "Result of '%s' statement condition must be 'Boolean'";
             error.param_count = 1;
             error.code = 6;
             break;
