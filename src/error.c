@@ -357,7 +357,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Cannot resolve '%s'";
             error.fix = "Function or variable must be defined before use";
             error.param_count = 1;
-            error.code = 6;
+            error.code = 3;
             break;
         case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
             error.message = "Mismatch in number of parameters or group of parameters on function '%s' call";

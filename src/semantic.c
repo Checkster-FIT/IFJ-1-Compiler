@@ -146,7 +146,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
             }
 
             if (entry->data_type != *result_type)
-                return print_error(SEMANTIC_NOT_MATCHING_VAR_TYPE, statement_node->line, type_full_name(*result_type), type_full_name(entry->data_type));
+                return print_error(SEMANTIC_NOT_MATCHING_VAR_TYPE, statement_node->line, type_full_name(entry->data_type), type_full_name(*result_type));
 
             if (entry->defined)
                 return print_error(SEMANTIC_VARIABLE_OR_FUNCTION_REDEFINITION, statement_node->line);
@@ -294,8 +294,9 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
             entry = get_closest_defined_symtable_entry(statement_node, identifier_tmp->chars);
 
             if (!entry) {
+                int exit_code = print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, identifier_tmp->chars);
                 dispose_dynamic_string(identifier_tmp);
-                return print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, "x");
+                return exit_code;
             }
 
             dispose_dynamic_string(identifier_tmp);
@@ -312,10 +313,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                     while (node->type != AST_PROGRAM) // parser doesn't let return slip outside function
                         node = node->parent;
 
-                    // reach desired function
-                    node = node->program.functions.first;
-                    while (strcmp(node->function.identifier, entry->identifier) != 0)
-                        node = node->next;
+                    node = find_function(node, entry->identifier);
 
                     result = handle_function(node);
                     if (result)
@@ -367,9 +365,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 else
                     statement_node->type = AST_FUNCALL;
 
-                if (entry->extension) // everything called with `.` has extension == true
-                    statement_node->function.identifier = identifier_tmp->chars;
-
+                statement_node->function.identifier = entry->identifier;
                 *result_type = entry->data_type;
                 return 0;
             }
@@ -400,6 +396,27 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
     }
 
     return result;
+}
+
+ASTNode* find_function(ASTNode* node, const char* identifier)
+{
+    ASTNode* f;
+    ASTNode* ext;
+    // search for desired function in extensions
+    for (ext = node->program.extensions.first; ext; ext = ext->next) {
+        for (f = ext->extension.functions.first; f; f = f->next) {
+            if (strcmp(f->function.identifier, identifier) == 0)
+                return f;
+        }
+    }
+
+    // search for desired function in normal functions
+    for (f = node->program.functions.first; f; f = f->next) {
+        if (strcmp(f->function.identifier, identifier) == 0)
+            return f;
+    }
+
+    return NULL;
 }
 
 int handle_expression(ASTNode* node, char* result_type)
@@ -743,6 +760,7 @@ int main_check(ASTNode* node, bool* main_found)
 
     return 0;
 }
+
 // TODO: kontrola rekurze u ext
 int run_semantic(ASTNode* ast)
 {
