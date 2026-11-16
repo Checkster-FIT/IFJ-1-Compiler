@@ -59,6 +59,7 @@ typedef struct {
     ASTNode* first;
     ASTNode* last;
     ASTNode* active;
+    size_t count;
 } ASTNodeList;
 
 typedef enum {

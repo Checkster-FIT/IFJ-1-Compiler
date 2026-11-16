@@ -35,11 +35,13 @@ ASTNode* new_ast()
                 .first = NULL,
                 .active = NULL,
                 .last = NULL,
+                .count = 0,
             },
             .extensions = {
                 .first = NULL,
                 .active = NULL,
                 .last = NULL,
+                .count = 0,
             },
             .recent_node = NULL,
             .global_symtable = symtable,
@@ -159,9 +161,11 @@ void ast_list_add(ASTNodeList* list, ASTNode* node)
         list->first = node;
         list->active = node;
         list->last = node;
+        list->count = 1;
     } else if (list->last != NULL) {
         list->last->next = node;
         list->last = node;
+        list->count++;
     }
 }
 

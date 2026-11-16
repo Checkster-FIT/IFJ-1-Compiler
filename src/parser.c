@@ -36,7 +36,9 @@ ParserContext *init_parser(ParserContext *parser, ASTNode *ast, AllocatedStrings
     parser->strings = strings,
             parser->ast = ast;
     push(parser->symtable_stack, ast->program.global_symtable);
-    add_built_in_entries(ast->program.global_symtable);
+
+    if (!add_built_in_entries(ast->program.global_symtable))
+        return NULL;
 
     // Scanned tokens
     parser->future.type = NONE;
@@ -58,7 +60,7 @@ ParserContext *init_parser(ParserContext *parser, ASTNode *ast, AllocatedStrings
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = false; // TODO: Disable debug
+    parser->debug = true; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
@@ -78,6 +80,7 @@ ParserContext *init_parser(ParserContext *parser, ASTNode *ast, AllocatedStrings
     parser->mockup_token_count = 0;
     parser->mockup_token_index = 0;
 
+    parser->input_stream = stdin;
     return parser;
 }
 
@@ -102,6 +105,7 @@ int run_parser(ASTNode *ast, AllocatedStrings *strings, ParserContext *external_
     else if (init_parser(&parser, ast, strings) == NULL)
         return print_error(MEMORY_ALLOCATION_ERROR, 0, "ParserContext");
 
+    next(&parser);
     const int status = parse_program(&parser);
 
     if (parser.debug && status == FAILED)
@@ -113,10 +117,11 @@ int run_parser(ASTNode *ast, AllocatedStrings *strings, ParserContext *external_
 // =======================================================
 
 int parse_program(ParserContext *parser) {
-    next(parser);
-
     // <program> -> [LF] <program> (Discard any leading line feeds)
     while (accept_next(LINE_FEED, parser)) {
+    };
+    // <program> -> [INDENT] <program>
+    while (accept_next(INDENT, parser)) {
     };
 
     // <program> -> <header> <body>
@@ -134,7 +139,6 @@ int parse_program(ParserContext *parser) {
 
 int parse_header(ParserContext *parser) {
     // <header> -> import [IDENTIFIER] . *
-
     if (!accept_next_keyword(IMPORT_KW, parser))
         return FAILED;
     if (!accept_next_identifier("ifj26", parser))
@@ -150,6 +154,9 @@ int parse_header(ParserContext *parser) {
 int parse_body(ParserContext *parser) {
     // <body> -> [LF] <body> (Discard any leading line feeds)
     while (accept_next(LINE_FEED, parser)) {
+    };
+    // <body> -> [DEDENT] <body>
+    while (accept_next(DEDENT, parser)) {
     };
 
     // <body> -> [EOF]
@@ -171,6 +178,9 @@ int parse_body(ParserContext *parser) {
     // <body> -> @main <function> <body>
     if (check_next_keyword(DEF_KW, parser) || check_next(MAIN_IDENTIFIER, parser))
         return parse_function(parser, '\0') && parse_body(parser);
+
+    if (check_next(DEDENT, parser))
+        return CORRECT;
 
     const char *invalid = str_token(&parser->next, GET_ATTRIBUTE);
     return failed(parser, PARSER_GLOBAL_SCOPE_INVALID, invalid);
@@ -1601,7 +1611,7 @@ Token retrieve_next_token(ParserContext *parser) {
         return token;
     }
 
-    return get_token(&parser->scanner, stdin);
+    return get_token(&parser->scanner, parser->input_stream);
 }
 
 // -------------------------------------------------------
@@ -1707,6 +1717,9 @@ int get_line(const ParserContext *parser) {
 }
 
 int failed(ParserContext *parser, const int err, ...) {
+    if (parser->token_error != 0)
+        return FAILED;
+
     va_list args = {};
     va_start(args, err);
 

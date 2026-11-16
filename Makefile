@@ -102,13 +102,18 @@ examples: $(MAIN_EXEC)
 GTEST_FLAGS = -lgtest -pthread -g
 
 # Units to be included in tests and the source files for tests
-TEST_UNITS = scanner parser generator
+TEST_UNITS = scanner parser
 TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
+TEST_UNITS_H = $(addsuffix .h, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
+TEST_COMPLEX = analysis
+TEST_COMPLEX_EXEC = $(addsuffix _tests, $(TEST_UNITS))
+
 TEST_SHARED = error shared_strings symtable ast bst debug stack
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
+TEST_SHARED_H = $(addsuffix .h, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
 
 GTEST_MAIN = $(TEST_DIR)/test_main.cpp
@@ -123,19 +128,20 @@ $(BUILD):
 $(OBJ):
 	@mkdir -p $@
 
+# Add the generated .d files as dependencies
+-include $(wildcard $(OBJ)/*.d)
 
 # Compile each module
-
 $(OBJ)/%.o: $(SRC_DIR)/%.c | $(BUILD) $(OBJ)
-	@gcc -I$(SRC_DIR) -c $< -o $@ -g -O0
+	gcc -I$(SRC_DIR) -MMD -MP -c $< -o $@ -g -O0
 
 # Compile each test source file
 $(OBJ)/%_tests.o: $(TEST_DIR)/%_tests.cpp | $(BUILD) $(OBJ)
-	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+	$(CXX) -I$(SRC_DIR) -MMD -MP -c $< -o $@ -g
 
 # Compile the shared test main
 $(OBJ)/test_main.o: $(GTEST_MAIN) | $(BUILD) $(OBJ)
-	$(CXX) -I$(SRC_DIR) -c $< -o $@ -g
+	$(CXX) -I$(SRC_DIR) -MMD -MP -c $< -o $@ -g
 
 # Create an executable for each test module
 SHARED_OBJECTS = $(addprefix $(OBJ)/,$(TEST_SHARED_O))
@@ -145,23 +151,37 @@ TEST_MAIN_OBJECT = $(OBJ)/test_main.o
 $(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJECT)
 	$(CXX) $^ $(GTEST_FLAGS) -o $@
 
+$(BUILD)/analysis_tests: $(OBJ)/analysis_tests.o \
+	$(SHARED_OBJECTS) \
+	$(OBJ)/parser.o \
+	$(OBJ)/scanner.o \
+	$(OBJ)/semantic.o \
+	$(TEST_MAIN_OBJECT)
+	$(CXX) $^ $(GTEST_FLAGS) -o $@
+
 # [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
 $(BUILD)/scanner_tests: $(OBJ)/parser.o
-$(BUILD)/generator_tests: $(OBJ)/parser.o $(OBJ)/scanner.o
+$(BUILD)/analysis_tests: $(OBJ)/parser.o $(OBJ)/scanner.o $(OBJ)/semantic.o
 
-TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
+TEST_EXECUTABLES = \
+	$(addprefix $(BUILD)/,$(addsuffix _tests,$(TEST_UNITS))) \
+	$(addprefix $(BUILD)/,$(addsuffix _tests,$(TEST_COMPLEX)))
+
 build-test: $(TEST_EXECUTABLES)
 test: $(TEST_EXECUTABLES)
 	@for test in $^; do echo; $$test 2>/dev/null || true; done
 
+test-parser-build: $(BUILD)/parser_tests
 test-parser: $(BUILD)/parser_tests
 	@$^ 2>/dev/null || true
 
+test-scanner-build: $(BUILD)/scanner_tests
 test-scanner: $(BUILD)/scanner_tests
 	@$^ 2>/dev/null || true
 
-test-generator: $(BUILD)/generator_tests
+test-analysis-build: $(BUILD)/analysis_tests
+test-analysis: $(BUILD)/analysis_tests
 	@$^ 2>/dev/null || true
 
 # -----------------------------------------------

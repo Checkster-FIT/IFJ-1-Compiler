@@ -20,13 +20,15 @@ Symtable* new_symtable()
     return ptr;
 }
 
-SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const char* parameters, const char return_type)
+SymtableEntry* add_built_in_function(
+    Symtable* symtable, char* identifier,
+    const char* parameters, const char return_type, bool extension)
 {
     const SymtableEntry entry = {
         .function = true,
         .defined = true,
         .builtin = true,
-        .extension = false,
+        .extension = extension,
         .constant = true,
         .main = false,
         .identifier = identifier,
@@ -50,25 +52,41 @@ SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const
 
 Symtable* add_built_in_entries(Symtable* symtable)
 {
-    add_built_in_function(symtable, "print", "#a", 'u');
-    add_built_in_function(symtable, "readLine", "#", 's');
-    add_built_in_function(symtable, "readInt", "#", 'i');
-    add_built_in_function(symtable, "readDouble", "#", 'd');
-    add_built_in_function(symtable, "toStr", "#a", 's');
-    add_built_in_function(symtable, "toInt", "#d", 'i');
-    add_built_in_function(symtable, "strLength", "#s", 'i');
-    add_built_in_function(symtable, "subStr", "#sii", 's');
-    add_built_in_function(symtable, "ord", "#si", 'i');
-    add_built_in_function(symtable, "chr", "#i", 's');
+    if (!add_built_in_function(symtable, "print", "#a", 'u', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "readLine", "#", 's', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "readInt", "#", 'i', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "readDouble", "#", 'd', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "toStr", "#a", 's', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "toInt", "#d", 'i', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "strLength", "#s", 'i', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "subStr", "#sii", 's', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "ord", "#si", 'i', false))
+        return NULL;
+    if (!add_built_in_function(symtable, "chr", "#i", 's', false))
+        return NULL;
 
     // BOOL-THEN
-    add_built_in_function(symtable, "readBoolean", "#", 'b');
+    if (!add_built_in_function(symtable, "readBoolean", "#", 'b', false))
+        return NULL;
 
     // VAL-MEM
-    add_built_in_function(symtable, "a#toString", "", 's');
-    add_built_in_function(symtable, "d#toInt", "", 'i');
-    add_built_in_function(symtable, "d#floor", "", 'd');
-    add_built_in_function(symtable, "s#length", "", 'i');
+    if (!add_built_in_function(symtable, "a#toString", "", 's', true))
+        return NULL;
+    if (!add_built_in_function(symtable, "d#toInt", "", 'i', true))
+        return NULL;
+    if (!add_built_in_function(symtable, "d#floor", "", 'd', true))
+        return NULL;
+    if (!add_built_in_function(symtable, "s#length", "", 'i', true))
+        return NULL;
+
     return symtable;
 }
 

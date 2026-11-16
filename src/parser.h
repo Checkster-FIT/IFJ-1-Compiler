@@ -56,6 +56,7 @@ typedef struct {
     Token* mockup_tokens;
     size_t mockup_token_count;
     size_t mockup_token_index;
+    FILE* input_stream;
 
 } ParserContext;
 
