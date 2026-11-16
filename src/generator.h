@@ -33,4 +33,6 @@ bool is_string_expr(ASTNode* node);
 
 void to_bool();
 
+void to_str();
+
 #endif // IFJ_1_COMPILER_GENERATOR_H

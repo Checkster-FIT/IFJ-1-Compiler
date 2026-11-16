@@ -361,10 +361,16 @@ void generate_expression(ASTNode* node)
             }
             break;
         case AST_INTERPOLATED_STRING:
+            printf("PUSHS string@\n");
             ASTNode* expr = node->interpolated_string.expressions.first;
             while (expr != NULL) {
                 generate_expression(expr);
+                to_str();
                 expr = expr->next;
+                printf("POPS LF@$op2\n");
+                printf("POPS LF@$op1\n");
+                printf("CONCAT LF@$op1 LF@$op1 LF@$op2\n");
+                printf("PUSHS LF@$op1\n");
             }
             break;
         case AST_FUNCTION:
@@ -493,7 +499,6 @@ void generate_expression(ASTNode* node)
                     }
                     printf("INT2FLOATS\n");
                 } else if (strcmp(node->term.identifier, "toStr") == 0) {
-                    int id = builtin_label_id++;
                     ASTNode* builtin_group = node->term.argument_groups.first;
                     while (builtin_group != NULL) {
                         ASTNode* arg = builtin_group->argument_group.arguments.first;
@@ -503,32 +508,7 @@ void generate_expression(ASTNode* node)
                         }
                         builtin_group = builtin_group->next;
                     }
-                    printf("POPS LF@$op1\n");
-                    printf("TYPE LF@$tmp_type LF@$op1\n");
-                    printf("JUMPIFEQ $tostr_str_%d LF@$tmp_type string@string\n", id);
-                    printf("JUMPIFEQ $tostr_int_%d LF@$tmp_type string@int\n", id);
-                    printf("JUMPIFEQ $tostr_flt_%d LF@$tmp_type string@float\n", id);
-                    printf("JUMPIFEQ $tostr_bool_%d LF@$tmp_type string@bool\n", id);
-
-                    printf("MOVE LF@$op1 string@nil\n");
-                    printf("JUMP $tostr_end_%d\n", id);
-                    printf("LABEL $tostr_int_%d\n", id);
-                    printf("INT2STR LF@$op1 LF@$op1\n");
-                    printf("JUMP $tostr_end_%d\n", id);
-                    printf("LABEL $tostr_flt_%d\n", id);
-                    printf("FLOAT2STR LF@$op1 LF@$op1\n");
-                    printf("JUMP $tostr_end_%d\n", id);
-                    printf("LABEL $tostr_bool_%d\n", id);
-                    printf("JUMPIFEQ $tostr_true_%d LF@$op1 bool@true\n", id);
-                    printf("MOVE LF@$op1 string@false\n");
-                    printf("JUMP $tostr_end_%d\n", id);
-                    printf("LABEL $tostr_true_%d\n", id);
-                    printf("MOVE LF@$op1 string@true\n");
-                    printf("JUMP $tostr_end_%d\n", id);
-                    printf("LABEL $tostr_str_%d\n", id);
-                    printf("LABEL $tostr_end_%d\n", id);
-                    printf("PUSHS LF@$op1\n");
-
+                    to_str();
                 } else if (strcmp(node->term.identifier, "ord") == 0) {
                     int id = builtin_label_id++;
                     ASTNode* builtin_group = node->term.argument_groups.first;
@@ -779,4 +759,34 @@ void to_bool()
     printf("PUSHS bool@false\n");
     printf("JUMP tobool_end_%d\n", id);
     printf("LABEL tobool_end_%d\n", id);
+}
+
+void to_str()
+{
+    int id = builtin_label_id++;
+    printf("POPS LF@$op1\n");
+    printf("TYPE LF@$tmp_type LF@$op1\n");
+    printf("JUMPIFEQ $tostr_str_%d LF@$tmp_type string@string\n", id);
+    printf("JUMPIFEQ $tostr_int_%d LF@$tmp_type string@int\n", id);
+    printf("JUMPIFEQ $tostr_flt_%d LF@$tmp_type string@float\n", id);
+    printf("JUMPIFEQ $tostr_bool_%d LF@$tmp_type string@bool\n", id);
+
+    printf("MOVE LF@$op1 string@nil\n");
+    printf("JUMP $tostr_end_%d\n", id);
+    printf("LABEL $tostr_int_%d\n", id);
+    printf("INT2STR LF@$op1 LF@$op1\n");
+    printf("JUMP $tostr_end_%d\n", id);
+    printf("LABEL $tostr_flt_%d\n", id);
+    printf("FLOAT2STR LF@$op1 LF@$op1\n");
+    printf("JUMP $tostr_end_%d\n", id);
+    printf("LABEL $tostr_bool_%d\n", id);
+    printf("JUMPIFEQ $tostr_true_%d LF@$op1 bool@true\n", id);
+    printf("MOVE LF@$op1 string@false\n");
+    printf("JUMP $tostr_end_%d\n", id);
+    printf("LABEL $tostr_true_%d\n", id);
+    printf("MOVE LF@$op1 string@true\n");
+    printf("JUMP $tostr_end_%d\n", id);
+    printf("LABEL $tostr_str_%d\n", id);
+    printf("LABEL $tostr_end_%d\n", id);
+    printf("PUSHS LF@$op1\n");
 }
