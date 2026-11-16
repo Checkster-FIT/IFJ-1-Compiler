@@ -360,7 +360,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 6;
             break;
         case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
-            error.message = "Mismatch in number of parameters or group of parameters on function '%s' call";
+            error.message = "'%s' function call does not match the defined number of parameters or group of parameters";
             error.param_count = 2;
             error.code = 5;
             break;

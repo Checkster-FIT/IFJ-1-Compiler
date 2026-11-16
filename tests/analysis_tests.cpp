@@ -14,7 +14,7 @@ extern "C" {
 #include "semantic.h"
 }
 
-// =====================================================
+// ===============================================================================
 
 class analysis : public ::testing::Test {
 protected:
@@ -89,7 +89,7 @@ protected:
     }
 };
 
-// ==================================================================
+// ========================================================
 
 TEST_F(analysis, empty_function)
 {
@@ -137,7 +137,7 @@ TEST_F(analysis, header_twice)
     EXPECT_EQ(exit_code(), 2);
 }
 
-// =================================
+// ===========================================================
 
 TEST_F(analysis, main_newline)
 {
@@ -242,7 +242,7 @@ TEST_F(analysis, main_type_explicit_incorrect)
     EXPECT_EQ(exit_code(), 6);
 }
 
-// =================================
+// ===========================================================
 
 TEST_F(analysis, function_block_missing)
 {
@@ -321,7 +321,7 @@ TEST_F(analysis, function_params_invalid_assignment)
     EXPECT_EQ(exit_code(), 7);
 }
 
-// =================================
+// ===========================================================
 
 TEST_F(analysis, return_statement_invalid_implicit_type)
 {
@@ -347,7 +347,7 @@ TEST_F(analysis, return_statement_invalid_explicit_type)
     EXPECT_EQ(exit_code(), 10);
 }
 
-// =================================
+// ===========================================================
 
 TEST_F(analysis, return_value_valid)
 {
@@ -359,7 +359,6 @@ TEST_F(analysis, return_value_valid)
     )");
     EXPECT_EQ(exit_code(), 0);
 }
-
 
 TEST_F(analysis, return_value_valid_expression)
 {
@@ -472,7 +471,7 @@ TEST_F(analysis, return_value_unit_discard_return)
     EXPECT_EQ(exit_code(), 0);
 }
 
-// =================================
+// ===========================================================
 
 TEST_F(analysis, if_return_valid_explicit_unit)
 {
@@ -629,7 +628,7 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else)
     EXPECT_EQ(exit_code(), 0);
 }
 
-// =================================
+// ===========================================================
 
 TEST_F(analysis, recursion_direct_valid_explicit)
 {
@@ -658,7 +657,6 @@ TEST_F(analysis, recursion_direct_invalid_implicit)
     EXPECT_EQ(exit_code(), 6);
 }
 
-
 TEST_F(analysis, recursion_indirect_valid_explicit)
 {
     load_code(R"(
@@ -674,6 +672,22 @@ TEST_F(analysis, recursion_indirect_valid_explicit)
     )");
 
     EXPECT_EQ(exit_code(true), 0);
+}
+
+TEST_F(analysis, recursion_indirect_valid_explicit_partial)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(i: Int) =
+            other(i)
+
+        def other(i: Int): Int =
+            something(i - 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
 }
 
 TEST_F(analysis, recursion_indirect_invalid_implicit_all)
@@ -693,18 +707,354 @@ TEST_F(analysis, recursion_indirect_invalid_implicit_all)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, recursion_indirect_invalid_implicit_one)
+// ===========================================================
+
+TEST_F(analysis, function_call_statement)
 {
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
 
-        def something(i: Int) =
-            other(i)
+        def squared(value: Double) = value * value
 
-        def other(i: Int): Int =
-            something(i - 1)
+        def something(num: Double) =
+            squared(squared(num))
+            squared(5)
+            squared(num)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, function_call_statement_before_definition)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double) =
+            squared(squared(num))
+            squared(5)
+            squared(num)
+
+        def squared(value: Double) = value * value
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, function_call_var_initialization)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double) =
+            var x = twice(twice(num))
+            val y = twice(5)
+            x
+
+        def twice(value: Double) = 2 * value
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, function_call_assignment_value)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double) =
+            var x = 5.5
+            val y = 8
+            x = add_one(add_one(y))
+            x
+
+        def add_one(value: Double) = (value + 1);
+    )");
+
+    EXPECT_EQ(exit_code(true), 0);
+}
+
+TEST_F(analysis, function_call_single_line_function)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            add_two(num);
+
+        def add_two(value: Double) = add_one(add_one(value))
+        def add_one(value: Double) = (value + 1);
+    )");
+
+    EXPECT_EQ(exit_code(true), 0);
+}
+
+TEST_F(analysis, function_call_return)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            return add(num, 5.0);
+
+        def add(a: Double, b: Double) = a + b;
+    )");
+
+    EXPECT_EQ(exit_code(true), 0);
+}
+
+TEST_F(analysis, function_call_invalid_parameter_count)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            return add(num, 5.0, 99999999);
+
+        def add(a: Double, b: Double) = a + b;
+    )");
+
+    EXPECT_EQ(exit_code(), 5);
+}
+
+TEST_F(analysis, function_call_undefined)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            return add(num, 2);
+    )");
+
+    EXPECT_EQ(exit_code(true), 3);
+}
+
+// ===========================================================
+
+TEST_F(analysis, if_statement_condition_boolean)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            if (num * 2 > num - 2) && num != 0 then
+                return num;
+            else
+                return num + 2;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_statement_condition_not_boolean)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            if 5 + 5 then
+                return num;
+            else
+                return num + 2;
     )");
 
     EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, if_statement_condition_boolean_variable)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            var _condition: Boolean = (num * 2 > num - 2) && num != 0;
+            if _condition then
+                return num;
+            else
+                return num + 2;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_statement_condition_not_boolean_variable)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            if num then
+                return num;
+            else
+                return num + 2;
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, if_statement_branch_scopes)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            var x = 1;
+            if num > 5.5 then
+                var x = 2;
+                return num + x;
+            else
+                var x = 3;
+                return num + x;
+            return num + x;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_statement_invalid_subindent_else)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            if num > 5.5 then
+                return num + 2;
+              else
+                return num + 3;
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+TEST_F(analysis, if_statement_invalid_missing_indent_else)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            if num > 5.5 then
+                return num + 2;
+                else
+                return num + 3;
+    )");
+
+    EXPECT_EQ(exit_code(), 2);
+}
+
+TEST_F(analysis, if_statement_invalid_dedent_else)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+              if num > 5.5 then
+                return num + 2;
+            else
+                return num + 3;
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+// ===========================================================
+
+TEST_F(analysis, while_statement_condition_boolean)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            var i = 0;
+            while (i < 5.2) || i + 25 != 12 do
+                i = i + 2;
+            i + 1.0
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, while_statement_condition_not_boolean)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            var i = 0;
+            while 848 - 5.5 * i do
+                i = i + 2;
+            i + 1.0
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, while_statement_condition_boolean_variable)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            var i = 0;
+            var _condition = (i < 5.2) || i + 25 != 12
+            while _condition do
+                i = i + 2;
+                _condition = (i < 5.2) || i + 25 != 12
+            i + 1.0
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, while_statement_condition_not_boolean_variable)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            val i = 0;
+            var _condition = 848 - 5.5 * i;
+            while _condition do
+                i = i + 2;
+            i + 1.0
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, while_statement_branch_scopes)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(num: Double): Double =
+            var i = 0;
+            while i < 10 do
+                i = i + 2
+                var i = 0;
+                i = i + 3;
+            i + 1.0
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
 }
