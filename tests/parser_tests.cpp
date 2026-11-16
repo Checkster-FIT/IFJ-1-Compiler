@@ -16,9 +16,9 @@ extern "C" {
 
 class parser : public ::testing::Test {
 protected:
-    ParserContext context = {};
-    AllocatedStrings* strings = {};
-    ASTNode* ast = {};
+    ParserContext context = { };
+    AllocatedStrings* strings = { };
+    ASTNode* ast = { };
     std::vector<Token> tokens;
 
     static Token token(const type_enum type)
@@ -134,7 +134,7 @@ TEST_F(parser, header_only)
 
 TEST_F(parser, empty)
 {
-    set_parser({});
+    set_parser({ });
     ASSERT_EQ(2, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
@@ -355,7 +355,6 @@ TEST_F(parser, functin_all_types)
     ASSERT_EQ(5, function_node->function.parameter_groups.first->parameter_group.parameters.count);
     ASSERT_EQ(5, function_node->function.statements.count);
 
-
     ASSERT_NE(nullptr, function_node->function.symtable);
     ASSERT_NE(nullptr, search(function_node->function.symtable, "param_i"));
     ASSERT_NE(nullptr, search(function_node->function.symtable, "param_d"));
@@ -367,7 +366,6 @@ TEST_F(parser, functin_all_types)
     ASSERT_NE(nullptr, search(function_node->function.symtable, "var_s"));
     ASSERT_NE(nullptr, search(function_node->function.symtable, "var_b"));
     ASSERT_NE(nullptr, search(function_node->function.symtable, "var_u"));
-
 }
 
 void check_built_in_functions(const ASTNode* node, const char* identifier, const char return_type, const char* params)
@@ -716,7 +714,6 @@ TEST_F(parser, if_then_else)
     EXPECT_EQ(statement_2->type, AST_LITERAL);
     EXPECT_EQ(statement_2->literal.type, AST_INTEGER);
     EXPECT_EQ(statement_2->literal.val_integer, 100);
-
 }
 
 TEST_F(parser, while_do)

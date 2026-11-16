@@ -37,7 +37,9 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->strings = strings,
     parser->ast = ast;
     push(parser->symtable_stack, ast->program.global_symtable);
-    add_built_in_entries(ast->program.global_symtable);
+
+    if (!add_built_in_entries(ast->program.global_symtable))
+        return NULL;
 
     // Scanned tokens
     parser->future.type = NONE;

@@ -31,7 +31,8 @@ typedef RBTree Symtable;
 
 Symtable* new_symtable();
 
-SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier, const char* parameters, char return_type);
+SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier,
+    const char* parameters, char return_type, bool extension);
 Symtable* add_built_in_entries(Symtable* symtable);
 
 void free_symtable(const Symtable* symtable);

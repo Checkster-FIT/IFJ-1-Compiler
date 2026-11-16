@@ -18,26 +18,32 @@ extern "C" {
 
 class analysis : public ::testing::Test {
 protected:
-    ParserContext parser = {};
-    AllocatedStrings* strings = {};
-    ASTNode* ast = {};
+    ParserContext parser = { };
+    AllocatedStrings* strings = { };
+    ASTNode* ast = { };
     FILE* stream = nullptr;
 
     void SetUp() override
     {
+        // Shared struct for string allocation
         strings = new_strings();
         ASSERT_NE(strings, nullptr);
+        // Program AST - modified by syntax and semantic analysis
         ast = new_ast();
         ASSERT_NE(ast, nullptr);
+        // Temporary input stream
         stream = tmpfile();
         ASSERT_NE(stream, nullptr);
 
-        //testing::internal::CaptureStderr();
+        ASSERT_NE(init_parser(&parser, ast, strings), nullptr);
+        parser.input_stream = stream;
+
+        testing::internal::CaptureStderr();
     }
 
     void TearDown() override
     {
-        //testing::internal::GetCapturedStderr();
+        testing::internal::GetCapturedStderr();
 
         if (stream != nullptr)
             fclose(stream);
@@ -51,15 +57,11 @@ protected:
 
 TEST_F(analysis, dummy)
 {
-    ASSERT_NE(init_parser(&parser, ast, strings), nullptr);
-    parser.input_stream = stream;
-    parser.debug = true;
-
-    const auto code =R"ifj26(
+    const auto code = R"(
         import ifj26.*
         @main def function() =
             print(2);
-    )ifj26";
+    )";
 
     ASSERT_GE(fputs(code, stream), 0);
     rewind(stream);

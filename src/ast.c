@@ -203,8 +203,8 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
         .parent = ast,
         .line = 0,
         .extension = {
-            .functions = {},
-            .parameter_groups = {},
+            .functions = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -229,8 +229,8 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
         .line = 0,
         .function = {
             .identifier = identifier,
-            .statements = {},
-            .parameter_groups = {},
+            .statements = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -263,7 +263,7 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
         .parent = NULL,
         .line = 0,
         .parameter_group = {
-            .parameters = {},
+            .parameters = { },
         },
     };
 
@@ -395,7 +395,7 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
         .parent = NULL,
         .while_do = {
             .condition = NULL,
-            .statements = {},
+            .statements = { },
             .symtable = symtable },
     };
 
@@ -447,7 +447,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             .parent = NULL,
             .then_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.then_node = node;
@@ -459,7 +459,7 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
             .parent = NULL,
             .else_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.else_node = node;
@@ -493,7 +493,7 @@ ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node)
         .parent = NULL,
         .line = 0,
         .argument_group = {
-            .arguments = {},
+            .arguments = { },
         },
     };
 
@@ -650,7 +650,7 @@ ASTNode* ast_new_interpolated_string()
         .parent = NULL,
         .line = 0,
         .interpolated_string = {
-            .expressions = {},
+            .expressions = { },
         },
     };
 
