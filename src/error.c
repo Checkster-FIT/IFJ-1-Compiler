@@ -387,7 +387,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 6;
             break;
         case SEMANTIC_WRITE_INTO_CONST_OR_FUN:
-            error.message = "Cannot assign value to function '%s'";
+            error.message = "Cannot assign value to constant or function '%s'";
             error.param_count = 1;
             error.code = 7;
             break;
