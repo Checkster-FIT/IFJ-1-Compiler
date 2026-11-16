@@ -14,7 +14,7 @@ char* type_full_name(char c);
 
 int handle_block(ASTNodeList list, char* result_type);
 
-int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcall_type);
+int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funcall_type);
 
 int handle_expression(ASTNode* node, char* result_type);
 
