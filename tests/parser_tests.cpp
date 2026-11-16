@@ -333,7 +333,6 @@ TEST_F(parser, functin_all_types)
     });
 
     ASSERT_EQ(0, run_parser(ast, strings, &context));
-    display_ast(ast);
 
     // ----------------------------------------------------
     ASTNode* function_node = ast->program.functions.first;

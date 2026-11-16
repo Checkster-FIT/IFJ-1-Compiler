@@ -99,6 +99,16 @@ protected:
     {
         return { .type = type, .attribute_double = value };
     }
+
+    void SetUp() override
+    {
+        testing::internal::CaptureStderr();
+    }
+
+    void TearDown() override
+    {
+        testing::internal::GetCapturedStderr();
+    }
 };
 
 // =====================================================

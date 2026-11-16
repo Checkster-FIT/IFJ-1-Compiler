@@ -261,7 +261,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
     switch (node->type) {
         case AST_NONE:
-            fprintf(stderr, "[???]: Unknown node\n");
+            fprintf(stderr, "[???] : Unknown node\n");
             break;
 
         case AST_PROGRAM:
@@ -278,7 +278,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             entry = get_closest_symtable_entry(node, node->function.identifier);
             fprintf(stderr, "[%sFun%s] ", color_secondary, reset);
             if (entry)
-                fprintf(stderr, "%s: %s", entry->identifier, str_type(entry->data_type));
+                fprintf(stderr, "%s : %s", entry->identifier, str_type(entry->data_type));
             if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
             if (entry && entry->main)
@@ -311,7 +311,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             entry = get_closest_symtable_entry(node, node->parameter.identifier);
             fprintf(stderr, "[%sPar%s] ", color_secondary, reset);
             if (entry)
-                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+                fprintf(stderr, "%s : %s\n", entry->identifier, str_type(entry->data_type));
             break;
 
         case AST_VAR_DEF:
@@ -323,7 +323,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             else
                 fprintf(stderr, "[%sV??%s] ", color, reset);
             if (entry)
-                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+                fprintf(stderr, "%s : %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->vardef.expression, &this);
             break;
 
@@ -373,7 +373,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             entry = get_closest_symtable_entry(node, node->vardef.identifier);
             fprintf(stderr, "[%s=%s] ", color, reset);
             if (entry)
-                fprintf(stderr, "%s: %s\n", entry->identifier, str_type(entry->data_type));
+                fprintf(stderr, "%s : %s\n", entry->identifier, str_type(entry->data_type));
             print_ast_recursively(node->assignment.expression, &this);
             break;
 
@@ -393,7 +393,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
             break;
 
         case AST_INTERPOLATED_STRING:
-            fprintf(stderr, "[%sIString%s] \n", color, reset);
+            fprintf(stderr, "[%sIString%s]", color, reset);
+            fprintf(stderr, " : %s\n", str_type('s'));
             print_ast_recursively(node->interpolated_string.expressions.first, &this);
             break;
 
@@ -439,7 +440,7 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
 
             fprintf(stderr, " %s", node->term.identifier);
             if (entry)
-                fprintf(stderr, ": %s", str_type(entry->data_type));
+                fprintf(stderr, " : %s", str_type(entry->data_type));
             if (entry && entry->parameters)
                 fprintf(stderr, " <%s>", entry->parameters->chars);
             if (node->type == AST_BUILTIN_FUNCALL)
