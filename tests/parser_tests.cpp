@@ -401,10 +401,10 @@ TEST_F(parser, built_in_functions) {
 
     check_built_in_functions(function_node, "readBoolean", 'b', "#");
 
-    check_built_in_functions(function_node, "a#toString", 's', "");
-    check_built_in_functions(function_node, "d#toInt", 'i', "");
-    check_built_in_functions(function_node, "d#floor", 'd', "");
-    check_built_in_functions(function_node, "s#length", 'i', "");
+    check_built_in_functions(function_node, "a%toString", 's', "");
+    check_built_in_functions(function_node, "d%toInt", 'i', "");
+    check_built_in_functions(function_node, "d%floor", 'd', "");
+    check_built_in_functions(function_node, "s%length", 'i', "");
 }
 
 TEST_F(parser, var_def) {

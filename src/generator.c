@@ -41,6 +41,16 @@ void generate_program(ASTNode* node)
         generate_function(helper_node);
         helper_node = helper_node->next;
     }
+
+    ASTNode* helper_ext_node = node->program.extensions.first;
+    while (helper_ext_node != NULL) {
+        ASTNode* helper_func_node = helper_ext_node->extension.functions.first;
+        while (helper_func_node != NULL) {
+            generate_function(helper_func_node);
+            helper_func_node = helper_func_node->next;
+        }
+        helper_ext_node = helper_ext_node->next;
+    }
     printf("EXIT int@0\n");
 }
 
@@ -60,12 +70,20 @@ void generate_function(ASTNode* node)
     generate_local_variables(node->function.symtable);
     generate_nested_local_variables(node->function.statements.first);
     generate_parameters(&node->function.parameter_groups);
+    if (node->parent->type == AST_EXTENSION) {
+        generate_parameters(&node->parent->extension.parameter_groups);
+    }
     generate_statements(node->function.statements.first, true);
 
-    SymtableEntry* main = symtable_main_search(node->parent->program.global_symtable);
-    if (strcmp(main->identifier, node->function.identifier) == 0) {
-        printf("EXIT int@0\n\n");
-    } else {
+    if (node->parent->type == AST_PROGRAM) {
+        SymtableEntry* main = symtable_main_search(node->parent->program.global_symtable);
+        if (strcmp(main->identifier, node->function.identifier) == 0) {
+            printf("EXIT int@0\n\n");
+        } else {
+            printf("POPFRAME\n");
+            printf("RETURN\n\n");
+        }
+    } else if (node->parent->type == AST_EXTENSION) {
         printf("POPFRAME\n");
         printf("RETURN\n\n");
     }
@@ -602,7 +620,7 @@ void generate_expression(ASTNode* node)
         }
         break;
     default:
-        fprintf(stderr, "generate_expression: accessed wrong node type\n");
+        fprintf(stderr, "generate_expression: accessed wrong node type(%d)\n", node->type);
         exit(99);
     }
 }

@@ -79,13 +79,13 @@ Symtable* add_built_in_entries(Symtable* symtable)
         return NULL;
 
     // VAL-MEM
-    if (!add_built_in_function(symtable, "a#toString", "", 's', true))
+    if (!add_built_in_function(symtable, "a%toString", "", 's', true))
         return NULL;
-    if (!add_built_in_function(symtable, "d#toInt", "", 'i', true))
+    if (!add_built_in_function(symtable, "d%toInt", "", 'i', true))
         return NULL;
-    if (!add_built_in_function(symtable, "d#floor", "", 'd', true))
+    if (!add_built_in_function(symtable, "d%floor", "", 'd', true))
         return NULL;
-    if (!add_built_in_function(symtable, "s#length", "", 'i', true))
+    if (!add_built_in_function(symtable, "s%length", "", 'i', true))
         return NULL;
 
     return symtable;
