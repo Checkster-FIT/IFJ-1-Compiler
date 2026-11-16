@@ -13,10 +13,18 @@
 
 #include <stdbool.h>
 
+typedef enum {
+    ANALYSIS_NONE,
+    ANALYSIS_IN_PROGRESS,
+    ANALYSIS_FINISHED
+} AnalysisStatus;
+
 typedef struct {
     const char* identifier;
     char data_type;
     DynamicString* parameters;
+
+    AnalysisStatus status;
 
     bool defined;
     bool builtin;
@@ -25,6 +33,7 @@ typedef struct {
     bool constant;
     bool main;
     bool error;
+
 } SymtableEntry;
 
 typedef RBTree Symtable;

@@ -331,9 +331,8 @@ TEST_F(analysis, return_invalid_implicit_type)
             return
     )");
 
-    EXPECT_EQ(exit_code(true), 10);
+    EXPECT_EQ(exit_code(), 10);
 }
-
 
 TEST_F(analysis, return_invalid_explicit_type)
 {
@@ -343,5 +342,5 @@ TEST_F(analysis, return_invalid_explicit_type)
             return
     )");
 
-    EXPECT_EQ(exit_code(true), 10);
+    EXPECT_EQ(exit_code(), 10);
 }
