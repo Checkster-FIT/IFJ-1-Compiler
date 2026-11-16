@@ -297,22 +297,361 @@ TEST_F(analysis, function_params_invalid_assignment) {
 
 // =================================
 
-TEST_F(analysis, return_invalid_implicit_type) {
+TEST_F(analysis, return_statement_invalid_implicit_type) {
     load_code(R"(
         import ifj26.*
-        @main def nothing() =
+        @main def nothing(): Unit = ();
+        def something() =
             return
     )");
 
     EXPECT_EQ(exit_code(), 10);
 }
 
-TEST_F(analysis, return_invalid_explicit_type) {
+TEST_F(analysis, return_statement_invalid_explicit_type) {
     load_code(R"(
         import ifj26.*
-        @main def nothing(): String =
+        @main def nothing(): Unit = ();
+        def something(): String =
             return
     )");
 
     EXPECT_EQ(exit_code(), 10);
+}
+
+// =================================
+
+TEST_F(analysis, return_value_valid) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): String =
+           "this is interpreted as String"
+    )");
+    EXPECT_EQ(exit_code(), 0);
+}
+
+
+TEST_F(analysis, return_value_valid_expression) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Int =
+           i + 52
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, return_value_valid_expression_single_line) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Int = i + 52
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, return_value_valid_funcall) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): Double =
+           not_pi()
+        def not_pi() = 3.14159265359
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, return_value_valid_funcall_single_line) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): Double = not_pi()
+        def not_pi() = 3.14159265359
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, return_value_valid_not_unit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): Unit = 55
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, return_value_after_vardef) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): String =
+            val str = "this is interpreted as Unit"
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, return_value_after_assignment) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): Int =
+            var _count = 5;
+            _count = _count + 16 /* Assignment is interpreted as Unit */
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, return_value_after_while) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): Double =
+            var _count = 5.5;
+            while _count < 100 do
+                _count = _count + 16
+                _count // Does not work as the return value
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, return_value_unit_discard_return) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(): Unit =
+            return 5;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+// =================================
+
+TEST_F(analysis, if_return_valid_explicit_unit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Unit =
+            if i > 5 then
+                5
+            else
+                i
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_return_invalid_implicit_unit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 5 then
+                5
+            else
+                i
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, if_return_valid_implicit_unit_not_return) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 5 then
+                5
+            else
+                i
+            5
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_return_invalid_explicit_type) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Int =
+            if i > 5 then
+                5
+            else
+                i
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, if_return_valid_explicit_type_all_branches_return) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Int =
+            if i > 5 then
+                return 5;
+            else
+                return i;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Int =
+            if i > 5 then
+                5
+            else
+                return i;
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, if_return_valid_implicit_all_branches_unit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 5 then
+                val x = i;
+            else
+                ()
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 5 then
+                if i > 5 then
+                    val x = i;
+                else
+                    val y = i
+            else
+                ()
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 5 then
+                if i > 5 then
+                    val x = i;
+                else
+                    5
+            else
+                ()
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 5 then
+                val x = i;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+// =================================
+
+TEST_F(analysis, recursion_direct_valid_explicit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int): Int =
+            if i > 0 then
+               something(i - 1)
+            i
+    )");
+
+    EXPECT_EQ(exit_code(true), 0);
+}
+
+TEST_F(analysis, recursion_direct_invalid_implicit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def something(i: Int) =
+            if i > 0 then
+               something(i - 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+
+TEST_F(analysis, recursion_indirect_valid_explicit) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(i: Int): Int =
+            val x = other(i)
+            x
+
+        def other(i: Int): Int =
+            something(i - 1)
+    )");
+
+    EXPECT_EQ(exit_code(true), 0);
+}
+
+TEST_F(analysis, recursion_indirect_invalid_implicit_all) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(i: Int) =
+            val x = other(i)
+            x
+
+        def other(i: Int) =
+            something(i - 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, recursion_indirect_invalid_implicit_one) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(i: Int) =
+            other(i)
+
+        def other(i: Int): Int =
+            something(i - 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
 }
