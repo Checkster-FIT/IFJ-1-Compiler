@@ -321,6 +321,12 @@ void generate_expression(ASTNode* node)
                 printf("EQS\n");
                 printf("NOTS\n");
                 break;
+            case OP_DOT:
+                generate_expression(node->expression.left);
+                generate_arguments(&node->expression.right->term.argument_groups);
+                printf("CREATEFRAME\n");
+                printf("CALL %s\n", node->expression.right->term.identifier);
+                break;
             case OP_NONE:
                 fprintf(stderr, "generate_expression: operator isn't set\n");
                 exit(99);

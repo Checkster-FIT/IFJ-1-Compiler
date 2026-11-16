@@ -12,6 +12,8 @@
 
 char *type_full_name(char c);
 
+ASTNode *find_function(ASTNode *node, const char *identifier);
+
 int handle_block(ASTNodeList list, char *result_type);
 
 int handle_statement(ASTNode *statement_node, char *result_type, char *dot_funcall_type);
