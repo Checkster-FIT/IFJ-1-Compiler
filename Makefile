@@ -107,6 +107,9 @@ TEST_UNITS_C = $(addsuffix .c, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
+TEST_COMPLEX = analysis
+TEST_COMPLEX_EXEC = $(addsuffix _tests, $(TEST_UNITS))
+
 TEST_SHARED = error shared_strings symtable ast bst debug stack
 TEST_SHARED_C = $(addsuffix .c, $(TEST_SHARED))
 TEST_SHARED_O = $(addsuffix .o, $(TEST_SHARED))
@@ -145,11 +148,23 @@ TEST_MAIN_OBJECT = $(OBJ)/test_main.o
 $(BUILD)/%_tests: $(OBJ)/%_tests.o $(OBJ)/%.o $(SHARED_OBJECTS) $(TEST_MAIN_OBJECT)
 	$(CXX) $^ $(GTEST_FLAGS) -o $@
 
+$(BUILD)/analysis_tests: $(OBJ)/analysis_tests.o \
+	$(SHARED_OBJECTS) \
+	$(OBJ)/parser.o \
+	$(OBJ)/scanner.o \
+	$(OBJ)/semantic.o \
+	$(TEST_MAIN_OBJECT)
+	$(CXX) $^ $(GTEST_FLAGS) -o $@
+
 # [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
 $(BUILD)/scanner_tests: $(OBJ)/parser.o
+$(BUILD)/analysis_tests: $(OBJ)/parser.o $(OBJ)/scanner.o $(OBJ)/semantic.o
 
-TEST_EXECUTABLES = $(addprefix $(BUILD)/,$(TEST_UNITS_EXEC))
+TEST_EXECUTABLES = \
+	$(addprefix $(BUILD)/,$(addsuffix _tests,$(TEST_UNITS))) \
+	$(addprefix $(BUILD)/,$(addsuffix _tests,$(TEST_COMPLEX)))
+
 build-test: $(TEST_EXECUTABLES)
 test: $(TEST_EXECUTABLES)
 	@for test in $^; do echo; $$test 2>/dev/null || true; done
@@ -158,6 +173,9 @@ test-parser: $(BUILD)/parser_tests
 	@$^ 2>/dev/null || true
 
 test-scanner: $(BUILD)/scanner_tests
+	@$^ 2>/dev/null || true
+
+test-analysis: $(BUILD)/analysis_tests
 	@$^ 2>/dev/null || true
 
 # -----------------------------------------------

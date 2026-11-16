@@ -260,6 +260,116 @@ TEST_F(parser, function_indent_param)
     EXPECT_EQ(nullptr, ast->program.extensions.first);
 }
 
+TEST_F(parser, functin_all_types)
+{
+    set_prepared_parser({
+        token(KEYWORD, DEF_KW),
+        token(IDENTIFIER, "function_all"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "param_i"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, INT_KW),
+        token(COMMA),
+        token(IDENTIFIER, "param_d"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, DOUBLE_KW),
+        token(COMMA),
+        token(IDENTIFIER, "param_s"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, STRING_KW),
+        token(COMMA),
+        token(IDENTIFIER, "param_b"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, BOOLEAN_KW),
+        token(COMMA),
+        token(IDENTIFIER, "param_u"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, UNIT_KW),
+        token(RIGHT_BRACKET),
+        token(ASSIGNMENT),
+        token(LINE_FEED),
+        token(INDENT),
+        // Variable - Int
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "var_i"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, INT_KW),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "param_i"),
+        token(LINE_FEED),
+        // Variable - Double
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "var_d"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, DOUBLE_KW),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "param_d"),
+        token(LINE_FEED),
+        // Variable - String
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "var_s"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, STRING_KW),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "param_s"),
+        token(LINE_FEED),
+        // Variable - Boolean
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "var_b"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, BOOLEAN_KW),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "param_b"),
+        token(LINE_FEED),
+        // Variable - Int
+        token(KEYWORD, VAR_KW),
+        token(IDENTIFIER, "var_u"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, UNIT_KW),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "param_u"),
+        token(LINE_FEED),
+        token(DEDENT),
+    });
+
+    ASSERT_EQ(0, run_parser(ast, strings, &context));
+    display_ast(ast);
+
+    // ----------------------------------------------------
+    ASTNode* function_node = ast->program.functions.first;
+    ASSERT_EQ(function_node->type, AST_FUNCTION);
+    ASSERT_NE(function_node, nullptr);
+    ASSERT_EQ(function_node->next, nullptr);
+    ASSERT_EQ(function_node->parent, ast);
+
+    EXPECT_STREQ(function_node->function.identifier, "function_all");
+    EXPECT_EQ(function_node, ast->program.functions.last);
+    EXPECT_EQ(function_node, ast->program.recent_function);
+    EXPECT_EQ(1, ast->program.functions.count);
+
+    EXPECT_EQ(0, ast->program.extensions.count);
+    EXPECT_EQ(nullptr, ast->program.extensions.first);
+
+    // ---------------------------------------------------
+    ASSERT_EQ(1, function_node->function.parameter_groups.count);
+    ASSERT_EQ(5, function_node->function.parameter_groups.first->parameter_group.parameters.count);
+    ASSERT_EQ(5, function_node->function.statements.count);
+
+
+    ASSERT_NE(nullptr, function_node->function.symtable);
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "param_i"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "param_d"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "param_s"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "param_b"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "param_u"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "var_i"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "var_d"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "var_s"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "var_b"));
+    ASSERT_NE(nullptr, search(function_node->function.symtable, "var_u"));
+
+}
+
 void check_built_in_functions(const ASTNode* node, const char* identifier, const char return_type, const char* params)
 {
     SymtableEntry* entry = get_closest_symtable_entry(node, identifier);
@@ -607,4 +717,105 @@ TEST_F(parser, if_then_else)
     EXPECT_EQ(statement_2->literal.type, AST_INTEGER);
     EXPECT_EQ(statement_2->literal.val_integer, 100);
 
+}
+
+TEST_F(parser, while_do)
+{
+    set_prepared_parser({
+        // Function definition
+        token(MAIN_IDENTIFIER),
+        token(KEYWORD, DEF_KW),
+        token(IDENTIFIER, "while_do_function"),
+        token(LEFT_BRACKET),
+        token(IDENTIFIER, "value"),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, DOUBLE_KW),
+        token(RIGHT_BRACKET),
+        token(DECLARATION_SIGN),
+        token(KEYWORD, UNIT_KW),
+        token(ASSIGNMENT),
+        token(LINE_FEED),
+        token(INDENT),
+        // Function body
+        token(KEYWORD, WHILE_KW),
+        token(IDENTIFIER, "value"),
+        token(COMPARE, LESS),
+        token(DOUBLE, 3.14159265359),
+        token(KEYWORD, DO_KW),
+        token(LINE_FEED),
+        token(INDENT),
+        token(IDENTIFIER, "value"),
+        token(ASSIGNMENT),
+        token(IDENTIFIER, "value"),
+        token(OPERATOR, PLUS),
+        token(INTEGER, 1),
+        token(LINE_FEED),
+        token(DEDENT),
+        token(DEDENT),
+    });
+
+    ASSERT_EQ(0, run_parser(ast, strings, &context));
+    ASSERT_EQ(1, ast->program.functions.count);
+    ASSERT_EQ(1, ast->program.functions.first->function.statements.count);
+
+    // ----------------------------------------------------
+    ASTNode* function_node = ast->program.functions.first;
+    ASSERT_NE(function_node, nullptr);
+    ASSERT_EQ(function_node->type, AST_FUNCTION);
+    ASSERT_EQ(function_node->next, nullptr);
+    ASSERT_EQ(function_node->parent, ast);
+
+    EXPECT_STREQ(function_node->function.identifier, "while_do_function");
+    EXPECT_EQ(function_node, ast->program.functions.last);
+    EXPECT_EQ(function_node, ast->program.recent_function);
+
+    // ----------------------------------------------------
+    ASTNode* while_node = function_node->function.statements.first;
+    ASSERT_NE(while_node, nullptr);
+    ASSERT_EQ(while_node->type, AST_WHILE_DO);
+    ASSERT_EQ(while_node->next, nullptr);
+    ASSERT_EQ(while_node->parent, function_node);
+
+    ASSERT_NE(while_node->while_do.condition, nullptr);
+    ASSERT_NE(while_node->while_do.statements.first, nullptr);
+    ASSERT_NE(while_node->while_do.symtable, nullptr);
+
+    ASTNode* condition_node = while_node->while_do.condition;
+    ASTNode* assignment_node = while_node->while_do.statements.first;
+
+    // Condition
+    ASSERT_EQ(condition_node->parent, while_node);
+    ASSERT_EQ(condition_node->type, AST_EXPRESSION);
+    ASSERT_EQ(condition_node->expression.operation, OP_LESS);
+    ASSERT_NE(condition_node->expression.left, nullptr);
+    ASSERT_NE(condition_node->expression.right, nullptr);
+
+    ASSERT_EQ(condition_node->expression.left->type, AST_TERM);
+    ASSERT_EQ(condition_node->expression.left->term.argument_groups.count, 0);
+    ASSERT_STREQ(condition_node->expression.left->term.identifier, "value");
+
+    ASSERT_EQ(condition_node->expression.right->type, AST_LITERAL);
+    ASSERT_EQ(condition_node->expression.right->literal.type, AST_DOUBLE);
+    ASSERT_EQ(condition_node->expression.right->literal.val_double, 3.14159265359);
+
+    // Assignment
+    ASSERT_EQ(assignment_node->parent, while_node);
+    ASSERT_EQ(assignment_node->type, AST_VAR_ASSIGN);
+    ASSERT_STREQ(assignment_node->assignment.target, "value");
+    ASSERT_NE(assignment_node->assignment.expression, nullptr);
+
+    ASTNode* assigned_expression_node = assignment_node->assignment.expression;
+    ASSERT_EQ(assigned_expression_node->parent, assignment_node);
+    ASSERT_EQ(assigned_expression_node->type, AST_EXPRESSION);
+    ASSERT_EQ(assigned_expression_node->expression.operation, OP_ADD);
+    ASSERT_NE(assigned_expression_node->expression.left, nullptr);
+    ASSERT_NE(assigned_expression_node->expression.right, nullptr);
+
+    ASSERT_EQ(assigned_expression_node->expression.left->type, AST_TERM);
+    ASSERT_EQ(assigned_expression_node->expression.left->term.argument_groups.count, 0);
+    ASSERT_STREQ(assigned_expression_node->expression.left->term.identifier, "value");
+
+    ASSERT_EQ(assigned_expression_node->expression.right->type, AST_LITERAL);
+    ASSERT_EQ(assigned_expression_node->expression.right->literal.type, AST_INTEGER);
+    ASSERT_EQ(assigned_expression_node->expression.right->literal.val_integer, 1);
 }

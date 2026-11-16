@@ -79,6 +79,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->mockup_token_count = 0;
     parser->mockup_token_index = 0;
 
+    parser->input_stream = stdin;
     return parser;
 }
 
@@ -105,6 +106,7 @@ int run_parser(ASTNode* ast, AllocatedStrings* strings, ParserContext* external_
     else if (init_parser(&parser, ast, strings) == NULL)
         return print_error(MEMORY_ALLOCATION_ERROR, 0, "ParserContext");
 
+    next(&parser);
     const int status = parse_program(&parser);
 
     if (parser.debug && status == FAILED)
@@ -117,10 +119,14 @@ int run_parser(ASTNode* ast, AllocatedStrings* strings, ParserContext* external_
 
 int parse_program(ParserContext* parser)
 {
-    next(parser);
-
     // <program> -> [LF] <program> (Discard any leading line feeds)
     while (accept_next(LINE_FEED, parser)) { };
+
+    if (accept_next(INDENT, parser)) {
+        if (!parse_program(parser))
+            return FAILED;
+        return accept_next(DEDENT, parser);
+    }
 
     // <program> -> <header> <body>
     if (check_next_keyword(IMPORT_KW, parser)) {
@@ -176,6 +182,9 @@ int parse_body(ParserContext* parser)
     // <body> -> @main <function> <body>
     if (check_next_keyword(DEF_KW, parser) || check_next(MAIN_IDENTIFIER, parser))
         return parse_function(parser, '\0') && parse_body(parser);
+
+    if (check_next(DEDENT, parser))
+        return CORRECT;
 
     const char* invalid = str_token(&parser->next, GET_ATTRIBUTE);
     return failed(parser, PARSER_GLOBAL_SCOPE_INVALID, invalid);
@@ -1582,7 +1591,7 @@ Token retrieve_next_token(ParserContext* parser)
         return token;
     }
 
-    return get_token(&parser->scanner, stdin);
+    return get_token(&parser->scanner, parser->input_stream);
 }
 
 // -------------------------------------------------------
