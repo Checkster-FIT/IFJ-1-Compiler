@@ -274,7 +274,7 @@ int parse_function(ParserContext* parser, const char extension_type)
     if (extension_type != '\0') {
         DynamicString* ext_identifier = init_dynamic_string();
         dynamic_string_append(ext_identifier, extension_type);
-        dynamic_string_append(ext_identifier, '#');
+        dynamic_string_append(ext_identifier, '%');
         dynamic_string_append_str(ext_identifier, identifier);
 
         identifier = add_string_copy(parser->strings, ext_identifier->chars);

@@ -834,7 +834,7 @@ TEST_F(analysis, function_call_undefined)
             return add(num, 2);
     )");
 
-    EXPECT_EQ(exit_code(true), 3);
+    EXPECT_EQ(exit_code(), 3);
 }
 
 // ===========================================================

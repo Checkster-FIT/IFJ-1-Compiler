@@ -272,7 +272,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 else
                     dynamic_string_append(identifier_tmp, *dot_funcall_type);
 
-                dynamic_string_append(identifier_tmp, '#');
+                dynamic_string_append(identifier_tmp, '%');
                 dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
             } else {
                 dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
@@ -284,7 +284,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 // if not found, try implicit conversion to Double
                 if (!entry && *dot_funcall_type == 'i') {
                     clear_dynamic_string(identifier_tmp);
-                    dynamic_string_append_str(identifier_tmp, "d#");
+                    dynamic_string_append_str(identifier_tmp, "d%");
                     dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
                     *dot_funcall_type = 'c'; // conversion
                 } else
