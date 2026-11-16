@@ -1275,8 +1275,8 @@ TEST_F(analysis, expressions_string_invalid_type_concatenation)
         def something(a: String) =
             var x: String = a + 1.0;
             var y: String = a + 1;
-            var y: String = a + true;
-            var y: String = a + ();
+            var z: String = a + true;
+            var w: String = a + ();
     )");
 
     EXPECT_EQ(exit_code(), 6);

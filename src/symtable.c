@@ -135,7 +135,7 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
     // Redefinition check
     data->error = false;
     const TNode* result = search(symtable, entry.identifier);
-    if (result != NULL && ((SymtableEntry*)result->value)->defined) {
+    if (result != NULL) {
         data->error = true;
         return data;
     }

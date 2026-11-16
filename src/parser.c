@@ -643,8 +643,11 @@ int parse_statement_variable_definition(ParserContext* parser)
     SymtableEntry* vardef_entry = symtable_add_entry(top(parser->symtable_stack), vardef);
     if (!vardef_entry)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "Symtable entry");
-    if (vardef_entry->error)
-        return failed(parser, SEMANTIC_INVALID_REDEFINITION, vardef_entry->identifier);
+    if (vardef_entry->error) {
+        const char* tmp_id = vardef_entry->identifier;
+        free(vardef_entry);
+        return failed(parser, SEMANTIC_INVALID_REDEFINITION, tmp_id);
+    }
 
     if (!accept_next(ASSIGNMENT, parser))
         return failed(parser, PARSER_ST_VAR_DEF_MISSING_ASSIGNMENT);
