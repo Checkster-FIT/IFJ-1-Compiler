@@ -61,7 +61,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = false; // TODO: Disable debug
+    parser->debug = true; // TODO: Disable debug
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
@@ -123,12 +123,8 @@ int parse_program(ParserContext* parser)
 {
     // <program> -> [LF] <program> (Discard any leading line feeds)
     while (accept_next(LINE_FEED, parser)) { };
-
-    if (accept_next(INDENT, parser)) {
-        if (!parse_program(parser))
-            return FAILED;
-        return accept_next(DEDENT, parser);
-    }
+    // <program> -> [INDENT] <program>
+    while (accept_next(INDENT, parser)) { };
 
     // <program> -> <header> <body>
     if (check_next_keyword(IMPORT_KW, parser)) {
@@ -147,7 +143,6 @@ int parse_program(ParserContext* parser)
 int parse_header(ParserContext* parser)
 {
     // <header> -> import [IDENTIFIER] . *
-
     if (!accept_next_keyword(IMPORT_KW, parser))
         return FAILED;
     if (!accept_next_identifier("ifj26", parser))
@@ -164,6 +159,8 @@ int parse_body(ParserContext* parser)
 {
     // <body> -> [LF] <body> (Discard any leading line feeds)
     while (accept_next(LINE_FEED, parser)) { };
+    // <body> -> [DEDENT] <body>
+    while (accept_next(DEDENT, parser)) { };
 
     // <body> -> [EOF]
     if (accept_next(END_OF_FILE, parser))
@@ -1712,6 +1709,9 @@ int get_line(const ParserContext* parser)
 
 int failed(ParserContext* parser, const int err, ...)
 {
+    if (parser->token_error != 0)
+        return FAILED;
+
     va_list args = { };
     va_start(args, err);
 

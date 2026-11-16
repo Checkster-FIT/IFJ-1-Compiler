@@ -1,10 +1,11 @@
 
 <program> -> [LF] <program>
-<program> -> [INDENT] <program> [DEDENT] // TODO: Correct?
+<program> -> [INDENT] <program>
 <program> -> <header> <body> // TODO: Require newline after header?
 <header> -> import [IDENTIFIER] . *
 
 <body> -> [LF] <body>
+<body> -> [DEDENT] <body>
 <body> -> 3 // TODO: Correct?
 <body> -> [EOF]
 <body> -> <function> <body>

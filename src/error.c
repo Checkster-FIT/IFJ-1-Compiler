@@ -262,6 +262,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 0;
             error.code = 2;
             break;
+        case PARSER_MISSING_PARAM_IDENTIFIER:
+            error.message = "Missing parameter identifier before type specifier ':'";
+            error.param_count = 0;
+            error.code = 2;
+            break;
         // Semantic error
         case SEMANTIC_INVALID_REDEFINITION:
             error.message = "Multiple definitions found for '%s'";
@@ -387,7 +392,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 6;
             break;
         case SEMANTIC_WRITE_INTO_CONST_OR_FUN:
-            error.message = "Cannot assign value to function '%s'";
+            error.message = "Cannot assign value to constant variable or function parameter: '%s'";
             error.param_count = 1;
             error.code = 7;
             break;
