@@ -54,9 +54,6 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
 {
     int result = 0;
     SymtableEntry* entry;
-    DynamicString* identifier = init_dynamic_string();
-    if (!identifier)
-        return print_error(MEMORY_ALLOCATION_ERROR, statement_node->line, "dynamic string");
 
     switch (statement_node->type) {
         case AST_IF: {
@@ -264,77 +261,103 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
         case AST_FUNCALL:
         case AST_VAR_USE:
         case AST_TERM: {
+            DynamicString* identifier_tmp = init_dynamic_string();
+
+            if (!identifier_tmp)
+                return print_error(MEMORY_ALLOCATION_ERROR, statement_node->line, "dynamic string");
+
             if (dot_funcall_type) {
-
                 if (strcmp(statement_node->term.identifier, "toString") == 0)
-                    dynamic_string_append(identifier, 'a');
+                    dynamic_string_append(identifier_tmp, 'a');
                 else
-                    dynamic_string_append(identifier, *dot_funcall_type);
+                    dynamic_string_append(identifier_tmp, *dot_funcall_type);
 
-                dynamic_string_append(identifier, '#');
-                dynamic_string_append_str(identifier, statement_node->term.identifier);
+                dynamic_string_append(identifier_tmp, '#');
+                dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
             } else {
-                dynamic_string_append_str(identifier, statement_node->term.identifier);
+                dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
             }
 
             // get closest either function or defined variable
-            entry = get_closest_defined_symtable_entry(statement_node, identifier->chars);
+            entry = get_closest_defined_symtable_entry(statement_node, identifier_tmp->chars);
             if (dot_funcall_type) {
                 // if not found, try implicit conversion to Double
                 if (!entry && *dot_funcall_type == 'i') {
-                    clear_dynamic_string(identifier);
-                    dynamic_string_append_str(identifier, "d#");
-                    dynamic_string_append_str(identifier, statement_node->term.identifier);
+                    clear_dynamic_string(identifier_tmp);
+                    dynamic_string_append_str(identifier_tmp, "d#");
+                    dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
                     *dot_funcall_type = 'c'; // conversion
                 } else
                     *dot_funcall_type = 'n'; // no conversion
             }
 
-            entry = get_closest_defined_symtable_entry(statement_node, identifier->chars);
-            if (!entry)
-                return print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, identifier->chars);
+            entry = get_closest_defined_symtable_entry(statement_node, identifier_tmp->chars);
+
+            if (!entry) {
+                dispose_dynamic_string(identifier_tmp);
+                return print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, "x");
+            }
+
+            dispose_dynamic_string(identifier_tmp);
 
             if (entry->function) {
-                // TODO: this is any call not just recursive -- prolly add symtable function state
-                // recursion on function with no declared type, e.x. `f(): = \n f()`
-                if (!entry->data_type)
-                    return print_error(SEMANTIC_RECURSION_WITHOUT_TYPE_DEF, statement_node->line, entry->identifier);
+
+                // funcall and/or recursion
+                if (!entry->data_type) {
+                    if (entry->status == ANALYSIS_IN_PROGRESS)
+                        return print_error(SEMANTIC_RECURSION_WITHOUT_TYPE_DEF, statement_node->line, entry->identifier);
+
+                    // reach program
+                    ASTNode* node = statement_node->parent;
+                    while (node->type != AST_PROGRAM) // parser doesn't let return slip outside function
+                        node = node->parent;
+
+                    // reach desired function
+                    node = node->program.functions.first;
+                    while (strcmp(node->function.identifier, entry->identifier) != 0)
+                        node = node->next;
+
+                    result = handle_function(node);
+                    if (result)
+                        return result;
+
+                    if (!entry->data_type)
+                        // handle function was not able to determine the return type of this function
+                        return print_error(SEMANTIC_UNABLE_TO_DETERMINE_RETURN_TYPE, node->line, entry->identifier);
+                }
 
                 char* param_string = entry->parameters->chars;
                 int i = 0; // marking char read from the parameter string
-                bool ext = entry->extension;
 
-                // skip param checks if ext with no parameters
-                if (!ext || entry->parameters->chars[0] != '\0') {
+                // ----- PARAM CHECKS -----
 
-                    for (ASTNode* group = statement_node->term.argument_groups.first; group; group = group->next) {
-                        if (param_string[i] != '#')
+                for (ASTNode* group = statement_node->term.argument_groups.first; group; group = group->next) {
+                    if (param_string[i] != '#')
+                        return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
+                    i++;
+
+                    for (ASTNode* arg = group->argument_group.arguments.first; arg; arg = arg->next) {
+                        if (param_string[i] == '#' || param_string[i] == '\0') // called with too many args
                             return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
-                        i++;
 
-                        for (ASTNode* arg = group->argument_group.arguments.first; arg; arg = arg->next) {
-                            if (param_string[i] == '#' || param_string[i] == '\0') // called with too many args
-                                return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
+                        result = handle_expression(arg, result_type);
+                        if (result)
+                            return result;
 
-                            result = handle_expression(arg, result_type);
-                            if (result)
-                                return result;
-
-                            if (*result_type == 'i' && param_string[i] == 'd') {
-                                ASTNode* new = ast_insert_conversion(arg, 'd');
-                                if (!new)
-                                    return print_error(MEMORY_ALLOCATION_ERROR, statement_node->line, "conversion node");
-                                *result_type = 'd';
-                            }
-
-                            // check if the parameter is not `Any` type
-                            if (*result_type != param_string[i] && param_string[i] != 'a')
-                                return print_error(SEMANTIC_FUNCALL_PARAMETER_TYPE_MISMATCH, statement_node->line);
-
-                            i++;
+                        if (*result_type == 'i' && param_string[i] == 'd') {
+                            ASTNode* new = ast_insert_conversion(arg, 'd');
+                            if (!new)
+                                return print_error(MEMORY_ALLOCATION_ERROR, statement_node->line, "conversion node");
+                            *result_type = 'd';
                         }
+
+                        // check if the parameter is not `Any` type
+                        if (*result_type != param_string[i] && param_string[i] != 'a')
+                            return print_error(SEMANTIC_FUNCALL_PARAMETER_TYPE_MISMATCH, statement_node->line);
+
+                        i++;
                     }
-                } // if (!ext || entry->parameters->chars[0] != '\0')
+                }
 
                 if (param_string[i] != '\0') // called with too little args
                     return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
@@ -345,7 +368,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                     statement_node->type = AST_FUNCALL;
 
                 if (entry->extension) // everything called with `.` has extension == true
-                    statement_node->function.identifier = identifier->chars;
+                    statement_node->function.identifier = identifier_tmp->chars;
 
                 *result_type = entry->data_type;
                 return 0;
@@ -367,16 +390,6 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
 
             *result_type = 's';
             return 0;
-
-        // case AST_BUILTIN_FUNCALL:
-        // case AST_FUNCALL:
-        // case AST_VAR_USE:
-        //     entry = get_closest_defined_symtable_entry(statement_node, statement_node->term.identifier);
-        //     if (!entry)
-        //         return print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, statement_node->term.identifier);
-        //
-        //     *result_type = entry->data_type;
-        //     return 0;
 
         case AST_CONVERSION:
             *result_type = statement_node->conversion.result_type;
@@ -476,9 +489,10 @@ int handle_expression(ASTNode* node, char* result_type)
                 return 0;
             }
 
-            if (oper == OP_ADD && *result_type == 's' && right_result_type == 's')
+            if (oper == OP_ADD && *result_type == 's' && right_result_type == 's') {
                 node->expression.result_type = 's';
-            return 0;
+                return 0;
+            }
 
             op = "";
             switch (oper) {
@@ -643,16 +657,15 @@ int handle_expression(ASTNode* node, char* result_type)
             result = handle_statement(node->expression.right, &right_result_type, result_type); // hand expression on which type the valmem or ext function has been called
             if (result)
                 return result;
+
             if (*result_type == 'c') {
                 ASTNode* new = ast_insert_conversion(node->expression.left, 'd');
                 if (!new)
                     return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
-                *result_type = 'd';
-                node->expression.result_type = 'd';
-            } else {
-                *result_type = right_result_type;
-                node->expression.result_type = right_result_type;
             }
+
+            *result_type = right_result_type;
+            node->expression.result_type = right_result_type;
 
             return 0;
 
@@ -663,69 +676,77 @@ int handle_expression(ASTNode* node, char* result_type)
     return result;
 }
 
-int handle_function(ASTNode* node, char* result_type, bool* main_found)
+int handle_function(ASTNode* node)
 {
     int result = 0;
+    char result_type = 'u';
 
     SymtableEntry* entry = get_closest_symtable_entry(node, node->function.identifier);
 
-    result = handle_block(node->function.statements, result_type);
+    // using == finished would cause infinite recursive checks
+    // in other words = only analyse function of which the analysis has not started yet
+    if (entry->status != ANALYSIS_NONE)
+        return 0;
+
+    entry->status = ANALYSIS_IN_PROGRESS;
+
+    result = handle_block(node->function.statements, &result_type);
     if (result)
         return result;
 
     // when else and if types don't match, 'e' is propagated, but it's valid for Unit function
-    if (*result_type == 'e' && entry->data_type != 'u')
+    if (result_type == 'e' && entry->data_type != 'u')
         return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, node->line);
 
     if (!entry->data_type) {
-        entry->data_type = *result_type;
+        entry->data_type = result_type;
     }
 
     // e.x. `def f(): Double = \n 3+3`
-    if (*result_type == 'i' && entry->data_type == 'd') {
+    if (result_type == 'i' && entry->data_type == 'd') {
         ASTNode* new = ast_insert_conversion(node->function.statements.last, 'd');
         if (!new)
             return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
-        *result_type = 'd';
+        result_type = 'd';
     }
 
     // --- type mismatch check ---
     // e.x. f(): Int = \n return ()
     // Unit function performs semantic analysis and result_type is ignored
     // return data type is already checked in AST_RETURN, so only 'r' is propagated here
-    if (*result_type != entry->data_type && *result_type != 'r' && entry->data_type != 'u')
+    if (result_type != entry->data_type && result_type != 'r' && entry->data_type != 'u')
         return print_error(SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE, node->line);
 
-    if (is_main(node)) {
-        if (*main_found)
-            return print_error(SEMANTIC_MULTIPLE_MAIN, node->line);
+    entry->status = ANALYSIS_FINISHED;
 
+    return 0;
+}
+
+int main_check(ASTNode* node, bool* main_found)
+{
+    SymtableEntry* entry = get_closest_symtable_entry(node, node->function.identifier);
+
+    if (*main_found && entry->main)
+        return print_error(SEMANTIC_MULTIPLE_MAIN, node->line);
+
+    if (entry->main) {
         if (entry->parameters->len > 1) // "#", "" = no args
             return print_error(SEMANTIC_MAIN_WITH_PARAMETERS, node->line);
 
+        // main_check() is called after the function has been analysed
+        // if the return type is not set to Unit in the symtable, it's not determinable
         if (entry->data_type != 'u')
             return print_error(SEMANTIC_MAIN_NOT_UNIT, node->line);
-
-        // solved by parser
-        // if (entry->extension) // extension function cannot be entry function
-        //     return print_error(SEMANTIC_MAIN_F_IN_EXT, node->line, entry->identifier);
 
         *main_found = true;
     }
 
     return 0;
 }
-
-bool is_main(ASTNode* fun_node)
-{
-    SymtableEntry* entry = get_closest_symtable_entry(fun_node, fun_node->function.identifier);
-    return entry->main;
-}
-
+// TODO: kontrola rekurze u ext
 int run_semantic(ASTNode* ast)
 {
     int result = 0;
-    char return_type = 'u';
     ASTNode* fun_node = NULL;
     bool main_found = false;
 
@@ -742,10 +763,11 @@ int run_semantic(ASTNode* ast)
 
         // cycle through ext functions
         while (fun_node) {
-            result = handle_function(fun_node, &return_type, &main_found);
+            result = handle_function(fun_node);
             if (result)
                 return result;
 
+            // parser checks for @main in ext functions
             fun_node = fun_node->next;
         }
         ext_node = ext_node->next;
@@ -755,7 +777,11 @@ int run_semantic(ASTNode* ast)
 
     // cycle through normal functions
     while (fun_node) {
-        result = handle_function(fun_node, &return_type, &main_found);
+        result = handle_function(fun_node);
+        if (result)
+            return result;
+
+        result = main_check(fun_node, &main_found);
         if (result)
             return result;
 

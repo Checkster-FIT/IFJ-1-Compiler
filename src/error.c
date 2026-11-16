@@ -418,6 +418,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 3;
             error.code = 6;
             break;
+        case SEMANTIC_UNABLE_TO_DETERMINE_RETURN_TYPE:
+            error.message = "Unable to determine return type of function '%s'";
+            error.fix = "Add return type to function definition";
+            error.param_count = 1;
+            error.code = 6;
+            break;
         // Internal errors
         case MEMORY_ALLOCATION_ERROR:
             error.message = "An error has occurred when trying to allocate memory for '%s'";
