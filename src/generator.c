@@ -366,7 +366,7 @@ void generate_expression(ASTNode* node)
                 builtin_label_id++;
                 printf("READ LF@$discard int\n");
                 printf("TYPE LF@$tmp_type LF@$discard\n");
-                printf("JUMPIFEQ read_is_nil_%d LF@$discard string@int\n", builtin_label_id);
+                printf("JUMPIFEQ read_is_nil_%d LF@$tmp_type string@nil\n", builtin_label_id);
                 printf("PUSHS LF@$discard\n");
                 printf("JUMP read_is_end_%d\n", builtin_label_id);
                 printf("LABEL read_is_nil_%d\n", builtin_label_id);
@@ -379,7 +379,7 @@ void generate_expression(ASTNode* node)
                 builtin_label_id++;
                 printf("READ LF@$discard float\n");
                 printf("TYPE LF@$tmp_type LF@$discard\n");
-                printf("JUMPIFEQ read_is_nil_%d LF@$discard string@float\n", builtin_label_id);
+                printf("JUMPIFEQ read_is_nil_%d LF@$tmp_type string@nil\n", builtin_label_id);
                 printf("PUSHS LF@$discard\n");
                 printf("JUMP read_is_end_%d\n", builtin_label_id);
                 printf("LABEL read_is_nil_%d\n", builtin_label_id);
