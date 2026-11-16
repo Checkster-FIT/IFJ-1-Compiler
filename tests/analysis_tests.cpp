@@ -1380,3 +1380,165 @@ TEST_F(analysis, expressions_combined_boolean)
 
     EXPECT_EQ(exit_code(), 0);
 }
+
+// ===========================================================
+
+TEST_F(analysis, built_in_print)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(): Unit =
+            return print(5)
+            return print(0.111111111)
+            return print("print can accept any type")
+            return print(false)
+            return print(())
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, built_in_print_unit_return_type)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(): Int =
+            return print(5)
+            return print(0.111111111)
+            return print("print can accept any type")
+            return print(false)
+            return print(())
+    )");
+
+    EXPECT_EQ(exit_code(), 6);
+}
+
+TEST_F(analysis, built_in_read_functions)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(): Unit =
+            var s: String = readLine()
+            var i: Int = readInt()
+            var d: Double = readDouble()
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, built_in_read_functions_invalid_arguments)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def something(): Unit =
+            var s: String = readLine(())
+            var i: Int = readInt("I'm an integer")
+            var d: Double = readDouble(5.5)
+    )");
+
+    EXPECT_EQ(exit_code(), 5);
+}
+
+TEST_F(analysis, built_in_conversion_functions)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def only_strings(): String =
+            return toStr(5)
+            return toStr(0.111111111)
+            return toStr("print can accept any type")
+            return toStr(false)
+            return toStr(())
+
+        def only_ints(x: Double): Int =
+            toInt(x) + toInt(0.1) + toInt(x + 1.5) + toInt(1)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, built_in_to_str_invalid_arguments)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def only_strings(): String =
+            return toStr(5, 5)
+    )");
+
+    EXPECT_EQ(exit_code(), 5);
+}
+
+TEST_F(analysis, built_in_to_int_invalid_arguments)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def only_ints(x: Double): Int =
+            toInt("I'm an integer for real") + toInt(true) + toInt(())
+    )");
+
+    EXPECT_EQ(exit_code(), 5);
+}
+
+TEST_F(analysis, built_in_str_length)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def doubled_length(str: String): Int =
+            strLength(str) * 2;
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, built_in_substr)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def first(str: String): String =
+            subStr(str, 0, 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, built_in_ord)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+
+        def ascii(i: Int): Int =
+            ord("Adam Zapletal", i);
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, built_in_chr)
+{
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit = ();
+        def simply_the_best(): String = chr(72);
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
