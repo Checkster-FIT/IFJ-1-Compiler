@@ -162,6 +162,10 @@ int parse_body(ParserContext* parser)
     // <body> -> [DEDENT] <body>
     while (accept_next(DEDENT, parser)) { };
 
+    // Multiple import headers
+    if (check_next_keyword(IMPORT_KW, parser))
+        return failed(parser, PARSER_MULTIPLE_IMPORT_HEADERS);
+
     // <body> -> [EOF]
     if (accept_next(END_OF_FILE, parser))
         return CORRECT;
@@ -410,6 +414,10 @@ int parse_param_group_list(ParserContext* parser, SymtableEntry* entry)
 
 int parse_param_list_first(ParserContext* parser, SymtableEntry* entry)
 {
+    // Better error messages
+    if (check_next(DECLARATION_SIGN, parser))
+        return failed(parser, PARSER_MISSING_PARAM_IDENTIFIER);
+
     // <param_list_first> -> <param> <param_list>
     if (check_next(IDENTIFIER, parser))
         return parse_param(parser, entry) && parse_param_list(parser, entry);
@@ -430,6 +438,10 @@ int parse_param_list(ParserContext* parser, SymtableEntry* entry)
 
 int parse_param(ParserContext* parser, const SymtableEntry* entry)
 {
+    // Better error messages
+    if (check_next(DECLARATION_SIGN, parser))
+        return failed(parser, PARSER_MISSING_PARAM_IDENTIFIER);
+
     // <param> -> [IDENTIFIER] : <type>
     log_ast_start(parser);
 
@@ -489,8 +501,15 @@ int parse_function_body(ParserContext* parser)
         if (!accept_next(LINE_FEED, parser))
             return FAILED;
 
-        if (!accept_next(INDENT, parser))
+        if (!accept_next(INDENT, parser)) {
+
+            // Better error message
+            if (check_next_keyword(DEF_KW, parser) || check_next_keyword(EXTENSION_KW, parser)
+                || check_next(DEDENT, parser)|| check_next(END_OF_FILE, parser))
+                return failed(parser, PARSER_FUNCTION_MISSING_BODY);
+
             return failed(parser, PARSER_FUNCTION_MISSING_INDENT);
+        }
 
         if (!parse_statement_list(parser))
             return FAILED;

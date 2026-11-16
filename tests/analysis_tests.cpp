@@ -303,7 +303,7 @@ TEST_F(analysis, function_params_missing_identifier)
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
-        def something(String): String = s
+        def something(: String): String = s
     )");
 
     EXPECT_EQ(exit_code(), 2);
