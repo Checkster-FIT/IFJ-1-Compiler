@@ -108,8 +108,8 @@ typedef enum error_enum {
 
 typedef struct {
     ErrorEnum id;
-    char* message;
-    char* fix;
+    char *message;
+    char *fix;
     int code;
     int param_count;
 } ErrorMessage;
@@ -139,6 +139,6 @@ int va_print_error(int error_id, int line, va_list args);
  * @param exit_code the error exit code
  * @return the error type string ("Syntax error", "Semantic error", ...)
  */
-char* get_error_type_str(int exit_code);
+char *get_error_type_str(int exit_code);
 
 #endif // IFJ_1_COMPILER_ERROR_H

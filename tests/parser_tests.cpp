@@ -16,43 +16,36 @@ extern "C" {
 
 class parser : public ::testing::Test {
 protected:
-    ParserContext context = { };
-    AllocatedStrings* strings = { };
-    ASTNode* ast = { };
+    ParserContext context = {};
+    AllocatedStrings *strings = {};
+    ASTNode *ast = {};
     std::vector<Token> tokens;
 
-    static Token token(const type_enum type)
-    {
-        return { .type = type };
+    static Token token(const type_enum type) {
+        return {.type = type};
     }
 
-    static Token token(const type_enum type, const char* value)
-    {
-        return { .type = type, .attribute_string = value };
+    static Token token(const type_enum type, const char *value) {
+        return {.type = type, .attribute_string = value};
     }
 
-    static Token token(const type_enum type, const int value)
-    {
-        return { .type = type, .attribute_int = value };
+    static Token token(const type_enum type, const int value) {
+        return {.type = type, .attribute_int = value};
     }
 
-    static Token token(const type_enum type, const double value)
-    {
-        return { .type = type, .attribute_double = value };
+    static Token token(const type_enum type, const double value) {
+        return {.type = type, .attribute_double = value};
     }
 
-    static Token token(const type_enum type, const enum attribute_keyword keyword)
-    {
-        return { .type = type, .attribute_keyword = keyword };
+    static Token token(const type_enum type, const enum attribute_keyword keyword) {
+        return {.type = type, .attribute_keyword = keyword};
     }
 
-    static Token token(const type_enum type, const enum attribute_operation_type operation)
-    {
-        return { .type = type, .attribute_operation_type = operation };
+    static Token token(const type_enum type, const enum attribute_operation_type operation) {
+        return {.type = type, .attribute_operation_type = operation};
     }
 
-    void set_parser(std::vector<Token> token_list)
-    {
+    void set_parser(std::vector<Token> token_list) {
         tokens = std::move(token_list);
         context.mockup_tokens = tokens.data();
         context.mockup_scanner = true;
@@ -61,8 +54,7 @@ protected:
         context.debug = false;
     }
 
-    void set_prepared_parser(const std::vector<Token>& token_list)
-    {
+    void set_prepared_parser(const std::vector<Token> &token_list) {
         std::vector<Token> header = {
             token(KEYWORD, IMPORT_KW),
             token(IDENTIFIER, "ifj26"),
@@ -75,8 +67,7 @@ protected:
         set_parser(header);
     }
 
-    void SetUp() override
-    {
+    void SetUp() override {
         strings = new_strings();
         ASSERT_NE(strings, nullptr);
         ast = new_ast();
@@ -86,21 +77,18 @@ protected:
         testing::internal::CaptureStderr();
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         testing::internal::GetCapturedStderr();
         free_ast_nodes(ast);
         free_strings(strings);
     }
 
-    void enable_debug()
-    {
+    void enable_debug() {
         context.debug = true;
         testing::internal::GetCapturedStderr();
     }
 
-    static void display_ast(ASTNode* ast)
-    {
+    static void display_ast(ASTNode *ast) {
         testing::internal::GetCapturedStderr();
         print_ast(ast);
         testing::internal::CaptureStderr();
@@ -109,8 +97,7 @@ protected:
 
 // ==================================================================
 
-TEST_F(parser, header_only)
-{
+TEST_F(parser, header_only) {
     set_parser({
         token(KEYWORD, IMPORT_KW),
         token(IDENTIFIER, "ifj26"),
@@ -132,9 +119,8 @@ TEST_F(parser, header_only)
     EXPECT_EQ(nullptr, ast->program.recent_node);
 }
 
-TEST_F(parser, empty)
-{
-    set_parser({ });
+TEST_F(parser, empty) {
+    set_parser({});
     ASSERT_EQ(2, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
@@ -147,8 +133,7 @@ TEST_F(parser, empty)
     EXPECT_EQ(nullptr, ast->program.recent_node);
 }
 
-TEST_F(parser, function_expression)
-{
+TEST_F(parser, function_expression) {
     set_prepared_parser({
         token(KEYWORD, DEF_KW),
         token(IDENTIFIER, "function"),
@@ -162,7 +147,7 @@ TEST_F(parser, function_expression)
     ASSERT_EQ(0, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->next, nullptr);
     ASSERT_EQ(function_node->parent, ast);
@@ -176,8 +161,7 @@ TEST_F(parser, function_expression)
     EXPECT_EQ(nullptr, ast->program.extensions.first);
 }
 
-TEST_F(parser, function_indent_param)
-{
+TEST_F(parser, function_indent_param) {
     set_prepared_parser({
         token(MAIN_IDENTIFIER),
         token(KEYWORD, DEF_KW),
@@ -200,7 +184,7 @@ TEST_F(parser, function_indent_param)
     ASSERT_EQ(0, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
     ASSERT_EQ(function_node->next, nullptr);
@@ -212,7 +196,7 @@ TEST_F(parser, function_indent_param)
     EXPECT_EQ(1, ast->program.functions.count);
 
     // ----------------------------------------------------
-    ASTNode* param_group_node = function_node->function.parameter_groups.first;
+    ASTNode *param_group_node = function_node->function.parameter_groups.first;
     ASSERT_NE(param_group_node, nullptr);
     ASSERT_EQ(param_group_node->type, AST_PARAMETER_GROUP);
 
@@ -220,7 +204,7 @@ TEST_F(parser, function_indent_param)
     EXPECT_EQ(1, function_node->function.parameter_groups.count);
 
     // ----------------------------------------------------
-    ASTNode* parameter_node = param_group_node->parameter_group.parameters.first;
+    ASTNode *parameter_node = param_group_node->parameter_group.parameters.first;
     ASSERT_NE(parameter_node, nullptr);
     ASSERT_EQ(parameter_node->type, AST_PARAMETER);
 
@@ -230,7 +214,7 @@ TEST_F(parser, function_indent_param)
 
     // Symtable checks
     // ----------------------------------------------------
-    SymtableEntry* param_entry = get_closest_symtable_entry(parameter_node, parameter_node->parameter.identifier);
+    SymtableEntry *param_entry = get_closest_symtable_entry(parameter_node, parameter_node->parameter.identifier);
     ASSERT_NE(param_entry, nullptr);
     EXPECT_STREQ(param_entry->identifier, "param1");
     EXPECT_EQ(param_entry->parameters, nullptr);
@@ -242,7 +226,7 @@ TEST_F(parser, function_indent_param)
     EXPECT_EQ(param_entry->defined, true);
 
     // ----------------------------------------------------
-    SymtableEntry* function_entry = get_closest_symtable_entry(function_node, function_node->function.identifier);
+    SymtableEntry *function_entry = get_closest_symtable_entry(function_node, function_node->function.identifier);
     ASSERT_NE(function_entry, nullptr);
     EXPECT_STREQ(function_entry->identifier, "_example_fun2");
     EXPECT_EQ(function_entry->data_type, 'i');
@@ -260,8 +244,7 @@ TEST_F(parser, function_indent_param)
     EXPECT_EQ(nullptr, ast->program.extensions.first);
 }
 
-TEST_F(parser, functin_all_types)
-{
+TEST_F(parser, functin_all_types) {
     set_prepared_parser({
         token(KEYWORD, DEF_KW),
         token(IDENTIFIER, "function_all"),
@@ -335,7 +318,7 @@ TEST_F(parser, functin_all_types)
     ASSERT_EQ(0, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_EQ(function_node->type, AST_FUNCTION);
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->next, nullptr);
@@ -367,9 +350,8 @@ TEST_F(parser, functin_all_types)
     ASSERT_NE(nullptr, search(function_node->function.symtable, "var_u"));
 }
 
-void check_built_in_functions(const ASTNode* node, const char* identifier, const char return_type, const char* params)
-{
-    SymtableEntry* entry = get_closest_symtable_entry(node, identifier);
+void check_built_in_functions(const ASTNode *node, const char *identifier, const char return_type, const char *params) {
+    SymtableEntry *entry = get_closest_symtable_entry(node, identifier);
     ASSERT_NE(entry, nullptr);
     ASSERT_STREQ(entry->identifier, identifier);
     EXPECT_EQ(entry->data_type, return_type);
@@ -384,8 +366,7 @@ void check_built_in_functions(const ASTNode* node, const char* identifier, const
     EXPECT_STREQ(entry->parameters->chars, params);
 }
 
-TEST_F(parser, built_in_functions)
-{
+TEST_F(parser, built_in_functions) {
     set_prepared_parser({
         token(MAIN_IDENTIFIER),
         token(KEYWORD, DEF_KW),
@@ -400,7 +381,7 @@ TEST_F(parser, built_in_functions)
     ASSERT_EQ(0, run_parser(ast, strings, &context));
 
     // ----------------------------------------------------
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_EQ(ast->program.functions.count, 1);
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
@@ -426,8 +407,7 @@ TEST_F(parser, built_in_functions)
     check_built_in_functions(function_node, "s%length", 'i', "");
 }
 
-TEST_F(parser, var_def)
-{
+TEST_F(parser, var_def) {
     set_prepared_parser({
         // Function definition
         token(MAIN_IDENTIFIER),
@@ -461,7 +441,7 @@ TEST_F(parser, var_def)
 
     // ----------------------------------------------------
 
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
     ASSERT_EQ(function_node->next, nullptr);
@@ -475,7 +455,7 @@ TEST_F(parser, var_def)
     ASSERT_EQ(2, function_node->function.statements.count);
 
     // ----------------------------------------------------
-    ASTNode* var_node = function_node->function.statements.first;
+    ASTNode *var_node = function_node->function.statements.first;
     ASSERT_NE(var_node, nullptr);
     ASSERT_EQ(var_node->type, AST_VAR_DEF);
     ASSERT_EQ(var_node->parent, function_node);
@@ -484,7 +464,7 @@ TEST_F(parser, var_def)
     ASSERT_NE(var_node->vardef.expression, nullptr);
 
     // ----------------------------------------------------
-    ASTNode* val_node = var_node->next;
+    ASTNode *val_node = var_node->next;
     ASSERT_NE(val_node, nullptr);
     ASSERT_EQ(val_node->type, AST_VAR_DEF);
     ASSERT_EQ(val_node->next, nullptr);
@@ -494,7 +474,7 @@ TEST_F(parser, var_def)
     ASSERT_NE(val_node->vardef.expression, nullptr);
 
     // ----------------------------------------------------
-    ASTNode* var_expr_node = var_node->vardef.expression;
+    ASTNode *var_expr_node = var_node->vardef.expression;
     ASSERT_NE(var_expr_node, nullptr);
     ASSERT_EQ(var_expr_node->type, AST_TERM);
     ASSERT_EQ(var_expr_node->next, nullptr);
@@ -503,7 +483,7 @@ TEST_F(parser, var_def)
     ASSERT_STREQ(var_expr_node->term.identifier, "str");
 
     // ----------------------------------------------------
-    ASTNode* val_expr_node = val_node->vardef.expression;
+    ASTNode *val_expr_node = val_node->vardef.expression;
     ASSERT_NE(val_expr_node, nullptr);
     ASSERT_EQ(val_expr_node->type, AST_TERM);
     ASSERT_EQ(val_expr_node->next, nullptr);
@@ -512,8 +492,7 @@ TEST_F(parser, var_def)
     ASSERT_STREQ(val_expr_node->term.identifier, "str");
 }
 
-TEST_F(parser, var_def_function_call)
-{
+TEST_F(parser, var_def_function_call) {
     set_prepared_parser({
         // Function definition
         token(MAIN_IDENTIFIER),
@@ -553,8 +532,7 @@ TEST_F(parser, var_def_function_call)
     ASSERT_EQ(2, ast->program.functions.first->function.statements.count);
 }
 
-TEST_F(parser, var_def_invalid)
-{
+TEST_F(parser, var_def_invalid) {
     set_prepared_parser({
         // Function definition
         token(MAIN_IDENTIFIER),
@@ -583,8 +561,7 @@ TEST_F(parser, var_def_invalid)
     ASSERT_EQ(2, run_parser(ast, strings, &context));
 }
 
-TEST_F(parser, semicolon)
-{
+TEST_F(parser, semicolon) {
     set_prepared_parser({
         // Function definition
         token(MAIN_IDENTIFIER),
@@ -621,8 +598,7 @@ TEST_F(parser, semicolon)
     ASSERT_EQ(2, ast->program.functions.first->function.statements.count);
 }
 
-TEST_F(parser, if_then_else)
-{
+TEST_F(parser, if_then_else) {
     set_prepared_parser({
         // Function definition
         token(MAIN_IDENTIFIER),
@@ -661,7 +637,7 @@ TEST_F(parser, if_then_else)
     ASSERT_EQ(1, ast->program.functions.first->function.statements.count);
 
     // ----------------------------------------------------
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
     ASSERT_EQ(function_node->next, nullptr);
@@ -672,7 +648,7 @@ TEST_F(parser, if_then_else)
     EXPECT_EQ(function_node, ast->program.recent_function);
 
     // ----------------------------------------------------
-    ASTNode* if_node = function_node->function.statements.first;
+    ASTNode *if_node = function_node->function.statements.first;
     ASSERT_NE(if_node, nullptr);
     ASSERT_EQ(if_node->type, AST_IF);
     ASSERT_EQ(if_node->next, nullptr);
@@ -682,9 +658,9 @@ TEST_F(parser, if_then_else)
     ASSERT_NE(if_node->if_statement.then_node, nullptr);
     ASSERT_NE(if_node->if_statement.else_node, nullptr);
 
-    ASTNode* condition_node = if_node->if_statement.condition;
-    ASTNode* then_node = if_node->if_statement.then_node;
-    ASTNode* else_node = if_node->if_statement.else_node;
+    ASTNode *condition_node = if_node->if_statement.condition;
+    ASTNode *then_node = if_node->if_statement.then_node;
+    ASTNode *else_node = if_node->if_statement.else_node;
 
     ASSERT_EQ(condition_node->parent, if_node);
     ASSERT_EQ(then_node->parent, if_node);
@@ -698,7 +674,7 @@ TEST_F(parser, if_then_else)
     EXPECT_EQ(then_node->then_statement.statements.count, 1);
     ASSERT_NE(then_node->then_statement.symtable, nullptr);
 
-    ASTNode* statement_1 = then_node->then_statement.statements.first;
+    ASTNode *statement_1 = then_node->then_statement.statements.first;
     ASSERT_NE(statement_1, nullptr);
     EXPECT_EQ(statement_1->type, AST_LITERAL);
     EXPECT_EQ(statement_1->literal.type, AST_INTEGER);
@@ -708,15 +684,14 @@ TEST_F(parser, if_then_else)
     EXPECT_EQ(else_node->else_statement.statements.count, 1);
     ASSERT_NE(else_node->else_statement.symtable, nullptr);
 
-    ASTNode* statement_2 = else_node->else_statement.statements.first;
+    ASTNode *statement_2 = else_node->else_statement.statements.first;
     ASSERT_NE(statement_2, nullptr);
     EXPECT_EQ(statement_2->type, AST_LITERAL);
     EXPECT_EQ(statement_2->literal.type, AST_INTEGER);
     EXPECT_EQ(statement_2->literal.val_integer, 100);
 }
 
-TEST_F(parser, while_do)
-{
+TEST_F(parser, while_do) {
     set_prepared_parser({
         // Function definition
         token(MAIN_IDENTIFIER),
@@ -755,7 +730,7 @@ TEST_F(parser, while_do)
     ASSERT_EQ(1, ast->program.functions.first->function.statements.count);
 
     // ----------------------------------------------------
-    ASTNode* function_node = ast->program.functions.first;
+    ASTNode *function_node = ast->program.functions.first;
     ASSERT_NE(function_node, nullptr);
     ASSERT_EQ(function_node->type, AST_FUNCTION);
     ASSERT_EQ(function_node->next, nullptr);
@@ -766,7 +741,7 @@ TEST_F(parser, while_do)
     EXPECT_EQ(function_node, ast->program.recent_function);
 
     // ----------------------------------------------------
-    ASTNode* while_node = function_node->function.statements.first;
+    ASTNode *while_node = function_node->function.statements.first;
     ASSERT_NE(while_node, nullptr);
     ASSERT_EQ(while_node->type, AST_WHILE_DO);
     ASSERT_EQ(while_node->next, nullptr);
@@ -776,8 +751,8 @@ TEST_F(parser, while_do)
     ASSERT_NE(while_node->while_do.statements.first, nullptr);
     ASSERT_NE(while_node->while_do.symtable, nullptr);
 
-    ASTNode* condition_node = while_node->while_do.condition;
-    ASTNode* assignment_node = while_node->while_do.statements.first;
+    ASTNode *condition_node = while_node->while_do.condition;
+    ASTNode *assignment_node = while_node->while_do.statements.first;
 
     // Condition
     ASSERT_EQ(condition_node->parent, while_node);
@@ -800,7 +775,7 @@ TEST_F(parser, while_do)
     ASSERT_STREQ(assignment_node->assignment.target, "value");
     ASSERT_NE(assignment_node->assignment.expression, nullptr);
 
-    ASTNode* assigned_expression_node = assignment_node->assignment.expression;
+    ASTNode *assigned_expression_node = assignment_node->assignment.expression;
     ASSERT_EQ(assigned_expression_node->parent, assignment_node);
     ASSERT_EQ(assigned_expression_node->type, AST_EXPRESSION);
     ASSERT_EQ(assigned_expression_node->expression.operation, OP_ADD);

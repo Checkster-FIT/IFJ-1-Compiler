@@ -93,6 +93,9 @@ Symtable* add_built_in_entries(Symtable* symtable)
 
 void free_symtable(const Symtable* symtable)
 {
+    if (symtable == NULL) {
+        return;
+    }
     free_allocated_entries(symtable->root);
     free((RBTree*)symtable);
 }
@@ -145,4 +148,28 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
 
     const TNode* node = search(symtable, entry.identifier);
     return node->value;
+}
+
+static SymtableEntry* find_main(const TNode* node)
+{
+    if (node == NULL)
+        return NULL;
+
+    SymtableEntry* entry = node->value;
+    if (entry != NULL && entry->main)
+        return entry;
+
+    SymtableEntry* found = find_main(node->left);
+    if (found != NULL)
+        return found;
+
+    return find_main(node->right);
+}
+
+SymtableEntry* symtable_main_search(Symtable* symtable)
+{
+    if (symtable == NULL)
+        return NULL;
+
+    return find_main(symtable->root);
 }

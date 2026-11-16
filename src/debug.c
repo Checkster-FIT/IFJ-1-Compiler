@@ -10,13 +10,12 @@
 #include "scanner.h"
 #include "stack.h"
 
-void log_parsed(ParserContext* parser)
-{
+void log_parsed(ParserContext *parser) {
     if (parser->accepted.type == NONE)
         return;
 
-    const char* prefix;
-    const char* color = "\033[1;30m";
+    const char *prefix;
+    const char *color = "\033[1;30m";
 
     // Accepted tokens (Recursive descent)
     if (parser->exit_code == 0 && parser->token_error == 0) {
@@ -67,8 +66,7 @@ void log_parsed(ParserContext* parser)
     parser->debug_prefix_skipped = false;
 }
 
-void log_remaining(ParserContext* parser)
-{
+void log_remaining(ParserContext *parser) {
     while (true) {
         next(parser);
 
@@ -88,16 +86,15 @@ void log_remaining(ParserContext* parser)
 
 // =======================================================
 
-void log_precedence_stack_reverse(const StackEl* current)
-{
+void log_precedence_stack_reverse(const StackEl *current) {
     if (current == NULL || current->data == NULL)
         return;
 
-    const PrecedenceElement* element = current->data;
+    const PrecedenceElement *element = current->data;
 
     log_precedence_stack_reverse(current->next);
 
-    static const char* groups[] = {
+    static const char *groups[] = {
         [P_EXPRESSION] = "E",
         [P_L_BRACKET] = "(",
         [P_TERM] = "t",
@@ -109,18 +106,17 @@ void log_precedence_stack_reverse(const StackEl* current)
         [P_SPECIAL_INVALID] = "?",
     };
 
-    const char* str;
+    const char *str;
     if (element->operation != OP_NONE)
         str = str_operation(element->operation);
     else
         str = map_str(groups, sizeof(groups) / sizeof(groups[0]),
-            element->group, "?");
+                      element->group, "?");
 
     fprintf(stderr, "%s", str);
 }
 
-void log_precedence_stack(const ParserContext* parser, const Stack* stack)
-{
+void log_precedence_stack(const ParserContext *parser, const Stack *stack) {
     if (!parser->debug_stack)
         return;
 
@@ -133,27 +129,24 @@ void log_precedence_stack(const ParserContext* parser, const Stack* stack)
     fprintf(stderr, "\n");
 }
 
-void print_line(ParserContext* parser)
-{
+void print_line(ParserContext *parser) {
     if (parser->exit_code != 0 || parser->token_error != 0)
         return;
 
-    const char* divider = "-----------------------";
+    const char *divider = "-----------------------";
     fprintf(stderr, "%s [line %i] %s\n", divider, get_line(parser), divider);
 }
 
 // =======================================================
 
-void log_ast_start(ParserContext* parser)
-{
+void log_ast_start(ParserContext *parser) {
     if (!parser->debug)
         return;
 
     parser->debug_prefix_ast = true;
 }
 
-void log_ast_end(ParserContext* parser)
-{
+void log_ast_end(ParserContext *parser) {
     if (parser->debug == false)
         return;
 
@@ -162,11 +155,11 @@ void log_ast_end(ParserContext* parser)
     if (!parser->debug_ast_nodes)
         return;
 
-    const ASTNode* node = parser->ast->program.recent_node;
+    const ASTNode *node = parser->ast->program.recent_node;
     // static const char* format = "[\033[1;35m%s\033[0m] %-*s%s\n";
-    static const char* format = "[\033[1;35m%s\033[0m] %-*s\n";
+    static const char *format = "[\033[1;35m%s\033[0m] %-*s\n";
 
-    const char* prefix = "AST";
+    const char *prefix = "AST";
     switch (node->type) {
         case AST_FUNCTION:
             fprintf(stderr, format, prefix, ALIGNMENT, "Function", node->function.identifier);
@@ -187,8 +180,7 @@ void log_ast_end(ParserContext* parser)
 
 // =======================================================
 
-void print_ast(ASTNode* root)
-{
+void print_ast(ASTNode *root) {
     Branch branch = {
         .parent = NULL,
         .symtable = root->program.global_symtable,
@@ -199,8 +191,7 @@ void print_ast(ASTNode* root)
     print_ast_recursively(root, &branch);
 }
 
-void print_ast_indent(const Branch* branch)
-{
+void print_ast_indent(const Branch *branch) {
     if (!branch->parent)
         return;
 
@@ -208,8 +199,7 @@ void print_ast_indent(const Branch* branch)
     fprintf(stderr, "\033[1;30m%s\033[0m", branch->last ? "       " : "  │    ");
 }
 
-int print_ast_recursively(ASTNode* node, Branch* parent)
-{
+int print_ast_recursively(ASTNode *node, Branch *parent) {
     if (!node)
         return 0;
 
@@ -228,7 +218,6 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         fprintf(stderr, "\033[1;30m000\033[0m");
 
     if (parent->parent) {
-
         // Add one more line before functions
         if (node->type == AST_FUNCTION
             && (node->parent->program.extensions.last != NULL
@@ -247,12 +236,13 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
         fprintf(stderr, "\033[1;30m%s\033[0m", parent->last ? "  └─────" : "  ├─────");
     }
 
-    char* color = "\033[1;34m";
-    char* color_secondary = "\033[1;32m";
-    char* reset = "\033[0m";
-    const SymtableEntry* entry = NULL;
+    char *color = "\033[1;34m";
+    char *color_secondary = "\033[1;32m";
+    char *reset = "\033[0m";
+    const SymtableEntry *entry = NULL;
 
-    Branch this = {
+    Branch
+    this = {
         .parent = parent,
         .symtable = NULL,
         .followed = false,
@@ -456,9 +446,8 @@ int print_ast_recursively(ASTNode* node, Branch* parent)
     return 0;
 }
 
-const char* str_operation(const Operator op)
-{
-    static const char* map[] = {
+const char *str_operation(const Operator op) {
+    static const char *map[] = {
         [OP_NOT] = "!",
         [OP_UNARY_PLUS] = "+",
         [OP_UNARY_MINUS] = "-",
@@ -482,8 +471,7 @@ const char* str_operation(const Operator op)
 
 // =======================================================
 
-const char* str_type(const char type_char)
-{
+const char *str_type(const char type_char) {
     switch (type_char) {
         case 's':
             return "String";
@@ -500,9 +488,8 @@ const char* str_type(const char type_char)
     }
 }
 
-const char* str_token(const Token* token, const TokenStringType mode)
-{
-    static const char* name_map[] = {
+const char *str_token(const Token *token, const TokenStringType mode) {
+    static const char *name_map[] = {
         [NONE] = "NONE",
         [ERROR] = "ERROR",
         [INTEGER] = "INTEGER",
@@ -545,10 +532,10 @@ const char* str_token(const Token* token, const TokenStringType mode)
         case ERROR:
             snprintf(num_to_str_buffer, BUFFER_SIZE, "%i", token->attribute_error);
             break;
-        default:;
+        default: ;
     }
 
-    const char* attribute_map[] = {
+    const char *attribute_map[] = {
         [DOT] = ".",
         [DECLARATION_SIGN] = ":",
         [SEMICOLON] = ";",
@@ -588,10 +575,9 @@ const char* str_token(const Token* token, const TokenStringType mode)
 
 // =======================================================
 
-void print_token(const Token* token)
-{
-    const char* name = str_token(token, GET_NAME);
-    const char* attribute = str_token(token, GET_ATTRIBUTE);
+void print_token(const Token *token) {
+    const char *name = str_token(token, GET_NAME);
+    const char *attribute = str_token(token, GET_ATTRIBUTE);
 
     fprintf(stderr, "%-*s", ALIGNMENT, name);
 
@@ -608,8 +594,7 @@ void print_token(const Token* token)
 
 // =======================================================
 
-bool is_string_token(const Token* token)
-{
+bool is_string_token(const Token *token) {
     switch (token->type) {
         case STRING:
         case STRING_INTERPOLATION:
@@ -626,9 +611,8 @@ bool is_string_token(const Token* token)
 
 // =======================================================
 
-const char* str_keyword(const int idx)
-{
-    static const char* map[] = {
+const char *str_keyword(const int idx) {
+    static const char *map[] = {
         [DEF_KW] = "def",
         [DO_KW] = "do",
         [DOUBLE_KW] = "Double",
@@ -656,9 +640,8 @@ const char* str_keyword(const int idx)
     return map_str(map, sizeof(map) / sizeof(map[0]), idx, "[Unknown keyword]");
 }
 
-const char* str_token_operator(const int idx)
-{
-    static const char* map[] = {
+const char *str_token_operator(const int idx) {
+    static const char *map[] = {
         [PLUS] = "+",
         [MINUS] = "-",
         [MULTIPLY] = "*",
@@ -671,9 +654,8 @@ const char* str_token_operator(const int idx)
     return map_str(map, sizeof(map) / sizeof(map[0]), idx, "[Unknown operator]");
 }
 
-const char* str_compare(const int idx)
-{
-    static const char* map[] = {
+const char *str_compare(const int idx) {
+    static const char *map[] = {
         [EQUAL] = "==",
         [NOT_EQUAL] = "!=",
         [LESS] = "<",
@@ -687,8 +669,7 @@ const char* str_compare(const int idx)
 
 // =======================================================
 
-void fprintf_escaped(FILE* stream, const char* string)
-{
+void fprintf_escaped(FILE *stream, const char *string) {
     if (string == NULL)
         return;
 
@@ -700,8 +681,7 @@ void fprintf_escaped(FILE* stream, const char* string)
     }
 }
 
-const char* map_str(const char** map, const int size, const int idx, const char* fallback)
-{
+const char *map_str(const char **map, const int size, const int idx, const char *fallback) {
     if (0 <= idx && idx < size && map[idx] != NULL)
         return map[idx];
 
