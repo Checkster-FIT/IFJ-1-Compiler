@@ -505,7 +505,7 @@ int parse_function_body(ParserContext* parser)
 
             // Better error message
             if (check_next_keyword(DEF_KW, parser) || check_next_keyword(EXTENSION_KW, parser)
-                || check_next(DEDENT, parser)|| check_next(END_OF_FILE, parser))
+                || check_next(DEDENT, parser) || check_next(END_OF_FILE, parser))
                 return failed(parser, PARSER_FUNCTION_MISSING_BODY);
 
             return failed(parser, PARSER_FUNCTION_MISSING_INDENT);

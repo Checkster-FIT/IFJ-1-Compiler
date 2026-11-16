@@ -18,9 +18,9 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
 
 int handle_expression(ASTNode* node, char* result_type);
 
-int handle_function(ASTNode* node, char* result_type, bool* main_found);
+int handle_function(ASTNode* node);
 
-bool is_main(ASTNode* fun_node);
+int main_check(ASTNode* fun_node, bool* main_found);
 
 int run_semantic(ASTNode* ast);
 
