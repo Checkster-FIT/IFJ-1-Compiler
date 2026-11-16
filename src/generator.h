@@ -29,4 +29,6 @@ void generate_expression(ASTNode* expression);
 
 void generate_statements(ASTNode* statement, bool is_function_body);
 
+bool is_string_expr(ASTNode* node);
+
 #endif // IFJ_1_COMPILER_GENERATOR_H

@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int builtin_label_id = 0;
+
 int run_generator(ASTNode* ast)
 {
     print_ast(ast);
@@ -49,6 +51,11 @@ void generate_function(ASTNode* node)
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@$discard\n");
+    printf("DEFVAR LF@$op1\n");
+    printf("DEFVAR LF@$op2\n");
+    printf("DEFVAR LF@$op3\n");
+    printf("DEFVAR LF@$tmp_type\n");
+    printf("DEFVAR LF@$tmp_char\n");
 
     generate_local_variables(node->function.symtable);
     generate_nested_local_variables(node->function.statements.first);
@@ -219,7 +226,14 @@ void generate_expression(ASTNode* node)
                 case OP_ADD:
                     generate_expression(node->expression.left);
                     generate_expression(node->expression.right);
-                    printf("ADDS\n");
+                    if (is_string_expr(node)) {
+                        printf("POPS LF@$op2\n");
+                        printf("POPS LF@$op1\n");
+                        printf("CONCAT LF@$op1 LF@$op1 LF@$op2\n");
+                        printf("PUSHS LF@$op1\n");
+                    } else {
+                        printf("ADDS\n");
+                    }
                     break;
                 case OP_SUB:
                     generate_expression(node->expression.left);
@@ -329,13 +343,199 @@ void generate_expression(ASTNode* node)
                 } else if (strcmp(node->term.identifier, "readLine") == 0) {
                     printf("READ LF@$discard string\n");
                     printf("PUSHS LF@$discard\n");
-                } else if (strcmp(node->term.identifier, "readBool") == 0) {
+                } else if (strcmp(node->term.identifier, "readBoolean") == 0) {
                     printf("READ LF@$discard bool\n");
+                    printf("PUSHS LF@$discard\n");
+                } else if (strcmp(node->term.identifier, "strLength") == 0) {
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("POPS LF@$discard\n");
+                    printf("STRLEN LF@$discard LF@$discard\n");
+                    printf("PUSHS LF@$discard\n");
+                } else if (strcmp(node->term.identifier, "chr") == 0) {
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    builtin_label_id++;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                        printf("POPS LF@$op1\n");
+                        printf("LT LF@$tmp_type LF@$op1 int@0\n");
+                        printf("JUMPIFEQ chr_fail_%d LF@$tmp_type bool@true\n", builtin_label_id);
+                        printf("GT LF@$tmp_type LF@$op1 int@127\n");
+                        printf("JUMPIFEQ chr_fail_%d LF@$tmp_type bool@true\n", builtin_label_id);
+                        printf("PUSHS LF@$op1\n");
+                        printf("INT2CHARS\n");
+                        printf("JUMP chr_success_%d\n", builtin_label_id);
+                        printf("LABEL chr_fail_%d\n", builtin_label_id);
+                        printf("EXIT int@57\n");
+                        printf("LABEL chr_success_%d\n", builtin_label_id);
+                        builtin_label_id++;
+                    }
+                } else if (strcmp(node->term.identifier, "toInt") == 0) {
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("FLOAT2INTS\n");
+
+                } else if (strcmp(node->term.identifier, "toDouble") == 0) {
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    builtin_label_id++;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("INT2FLOATS\n");
+                } else if (strcmp(node->term.identifier, "toStr") == 0) {
+                    int id = builtin_label_id++;
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("POPS LF@$op1\n");
+                    printf("TYPE LF@$tmp_type LF@$op1\n");
+                    printf("JUMPIFEQ $tostr_str_%d LF@$tmp_type string@string\n", id);
+                    printf("JUMPIFEQ $tostr_int_%d LF@$tmp_type string@int\n", id);
+                    printf("JUMPIFEQ $tostr_flt_%d LF@$tmp_type string@float\n", id);
+                    printf("JUMPIFEQ $tostr_bool_%d LF@$tmp_type string@bool\n", id);
+
+                    printf("MOVE LF@$op1 string@nil\n");
+                    printf("JUMP $tostr_end_%d\n", id);
+                    printf("LABEL $tostr_int_%d\n", id);
+                    printf("INT2STR LF@$op1 LF@$op1\n");
+                    printf("JUMP $tostr_end_%d\n", id);
+                    printf("LABEL $tostr_flt_%d\n", id);
+                    printf("FLOAT2STR LF@$op1 LF@$op1\n");
+                    printf("JUMP $tostr_end_%d\n", id);
+                    printf("LABEL $tostr_bool_%d\n", id);
+                    printf("JUMPIFEQ $tostr_true_%d LF@$op1 bool@true\n", id);
+                    printf("MOVE LF@$op1 string@false\n");
+                    printf("JUMP $tostr_end_%d\n", id);
+                    printf("LABEL $tostr_true_%d\n", id);
+                    printf("MOVE LF@$op1 string@true\n");
+                    printf("JUMP $tostr_end_%d\n", id);
+                    printf("LABEL $tostr_str_%d\n", id);
+                    printf("LABEL $tostr_end_%d\n", id);
+                    printf("PUSHS LF@$op1\n");
+
+                } else if (strcmp(node->term.identifier, "ord") == 0) {
+                    int id = builtin_label_id++;
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("POPS LF@$op2\n");
+                    printf("POPS LF@$op1\n");
+                    printf("STRLEN LF@$op3 LF@$op1\n");
+
+                    printf("PUSHS LF@$op2\n");
+                    printf("PUSHS int@0\n");
+                    printf("LTS\n");
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $ord_err_%d\n", id);
+                    printf("PUSHS LF@$op2\n");
+                    printf("PUSHS LF@$op3\n");
+                    printf("LTS\n");
+                    printf("PUSHS bool@false\n");
+                    printf("JUMPIFEQS $ord_err_%d\n", id);
+                    printf("STRI2INT LF@$discard LF@$op1 LF@$op2\n");
+                    printf("PUSHS LF@$discard\n");
+                    printf("JUMP $ord_end_%d\n", id);
+                    printf("LABEL $ord_err_%d\n", id);
+                    printf("PUSHS int@-1\n");
+                    printf("LABEL $ord_end_%d\n", id);
+
+                } else if (strcmp(node->term.identifier, "subStr") == 0) {
+                    int id = builtin_label_id++;
+                    ASTNode* builtin_group = node->term.argument_groups.first;
+                    while (builtin_group != NULL) {
+                        ASTNode* arg = builtin_group->argument_group.arguments.first;
+                        while (arg != NULL) {
+                            generate_expression(arg);
+                            arg = arg->next;
+                        }
+                        builtin_group = builtin_group->next;
+                    }
+                    printf("POPS LF@$op3\n");
+                    printf("POPS LF@$op2\n");
+                    printf("POPS LF@$op1\n");
+                    printf("MOVE LF@$discard string@\n");
+                    printf("PUSHS LF@$op2\n");
+                    printf("PUSHS int@0\n");
+                    printf("LTS\n");
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("PUSHS LF@$op3\n");
+                    printf("PUSHS int@0\n");
+                    printf("GTS\n");
+                    printf("PUSHS bool@false\n");
+                    printf("JUMPIFEQS $substr_end_%d\n", id);
+
+                    printf("STRLEN LF@$tmp_type LF@$op1\n");
+                    printf("LABEL $substr_loop_%d\n", id);
+
+                    printf("JUMPIFEQ $substr_end_%d LF@$op3 int@0\n", id);
+                    printf("PUSHS LF@$op2\n");
+                    printf("PUSHS LF@$tmp_type\n");
+                    printf("LTS\n");
+                    printf("PUSHS bool@false\n");
+                    printf("JUMPIFEQS $substr_end_%d\n", id);
+
+                    printf("GETCHAR LF@$tmp_char LF@$op1 LF@$op2\n");
+                    printf("CONCAT LF@$discard LF@$discard LF@$tmp_char\n");
+                    printf("ADD LF@$op2 LF@$op2 int@1\n");
+                    printf("SUB LF@$op3 LF@$op3 int@1\n");
+                    printf("JUMP $substr_loop_%d\n", id);
+                    printf("LABEL $substr_end_%d\n", id);
                     printf("PUSHS LF@$discard\n");
                 }
             }
             break;
         }
+        case AST_CONVERSION:
+            generate_expression(node->conversion.expression);
+            switch (node->conversion.result_type) {
+                case 'i':
+                    printf("FLOAT2INTS\n");
+                    break;
+                case 'd':
+                    printf("INT2FLOATS\n");
+                    break;
+                default:
+                    fprintf(stderr, "generate_expression: unsupported conversion target type %d\n", node->conversion.result_type);
+                    exit(99);
+            }
+            break;
         default:
             fprintf(stderr, "generate_expression: accessed wrong node type\n");
             exit(99);
@@ -380,6 +580,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             printf("CALL %s\n", statement->function.identifier);
             break;
         case AST_TERM:
+        case AST_LITERAL:
         case AST_EXPRESSION:
         case AST_FUNCALL:
         case AST_BUILTIN_FUNCALL:
@@ -425,4 +626,34 @@ void generate_statements(ASTNode* statement, bool is_function_body)
         generate_statements_switch(statement, is_last);
         statement = statement->next;
     }
+}
+
+bool is_string_expr(ASTNode* node)
+{
+    if (node == NULL)
+        return false;
+
+    if (node->type == AST_EXPRESSION) {
+        if (node->expression.result_type == 's')
+            return true;
+        return is_string_expr(node->expression.left) || is_string_expr(node->expression.right);
+    }
+    if (node->type == AST_LITERAL) {
+        return node->literal.type == AST_STRING;
+    }
+    if (node->type == AST_INTERPOLATED_STRING) {
+        return true;
+    }
+    if (node->type == AST_BUILTIN_FUNCALL && node->term.identifier != NULL) {
+        return strcmp(node->term.identifier, "readLine") == 0 ||
+            strcmp(node->term.identifier, "chr") == 0 ||
+            strcmp(node->term.identifier, "subStr") == 0 ||
+            strcmp(node->term.identifier, "toStr") == 0;
+    }
+    if (node->type == AST_VAR_USE && node->term.identifier != NULL) {
+        SymtableEntry* entry = get_closest_symtable_entry(node, node->term.identifier);
+        if (entry != NULL && entry->data_type == 's')
+            return true;
+    }
+    return false;
 }
