@@ -94,7 +94,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             break;
         // Syntax errors
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
-            error.message = "The symbol @ can only be followed by identifier 'main'";
+            error.message = "The '@' symbol must be directly followed by the identifier 'main'";
             error.param_count = 0;
             error.code = 2;
             break;
@@ -115,13 +115,13 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.code = 2;
             break;
         case PARSER_MISSING_HEADER:
-            error.message = "Missing or incorrect 'ifj26.*' header";
+            error.message = "Missing or incorrect 'import ifj26.*' header";
             error.param_count = 0;
             error.code = 2;
             break;
         case PARSER_MISSING_EXT_PARAM:
             error.message = "Missing extension parameter";
-            error.fix = "The 'extension' keyword should be followed by a valid parameter: 'extension (param: Type)'";
+            error.fix = "The 'extension' keyword must be followed by a valid parameter: 'extension (param: Type)'";
             error.param_count = 0;
             error.code = 2;
             break;
@@ -150,8 +150,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.code = 2;
             break;
         case PARSER_INVALID_FUNCTION:
-            error.message = "Missing function identifier";
-            error.fix = "The 'def' keyword should be followed by a valid identifier";
+            error.message = "Missing required function identifier";
+            error.fix = "The 'def' keyword must be followed by a valid identifier";
             error.param_count = 0;
             error.code = 2;
             break;
@@ -202,6 +202,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.param_count = 0;
             error.code = 2;
             break;
+        case PARSER_FUNCTION_MISSING_BODY:
+            error.message = "Function definition must be followed by an indented block or an expression";
+            error.fix = "Empty block or expression can be represented by the unit literal: '()'";
+            error.param_count = 0;
+            error.code = 2;
+            break;
         case PARSER_ST_VAR_DEF_MISSING_IDENTIFIER:
             error.message = "Missing variable identifier in its definition";
             error.fix = "Add a valid identifier name after the variable definition keyword (var, val)";
@@ -214,7 +220,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.code = 2;
             break;
         case PARSER_ST_MISSING_SEPARATOR:
-            error.message = "A statement must be ended with a new or a semicolon ';'";
+            error.message = "A statement must be ended with a new line or a semicolon ';'";
             error.param_count = 0;
             error.code = 2;
             break;
@@ -263,6 +269,16 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.param_count = 0;
             error.code = 2;
             break;
+        case PARSER_MULTIPLE_IMPORT_HEADERS:
+            error.message = "Multiple import headers are not allowed";
+            error.param_count = 0;
+            error.code = 2;
+            break;
+        case PARSER_MISSING_PARAM_IDENTIFIER:
+            error.message = "Missing parameter identifier before type specifier ':'";
+            error.param_count = 0;
+            error.code = 2;
+            break;
         // Semantic error
         case SEMANTIC_INVALID_REDEFINITION:
             error.message = "Multiple definitions found for '%s'";
@@ -276,13 +292,13 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             break;
         case SEMANTIC_MULTIPLE_MAIN:
             error.message = "Two or more functions are marked with `@main`";
-            error.fix = "Exactly one function must be marked as entry function";
+            error.fix = "Exactly one function must be marked as the entry function";
             error.param_count = 0;
             error.code = 4;
             break;
         case SEMANTIC_NO_MAIN:
             error.message = "No function is marked with `@main`";
-            error.fix = "Exactly one function must be marked as entry function";
+            error.fix = "Exactly one function must be marked as the entry function";
             error.param_count = 0;
             error.code = 3;
             break;
@@ -366,10 +382,10 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.code = 10;
             break;
         case SEMANTIC_RETURN_NOT_ALLOWED:
-            error.message = "Unable to use return with no expression in function '%s' which returns '%s'";
-            error.fix = "Return with no expression is only allowed inside function returning Unit type";
+            error.message = "Unable to use 'return' without an expression in function '%s' with '%s' return type";
+            error.fix = "Functions with return statements without an expression must have explicit 'Unit' return type";
             error.param_count = 2;
-            error.code = 6;
+            error.code = 10;
             break;
         case SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE:
             error.message = "Unable to use return in function '%s' as it has no explicit return type";
@@ -378,17 +394,17 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.code = 10;
             break;
         case SEMANTIC_MAIN_WITH_PARAMETERS:
-            error.message = "Function with @main cannot accept any parameters";
+            error.message = "Function with the '@main' tag cannot accept any parameters";
             error.param_count = 0;
             error.code = 5;
             break;
         case SEMANTIC_MAIN_NOT_UNIT:
-            error.message = "Return type of function with @main can only be Unit";
+            error.message = "Return type of function with the '@main' tag must be 'Unit'";
             error.param_count = 0;
             error.code = 6;
             break;
         case SEMANTIC_WRITE_INTO_CONST_OR_FUN:
-            error.message = "Cannot assign value to constant or function '%s'";
+            error.message = "Cannot assign value to a constant variable, function parameter or a function: '%s'";
             error.param_count = 1;
             error.code = 7;
             break;

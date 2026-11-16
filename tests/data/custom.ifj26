@@ -24,7 +24,7 @@ def factorial(n: Int): Int =
     result
 
 def pi_string() =
-    3.14159265359.toStr
+    3.14159265359.toString
 
 @main
 def runFoo(): Unit =

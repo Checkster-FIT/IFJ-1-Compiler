@@ -278,7 +278,7 @@ TEST_F(analysis, function_params_missing_identifier) {
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
-        def something(String): String = s
+        def something(: String): String = s
     )");
 
     EXPECT_EQ(exit_code(), 2);
@@ -293,4 +293,26 @@ TEST_F(analysis, function_params_invalid_assignment) {
     )");
 
     EXPECT_EQ(exit_code(), 7);
+}
+
+// =================================
+
+TEST_F(analysis, return_invalid_implicit_type) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing() =
+            return
+    )");
+
+    EXPECT_EQ(exit_code(), 10);
+}
+
+TEST_F(analysis, return_invalid_explicit_type) {
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): String =
+            return
+    )");
+
+    EXPECT_EQ(exit_code(), 10);
 }

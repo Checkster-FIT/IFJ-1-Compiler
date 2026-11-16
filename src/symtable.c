@@ -22,7 +22,7 @@ Symtable* new_symtable()
 
 SymtableEntry* add_built_in_function(
     Symtable* symtable, char* identifier,
-    const char* parameters, const char return_type, bool extension)
+    const char* parameters, const char return_type, const bool extension)
 {
     const SymtableEntry entry = {
         .function = true,
@@ -34,6 +34,7 @@ SymtableEntry* add_built_in_function(
         .identifier = identifier,
         .data_type = return_type,
         .parameters = NULL,
+        .status = ANALYSIS_NONE,
     };
 
     SymtableEntry* added_entry = symtable_add_entry(symtable, entry);
@@ -125,6 +126,7 @@ SymtableEntry* symtable_add_entry(Symtable* symtable, const SymtableEntry entry)
     }
 
     *data = entry;
+    data->status = ANALYSIS_NONE;
 
     if (data->parameters != NULL) {
         data->parameters = init_dynamic_string();
