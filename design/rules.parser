@@ -63,6 +63,7 @@
             <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
             <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
             <st_return> -> return <EXPR>
+            <st_return> -> return
 
         <construct> := <c_while> <c_if_then> <c_for>
 

@@ -697,6 +697,10 @@ int parse_statement_return(ParserContext* parser)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
     node->line = get_line(parser);
 
+    node->return_st.expression = NULL;
+    if (check_next(LINE_FEED, parser) || check_next(SEMICOLON, parser))
+        return CORRECT;
+
     if (!parse_expression(parser, &(node->return_st.expression)))
         return FAILED;
     node->return_st.expression->parent = node;

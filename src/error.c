@@ -219,7 +219,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 2;
             break;
         case PARSER_ST_MISSING_SEPARATOR:
-            error.message = "A statement must be ended with a new or a semicolon ';'";
+            error.message = "A statement must be ended with a new line or a semicolon ';'";
             error.param_count = 0;
             error.code = 2;
             break;
@@ -381,10 +381,10 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 10;
             break;
         case SEMANTIC_RETURN_NOT_ALLOWED:
-            error.message = "Unable to use return with no expression in function '%s' which returns '%s'";
-            error.fix = "Return with no expression is only allowed inside function returning Unit type";
+            error.message = "Unable to use 'return' without an expression in function '%s' with '%s' return type";
+            error.fix = "Functions with return statements without an expression must have explicit 'Unit' return type";
             error.param_count = 2;
-            error.code = 6;
+            error.code = 10;
             break;
         case SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE:
             error.message = "Unable to use return in function '%s' as it has no explicit return type";
