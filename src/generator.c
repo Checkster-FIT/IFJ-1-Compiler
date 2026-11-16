@@ -14,12 +14,6 @@
 
 static int builtin_label_id = 0;
 
-int run_generator(ASTNode* ast)
-{
-    print_ast(ast);
-    return 0;
-}
-
 void generate_program(ASTNode* node)
 {
     printf(".IFJcode26\n\n");

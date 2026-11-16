@@ -26,7 +26,7 @@ int main()
     const int exit_code_parser = run_parser(ast, strings, NULL);
     const int exit_code_semantic = run_semantic(ast);
 
-    run_generator(ast);
+    // print_ast(ast);
     generate_program(ast);
 
     free_ast_nodes(ast);

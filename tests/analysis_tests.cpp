@@ -18,13 +18,14 @@ extern "C" {
 
 class analysis : public ::testing::Test {
 protected:
-    ParserContext parser = {};
-    AllocatedStrings *strings = {};
-    ASTNode *ast = {};
-    FILE *stream = nullptr;
+    ParserContext parser = { };
+    AllocatedStrings* strings = { };
+    ASTNode* ast = { };
+    FILE* stream = nullptr;
     bool errors = false;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         // Shared struct for string allocation
         strings = new_strings();
         ASSERT_NE(strings, nullptr);
@@ -42,7 +43,8 @@ protected:
         testing::internal::CaptureStderr();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         if (errors) {
             std::cout << testing::internal::GetCapturedStderr();
         } else {
@@ -56,20 +58,24 @@ protected:
         free_strings(strings);
     }
 
-    void load_code(const char *code) const {
+    void load_code(const char* code) const
+    {
         ASSERT_GE(fputs(code, stream), 0);
         rewind(stream);
     }
 
-    int check_syntax() {
+    int check_syntax()
+    {
         return run_parser(ast, strings, &parser);
     }
 
-    int check_semantics() const {
+    int check_semantics() const
+    {
         return run_semantic(ast);
     }
 
-    int exit_code(const bool stderr = false) {
+    int exit_code(const bool stderr = false)
+    {
         if (stderr)
             errors = true;
 
@@ -85,7 +91,8 @@ protected:
 
 // ========================================================
 
-TEST_F(analysis, empty_function) {
+TEST_F(analysis, empty_function)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -95,7 +102,8 @@ TEST_F(analysis, empty_function) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, header_with_comments) {
+TEST_F(analysis, header_with_comments)
+{
     load_code(R"(
         // This program has a comment before its header
         /* This program has a comment before its header */
@@ -107,7 +115,8 @@ TEST_F(analysis, header_with_comments) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, header_missing) {
+TEST_F(analysis, header_missing)
+{
     load_code(R"(
         @main def nothing(): Unit =
             ()
@@ -116,7 +125,8 @@ TEST_F(analysis, header_missing) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, header_twice) {
+TEST_F(analysis, header_twice)
+{
     load_code(R"(
         import ifj26.*
         import ifj26.*
@@ -129,7 +139,8 @@ TEST_F(analysis, header_twice) {
 
 // ===========================================================
 
-TEST_F(analysis, main_newline) {
+TEST_F(analysis, main_newline)
+{
     load_code(R"(
         import ifj26.*
         @main
@@ -140,7 +151,8 @@ TEST_F(analysis, main_newline) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, main_missing) {
+TEST_F(analysis, main_missing)
+{
     load_code(R"(
         import ifj26.*
         def nothing(): Unit =
@@ -150,7 +162,8 @@ TEST_F(analysis, main_missing) {
     EXPECT_EQ(exit_code(), 3);
 }
 
-TEST_F(analysis, main_twice) {
+TEST_F(analysis, main_twice)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -162,7 +175,8 @@ TEST_F(analysis, main_twice) {
     EXPECT_EQ(exit_code(), 4);
 }
 
-TEST_F(analysis, main_invalid_tag) {
+TEST_F(analysis, main_invalid_tag)
+{
     load_code(R"(
         import ifj26.*
         @ main
@@ -173,7 +187,8 @@ TEST_F(analysis, main_invalid_tag) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, main_invalid_params) {
+TEST_F(analysis, main_invalid_params)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(str: String): Unit =
@@ -183,7 +198,8 @@ TEST_F(analysis, main_invalid_params) {
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, main_type_implicit) {
+TEST_F(analysis, main_type_implicit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing() =
@@ -193,7 +209,8 @@ TEST_F(analysis, main_type_implicit) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, main_type_implicit_incorrect) {
+TEST_F(analysis, main_type_implicit_incorrect)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing() =
@@ -203,7 +220,8 @@ TEST_F(analysis, main_type_implicit_incorrect) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, main_type_explicit) {
+TEST_F(analysis, main_type_explicit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -213,7 +231,8 @@ TEST_F(analysis, main_type_explicit) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, main_type_explicit_incorrect) {
+TEST_F(analysis, main_type_explicit_incorrect)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Double =
@@ -225,7 +244,8 @@ TEST_F(analysis, main_type_explicit_incorrect) {
 
 // ===========================================================
 
-TEST_F(analysis, function_block_missing) {
+TEST_F(analysis, function_block_missing)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -234,7 +254,8 @@ TEST_F(analysis, function_block_missing) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_inline) {
+TEST_F(analysis, function_inline)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -244,7 +265,8 @@ TEST_F(analysis, function_inline) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_identifier_missing) {
+TEST_F(analysis, function_identifier_missing)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -254,7 +276,8 @@ TEST_F(analysis, function_identifier_missing) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_missing_comma) {
+TEST_F(analysis, function_params_missing_comma)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -264,7 +287,8 @@ TEST_F(analysis, function_params_missing_comma) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_missing_type) {
+TEST_F(analysis, function_params_missing_type)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -274,7 +298,8 @@ TEST_F(analysis, function_params_missing_type) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_missing_identifier) {
+TEST_F(analysis, function_params_missing_identifier)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -284,7 +309,8 @@ TEST_F(analysis, function_params_missing_identifier) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_invalid_assignment) {
+TEST_F(analysis, function_params_invalid_assignment)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -297,7 +323,8 @@ TEST_F(analysis, function_params_invalid_assignment) {
 
 // ===========================================================
 
-TEST_F(analysis, return_statement_invalid_implicit_type) {
+TEST_F(analysis, return_statement_invalid_implicit_type)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -308,7 +335,8 @@ TEST_F(analysis, return_statement_invalid_implicit_type) {
     EXPECT_EQ(exit_code(), 10);
 }
 
-TEST_F(analysis, return_statement_invalid_explicit_type) {
+TEST_F(analysis, return_statement_invalid_explicit_type)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -321,7 +349,8 @@ TEST_F(analysis, return_statement_invalid_explicit_type) {
 
 // ===========================================================
 
-TEST_F(analysis, return_value_valid) {
+TEST_F(analysis, return_value_valid)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -331,7 +360,8 @@ TEST_F(analysis, return_value_valid) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_expression) {
+TEST_F(analysis, return_value_valid_expression)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -342,7 +372,8 @@ TEST_F(analysis, return_value_valid_expression) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_expression_single_line) {
+TEST_F(analysis, return_value_valid_expression_single_line)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -352,7 +383,8 @@ TEST_F(analysis, return_value_valid_expression_single_line) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_funcall) {
+TEST_F(analysis, return_value_valid_funcall)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -364,7 +396,8 @@ TEST_F(analysis, return_value_valid_funcall) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_funcall_single_line) {
+TEST_F(analysis, return_value_valid_funcall_single_line)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -375,7 +408,8 @@ TEST_F(analysis, return_value_valid_funcall_single_line) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_not_unit) {
+TEST_F(analysis, return_value_valid_not_unit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -385,7 +419,8 @@ TEST_F(analysis, return_value_valid_not_unit) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_after_vardef) {
+TEST_F(analysis, return_value_after_vardef)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -396,7 +431,8 @@ TEST_F(analysis, return_value_after_vardef) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, return_value_after_assignment) {
+TEST_F(analysis, return_value_after_assignment)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -408,7 +444,8 @@ TEST_F(analysis, return_value_after_assignment) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, return_value_after_while) {
+TEST_F(analysis, return_value_after_while)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -422,7 +459,8 @@ TEST_F(analysis, return_value_after_while) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, return_value_unit_discard_return) {
+TEST_F(analysis, return_value_unit_discard_return)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -435,7 +473,8 @@ TEST_F(analysis, return_value_unit_discard_return) {
 
 // ===========================================================
 
-TEST_F(analysis, if_return_valid_explicit_unit) {
+TEST_F(analysis, if_return_valid_explicit_unit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -449,7 +488,8 @@ TEST_F(analysis, if_return_valid_explicit_unit) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_implicit_unit) {
+TEST_F(analysis, if_return_invalid_implicit_unit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -463,7 +503,8 @@ TEST_F(analysis, if_return_invalid_implicit_unit) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_implicit_unit_not_return) {
+TEST_F(analysis, if_return_valid_implicit_unit_not_return)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -478,7 +519,8 @@ TEST_F(analysis, if_return_valid_implicit_unit_not_return) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_explicit_type) {
+TEST_F(analysis, if_return_invalid_explicit_type)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -492,7 +534,8 @@ TEST_F(analysis, if_return_invalid_explicit_type) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_explicit_type_all_branches_return) {
+TEST_F(analysis, if_return_valid_explicit_type_all_branches_return)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -506,7 +549,8 @@ TEST_F(analysis, if_return_valid_explicit_type_all_branches_return) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return) {
+TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -520,7 +564,8 @@ TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_implicit_all_branches_unit) {
+TEST_F(analysis, if_return_valid_implicit_all_branches_unit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -534,7 +579,8 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive) {
+TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -551,7 +597,8 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive) {
+TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -568,7 +615,8 @@ TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else) {
+TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -582,7 +630,8 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else) {
 
 // ===========================================================
 
-TEST_F(analysis, recursion_direct_valid_explicit) {
+TEST_F(analysis, recursion_direct_valid_explicit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -595,7 +644,8 @@ TEST_F(analysis, recursion_direct_valid_explicit) {
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, recursion_direct_invalid_implicit) {
+TEST_F(analysis, recursion_direct_invalid_implicit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -607,7 +657,8 @@ TEST_F(analysis, recursion_direct_invalid_implicit) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, recursion_indirect_valid_explicit) {
+TEST_F(analysis, recursion_indirect_valid_explicit)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -623,7 +674,8 @@ TEST_F(analysis, recursion_indirect_valid_explicit) {
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, recursion_indirect_valid_explicit_partial) {
+TEST_F(analysis, recursion_indirect_valid_explicit_partial)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -638,7 +690,8 @@ TEST_F(analysis, recursion_indirect_valid_explicit_partial) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, recursion_indirect_invalid_implicit_all) {
+TEST_F(analysis, recursion_indirect_invalid_implicit_all)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -656,7 +709,8 @@ TEST_F(analysis, recursion_indirect_invalid_implicit_all) {
 
 // ===========================================================
 
-TEST_F(analysis, function_call_statement) {
+TEST_F(analysis, function_call_statement)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -672,7 +726,8 @@ TEST_F(analysis, function_call_statement) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_call_statement_before_definition) {
+TEST_F(analysis, function_call_statement_before_definition)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -688,7 +743,8 @@ TEST_F(analysis, function_call_statement_before_definition) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_call_var_initialization) {
+TEST_F(analysis, function_call_var_initialization)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -704,7 +760,8 @@ TEST_F(analysis, function_call_var_initialization) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_call_assignment_value) {
+TEST_F(analysis, function_call_assignment_value)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -721,7 +778,8 @@ TEST_F(analysis, function_call_assignment_value) {
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, function_call_single_line_function) {
+TEST_F(analysis, function_call_single_line_function)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -736,7 +794,8 @@ TEST_F(analysis, function_call_single_line_function) {
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, function_call_return) {
+TEST_F(analysis, function_call_return)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -750,7 +809,8 @@ TEST_F(analysis, function_call_return) {
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, function_call_invalid_parameter_count) {
+TEST_F(analysis, function_call_invalid_parameter_count)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -764,7 +824,8 @@ TEST_F(analysis, function_call_invalid_parameter_count) {
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, function_call_undefined) {
+TEST_F(analysis, function_call_undefined)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -778,7 +839,8 @@ TEST_F(analysis, function_call_undefined) {
 
 // ===========================================================
 
-TEST_F(analysis, if_statement_condition_boolean) {
+TEST_F(analysis, if_statement_condition_boolean)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -793,7 +855,8 @@ TEST_F(analysis, if_statement_condition_boolean) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_statement_condition_not_boolean) {
+TEST_F(analysis, if_statement_condition_not_boolean)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -808,7 +871,8 @@ TEST_F(analysis, if_statement_condition_not_boolean) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_statement_condition_boolean_variable) {
+TEST_F(analysis, if_statement_condition_boolean_variable)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -824,7 +888,8 @@ TEST_F(analysis, if_statement_condition_boolean_variable) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_statement_condition_not_boolean_variable) {
+TEST_F(analysis, if_statement_condition_not_boolean_variable)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -839,7 +904,8 @@ TEST_F(analysis, if_statement_condition_not_boolean_variable) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_statement_branch_scopes) {
+TEST_F(analysis, if_statement_branch_scopes)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -858,7 +924,8 @@ TEST_F(analysis, if_statement_branch_scopes) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_statement_invalid_subindent_else) {
+TEST_F(analysis, if_statement_invalid_subindent_else)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -873,7 +940,8 @@ TEST_F(analysis, if_statement_invalid_subindent_else) {
     EXPECT_EQ(exit_code(), 1);
 }
 
-TEST_F(analysis, if_statement_invalid_missing_indent_else) {
+TEST_F(analysis, if_statement_invalid_missing_indent_else)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -888,7 +956,8 @@ TEST_F(analysis, if_statement_invalid_missing_indent_else) {
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, if_statement_invalid_dedent_else) {
+TEST_F(analysis, if_statement_invalid_dedent_else)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -905,7 +974,8 @@ TEST_F(analysis, if_statement_invalid_dedent_else) {
 
 // ===========================================================
 
-TEST_F(analysis, while_statement_condition_boolean) {
+TEST_F(analysis, while_statement_condition_boolean)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -920,7 +990,8 @@ TEST_F(analysis, while_statement_condition_boolean) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, while_statement_condition_not_boolean) {
+TEST_F(analysis, while_statement_condition_not_boolean)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -935,7 +1006,8 @@ TEST_F(analysis, while_statement_condition_not_boolean) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, while_statement_condition_boolean_variable) {
+TEST_F(analysis, while_statement_condition_boolean_variable)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -952,7 +1024,8 @@ TEST_F(analysis, while_statement_condition_boolean_variable) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, while_statement_condition_not_boolean_variable) {
+TEST_F(analysis, while_statement_condition_not_boolean_variable)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -968,7 +1041,8 @@ TEST_F(analysis, while_statement_condition_not_boolean_variable) {
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, while_statement_branch_scopes) {
+TEST_F(analysis, while_statement_branch_scopes)
+{
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1468,3 +1542,8 @@ TEST_F(analysis, built_in_chr)
 
     EXPECT_EQ(exit_code(), 0);
 }
+
+// ===========================================================
+// > VarDef
+// > Extensions
+// > Parser/Scanner errors
