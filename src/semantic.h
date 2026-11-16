@@ -2,7 +2,7 @@
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    semantic.h
  * @brief
- * @author  Drahovska Andrea (xdrahoa00), Wyslych Vojtech (xwyslyv00)
+ * @author  Wyslych Vojtech (xwyslyv00)
  */
 
 #ifndef IFJ_1_COMPILER_SEMANTIC_H
@@ -14,7 +14,7 @@ char* type_full_name(char c);
 
 int handle_block(ASTNodeList list, char* result_type);
 
-int handle_statement(ASTNode* statement_node, char* result_type);
+int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcall_type);
 
 int handle_expression(ASTNode* node, char* result_type);
 
