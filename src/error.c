@@ -285,7 +285,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 4;
             break;
         case SEMANTIC_NOT_MATCHING_FUNCTION_RETURN_DATA_TYPE:
-            error.message = "Function declaration does not match function return value data type";
+            error.message = "Value returned by the function does not match its specified return type";
             error.param_count = 0;
             error.code = 6;
             break;
