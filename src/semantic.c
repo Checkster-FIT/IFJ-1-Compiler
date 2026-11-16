@@ -40,7 +40,7 @@ int handle_block(ASTNodeList list, char* result_type)
     ASTNode* statement = list.first;
 
     while (statement) {
-        result = handle_statement(statement, result_type, '\0');
+        result = handle_statement(statement, result_type, NULL);
         if (result)
             return result;
 
@@ -50,7 +50,7 @@ int handle_block(ASTNodeList list, char* result_type)
     return result;
 }
 
-int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcall_type)
+int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funcall_type)
 {
     int result = 0;
     SymtableEntry* entry;
@@ -185,7 +185,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcal
 
         case AST_RETURN: {
             ASTNode* node = statement_node->parent;
-            while (node->type != AST_FUNCTION) // TODO: what if no function?
+            while (node->type != AST_FUNCTION) // parser doesn't let return slip outside function
                 node = node->parent;
 
             entry = get_closest_symtable_entry(node, node->function.identifier);
@@ -269,7 +269,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcal
                 if (strcmp(statement_node->term.identifier, "toString") == 0)
                     dynamic_string_append(identifier, 'a');
                 else
-                    dynamic_string_append(identifier, dot_funcall_type);
+                    dynamic_string_append(identifier, *dot_funcall_type);
 
                 dynamic_string_append(identifier, '#');
                 dynamic_string_append_str(identifier, statement_node->term.identifier);
@@ -279,8 +279,21 @@ int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcal
 
             // get closest either function or defined variable
             entry = get_closest_defined_symtable_entry(statement_node, identifier->chars);
+            if (dot_funcall_type) {
+                // if not found, try implicit conversion to Double
+                if (!entry && *dot_funcall_type == 'i') {
+                    clear_dynamic_string(identifier);
+                    dynamic_string_append_str(identifier, "d#");
+                    dynamic_string_append_str(identifier, statement_node->term.identifier);
+                    *dot_funcall_type = 'c'; // conversion
+                } else
+                    *dot_funcall_type = 'n'; // no conversion
+            }
+
+            entry = get_closest_defined_symtable_entry(statement_node, identifier->chars);
             if (!entry)
                 return print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, identifier->chars);
+
             if (entry->function) {
                 // TODO: this is any call not just recursive -- prolly add symtable function state
                 // recursion on function with no declared type, e.x. `f(): = \n f()`
@@ -331,7 +344,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char dot_funcal
                 else
                     statement_node->type = AST_FUNCALL;
 
-                if (dot_funcall_type)
+                if (entry->extension) // everything called with `.` has extension == true
                     statement_node->function.identifier = identifier->chars;
 
                 *result_type = entry->data_type;
@@ -383,7 +396,7 @@ int handle_expression(ASTNode* node, char* result_type)
     char* op = "";
 
     if (node->type != AST_EXPRESSION)
-        return handle_statement(node, result_type, '\0');
+        return handle_statement(node, result_type, NULL);
 
     int oper = node->expression.operation;
 
@@ -627,12 +640,19 @@ int handle_expression(ASTNode* node, char* result_type)
                 return result;
 
             // handle_statement() checks if suitable for dot notation (matching types)
-            result = handle_statement(node->expression.right, &right_result_type, *result_type); // hand to expression on which type the valmem or ext function has been called
+            result = handle_statement(node->expression.right, &right_result_type, result_type); // hand expression on which type the valmem or ext function has been called
             if (result)
                 return result;
-
-            *result_type = right_result_type;
-            node->expression.result_type = right_result_type;
+            if (*result_type == 'c') {
+                ASTNode* new = ast_insert_conversion(node->expression.left, 'd');
+                if (!new)
+                    return print_error(MEMORY_ALLOCATION_ERROR, node->line, "conversion node");
+                *result_type = 'd';
+                node->expression.result_type = 'd';
+            } else {
+                *result_type = right_result_type;
+                node->expression.result_type = right_result_type;
+            }
 
             return 0;
 
@@ -702,13 +722,6 @@ bool is_main(ASTNode* fun_node)
     return entry->main;
 }
 
-/** TODO:
- * ext, valmem handling:
- *  implicit conversion to double
- *  check if type is applicable for this function + check if `Any` function type is available in the symtable
- *   (check for i#toString if not found, check for a#toString)
- *  propagate found return types to AST
- */
 int run_semantic(ASTNode* ast)
 {
     int result = 0;
