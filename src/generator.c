@@ -184,6 +184,47 @@ void generate_arguments(ASTNodeList* arguments)
     }
 }
 
+void generate_builtin_function(ASTNode* node)
+{
+    if (strcmp(node->term.identifier, "toStr") == 0 || strcmp(node->term.identifier, "a%toString") == 0) {
+        ASTNode* builtin_group = node->term.argument_groups.first;
+        while (builtin_group != NULL) {
+            ASTNode* arg = builtin_group->argument_group.arguments.first;
+            while (arg != NULL) {
+                generate_expression(arg);
+                arg = arg->next;
+            }
+            builtin_group = builtin_group->next;
+        }
+        to_str();
+    } else if (strcmp(node->term.identifier, "strLength") == 0 || strcmp(node->term.identifier, "s%length") == 0) {
+        ASTNode* builtin_group = node->term.argument_groups.first;
+        while (builtin_group != NULL) {
+            ASTNode* arg = builtin_group->argument_group.arguments.first;
+            while (arg != NULL) {
+                generate_expression(arg);
+                arg = arg->next;
+            }
+            builtin_group = builtin_group->next;
+        }
+        printf("POPS LF@$discard\n");
+        printf("STRLEN LF@$discard LF@$discard\n");
+        printf("PUSHS LF@$discard\n");
+    } else if (strcmp(node->term.identifier, "d%toInt") == 0) {
+        printf("FLOAT2INTS\n");
+    } else if (strcmp(node->term.identifier, "d%floor") == 0) {
+        int id_builtin = builtin_label_id++;
+        printf("POPS LF@$op1\n");
+        printf("FLOAT2INT LF@$op2 LF@$op1\n");
+        printf("INT2FLOAT LF@$op3 LF@$op2\n");
+        printf("GT LF@$tmp_type LF@$op3 LF@$op1\n");
+        printf("JUMPIFEQ builtin_end_%d LF@$tmp_type bool@false\n", id_builtin);
+        printf("SUB LF@$op3 LF@$op3 float@0x1p+0\n");
+        printf("LABEL builtin_end_%d\n", id_builtin);
+        printf("PUSHS LF@$op3\n");
+    }
+}
+
 void generate_expression(ASTNode* node)
 {
     if (node == NULL) {
@@ -305,9 +346,19 @@ void generate_expression(ASTNode* node)
                     case OP_UNARY_PLUS:
                         break;
                     case OP_UNARY_MINUS:
-                        printf("PUSHS int@0\n");
                         generate_expression(node->expression.left);
-                        printf("SUBS\n");
+                        int id_unary_minus = builtin_label_id++;
+                        printf("POPS LF@$op1\n");
+                        printf("TYPE LF@$tmp_type LF@$op1\n");
+                        printf("JUMPIFEQ unary_minus_float_%d LF@$tmp_type string@float\n", id_unary_minus);
+                        printf("JUMPIFEQ unary_minus_int_%d LF@$tmp_type string@int\n", id_unary_minus);
+                        printf("LABEL unary_minus_int_%d\n", id_unary_minus);
+                        printf("SUB LF@$op1 int@0 LF@$op1\n");
+                        printf("JUMP unary_minus_end_%d\n", id_unary_minus);
+                        printf("LABEL unary_minus_float_%d\n", id_unary_minus);
+                        printf("SUB LF@$op1 float@0x0p+0 LF@$op1\n");
+                        printf("LABEL unary_minus_end_%d\n", id_unary_minus);
+                        printf("PUSHS LF@$op1\n");
                         break;
                     case OP_LESS:
                         generate_expression(node->expression.left);
@@ -345,8 +396,12 @@ void generate_expression(ASTNode* node)
                     case OP_DOT:
                         generate_expression(node->expression.left);
                         generate_arguments(&node->expression.right->term.argument_groups);
-                        printf("CREATEFRAME\n");
-                        printf("CALL %s\n", node->expression.right->term.identifier);
+                        if (node->expression.right->type == AST_BUILTIN_FUNCALL) {
+                            generate_builtin_function(node->expression.right);
+                        } else {
+                            printf("CREATEFRAME\n");
+                            printf("CALL %s\n", node->expression.right->term.identifier);
+                        }
                         break;
                     case OP_NONE:
                         fprintf(stderr, "generate_expression: operator isn't set\n");
@@ -771,7 +826,7 @@ void to_str()
     printf("JUMPIFEQ $tostr_flt_%d LF@$tmp_type string@float\n", id);
     printf("JUMPIFEQ $tostr_bool_%d LF@$tmp_type string@bool\n", id);
 
-    printf("MOVE LF@$op1 string@nil\n");
+    printf("MOVE LF@$op1 string@()\n");
     printf("JUMP $tostr_end_%d\n", id);
     printf("LABEL $tostr_int_%d\n", id);
     printf("INT2STR LF@$op1 LF@$op1\n");
