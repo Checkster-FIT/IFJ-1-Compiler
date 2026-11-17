@@ -21,7 +21,8 @@ DB_OUTPUT = compile_commands.json
 
 
 ARCHIVE_NAME = archive
-ARCHIVE_CONTAINS = src/* tests/* dokumentace.pdf Makefile rozdeleni
+ARCHIVE_CONTAINS = src/* tests/* tests/data/* dokumentace.pdf Makefile rozdeleni rozsireni
+ARCHIVE_EXCLUDES = tests/data/* tests/data/*/* tests/build/* tests/build/*/* tests/compile
 
 DOC_NAME = dokumentace
 
@@ -74,7 +75,7 @@ clean:
 MAKEFLAGS += --no-print-directory
 
 check:
-	@echo && $(MAKE) checklist
+	@$(MAKE) checklist
 	@echo && $(MAKE) format
 	@echo && $(MAKE) tidy
 	@echo
@@ -216,7 +217,7 @@ doc:
 	mv $(TEX_DIR)/$(DOC_NAME).pdf $(DOC_NAME).pdf
 
 archive: doc
-	zip $(ARCHIVE_NAME).zip $(ARCHIVE_CONTAINS)
+	zip -rD $(ARCHIVE_NAME).zip $(ARCHIVE_CONTAINS) -x $(ARCHIVE_EXCLUDES)
 
 # -----------------------------------------------
 .PHONY: interpret

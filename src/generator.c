@@ -1,8 +1,8 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    generator.c
- * @brief
- * @author
+ * @brief   Generates '.ifj26code' from the final AST and the included symtables
+ * @author  Tobias Mikan (xmikant00)
  */
 
 #include "generator.h"

@@ -1,7 +1,8 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    semantic.c
- * @brief   Implementation of semantic analysis.
+ * @brief   Runs semantic checks on the AST and fills semantic information
+ *          (data types, conversions, term types, ...)
  * @author  Wyslych Vojtech (xwyslyv00)
  */
 

@@ -93,6 +93,7 @@ protected:
 
 TEST_F(analysis, empty_function)
 {
+    /* language=.ifj26 */ /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -104,6 +105,7 @@ TEST_F(analysis, empty_function)
 
 TEST_F(analysis, header_with_comments)
 {
+    /* language=.ifj26 */
     load_code(R"(
         // This program has a comment before its header
         /* This program has a comment before its header */
@@ -117,6 +119,7 @@ TEST_F(analysis, header_with_comments)
 
 TEST_F(analysis, header_missing)
 {
+    /* language=.ifj26 */
     load_code(R"(
         @main def nothing(): Unit =
             ()
@@ -127,6 +130,7 @@ TEST_F(analysis, header_missing)
 
 TEST_F(analysis, header_twice)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         import ifj26.*
@@ -141,6 +145,7 @@ TEST_F(analysis, header_twice)
 
 TEST_F(analysis, main_newline)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main
@@ -153,6 +158,7 @@ TEST_F(analysis, main_newline)
 
 TEST_F(analysis, main_missing)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         def nothing(): Unit =
@@ -164,6 +170,7 @@ TEST_F(analysis, main_missing)
 
 TEST_F(analysis, main_twice)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -177,6 +184,7 @@ TEST_F(analysis, main_twice)
 
 TEST_F(analysis, main_invalid_tag)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @ main
@@ -189,6 +197,7 @@ TEST_F(analysis, main_invalid_tag)
 
 TEST_F(analysis, main_invalid_params)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(str: String): Unit =
@@ -200,6 +209,7 @@ TEST_F(analysis, main_invalid_params)
 
 TEST_F(analysis, main_type_implicit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing() =
@@ -211,6 +221,7 @@ TEST_F(analysis, main_type_implicit)
 
 TEST_F(analysis, main_type_implicit_incorrect)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing() =
@@ -222,6 +233,7 @@ TEST_F(analysis, main_type_implicit_incorrect)
 
 TEST_F(analysis, main_type_explicit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -233,6 +245,7 @@ TEST_F(analysis, main_type_explicit)
 
 TEST_F(analysis, main_type_explicit_incorrect)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Double =
@@ -246,6 +259,7 @@ TEST_F(analysis, main_type_explicit_incorrect)
 
 TEST_F(analysis, function_block_missing)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit =
@@ -256,6 +270,7 @@ TEST_F(analysis, function_block_missing)
 
 TEST_F(analysis, function_inline)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -267,6 +282,7 @@ TEST_F(analysis, function_inline)
 
 TEST_F(analysis, function_identifier_missing)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -278,6 +294,7 @@ TEST_F(analysis, function_identifier_missing)
 
 TEST_F(analysis, function_params_missing_comma)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -289,6 +306,7 @@ TEST_F(analysis, function_params_missing_comma)
 
 TEST_F(analysis, function_params_missing_type)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -300,6 +318,7 @@ TEST_F(analysis, function_params_missing_type)
 
 TEST_F(analysis, function_params_missing_identifier)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -311,6 +330,7 @@ TEST_F(analysis, function_params_missing_identifier)
 
 TEST_F(analysis, function_params_invalid_assignment)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -325,6 +345,7 @@ TEST_F(analysis, function_params_invalid_assignment)
 
 TEST_F(analysis, return_statement_invalid_implicit_type)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -337,6 +358,7 @@ TEST_F(analysis, return_statement_invalid_implicit_type)
 
 TEST_F(analysis, return_statement_invalid_explicit_type)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -351,6 +373,7 @@ TEST_F(analysis, return_statement_invalid_explicit_type)
 
 TEST_F(analysis, return_value_valid)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -362,6 +385,7 @@ TEST_F(analysis, return_value_valid)
 
 TEST_F(analysis, return_value_valid_expression)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -374,6 +398,7 @@ TEST_F(analysis, return_value_valid_expression)
 
 TEST_F(analysis, return_value_valid_expression_single_line)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -385,6 +410,7 @@ TEST_F(analysis, return_value_valid_expression_single_line)
 
 TEST_F(analysis, return_value_valid_funcall)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -398,6 +424,7 @@ TEST_F(analysis, return_value_valid_funcall)
 
 TEST_F(analysis, return_value_valid_funcall_single_line)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -410,6 +437,7 @@ TEST_F(analysis, return_value_valid_funcall_single_line)
 
 TEST_F(analysis, return_value_valid_not_unit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -421,6 +449,7 @@ TEST_F(analysis, return_value_valid_not_unit)
 
 TEST_F(analysis, return_value_after_vardef)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -433,6 +462,7 @@ TEST_F(analysis, return_value_after_vardef)
 
 TEST_F(analysis, return_value_after_assignment)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -446,6 +476,7 @@ TEST_F(analysis, return_value_after_assignment)
 
 TEST_F(analysis, return_value_after_while)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -461,6 +492,7 @@ TEST_F(analysis, return_value_after_while)
 
 TEST_F(analysis, return_value_unit_discard_return)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -475,6 +507,7 @@ TEST_F(analysis, return_value_unit_discard_return)
 
 TEST_F(analysis, if_return_valid_explicit_unit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -490,6 +523,7 @@ TEST_F(analysis, if_return_valid_explicit_unit)
 
 TEST_F(analysis, if_return_invalid_implicit_unit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -505,6 +539,7 @@ TEST_F(analysis, if_return_invalid_implicit_unit)
 
 TEST_F(analysis, if_return_valid_implicit_unit_not_return)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -521,6 +556,7 @@ TEST_F(analysis, if_return_valid_implicit_unit_not_return)
 
 TEST_F(analysis, if_return_invalid_explicit_type)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -536,6 +572,7 @@ TEST_F(analysis, if_return_invalid_explicit_type)
 
 TEST_F(analysis, if_return_valid_explicit_type_all_branches_return)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -551,6 +588,7 @@ TEST_F(analysis, if_return_valid_explicit_type_all_branches_return)
 
 TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -566,6 +604,7 @@ TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return)
 
 TEST_F(analysis, if_return_valid_implicit_all_branches_unit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -581,6 +620,7 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit)
 
 TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -599,6 +639,7 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive)
 
 TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -617,6 +658,7 @@ TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive)
 
 TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -632,6 +674,7 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else)
 
 TEST_F(analysis, recursion_direct_valid_explicit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -646,6 +689,7 @@ TEST_F(analysis, recursion_direct_valid_explicit)
 
 TEST_F(analysis, recursion_direct_invalid_implicit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -659,6 +703,7 @@ TEST_F(analysis, recursion_direct_invalid_implicit)
 
 TEST_F(analysis, recursion_indirect_valid_explicit)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -676,6 +721,7 @@ TEST_F(analysis, recursion_indirect_valid_explicit)
 
 TEST_F(analysis, recursion_indirect_valid_explicit_partial)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -692,6 +738,7 @@ TEST_F(analysis, recursion_indirect_valid_explicit_partial)
 
 TEST_F(analysis, recursion_indirect_invalid_implicit_all)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -711,6 +758,7 @@ TEST_F(analysis, recursion_indirect_invalid_implicit_all)
 
 TEST_F(analysis, function_call_statement)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -728,6 +776,7 @@ TEST_F(analysis, function_call_statement)
 
 TEST_F(analysis, function_call_statement_before_definition)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -745,6 +794,7 @@ TEST_F(analysis, function_call_statement_before_definition)
 
 TEST_F(analysis, function_call_var_initialization)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -762,6 +812,7 @@ TEST_F(analysis, function_call_var_initialization)
 
 TEST_F(analysis, function_call_assignment_value)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -780,6 +831,7 @@ TEST_F(analysis, function_call_assignment_value)
 
 TEST_F(analysis, function_call_single_line_function)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -796,6 +848,7 @@ TEST_F(analysis, function_call_single_line_function)
 
 TEST_F(analysis, function_call_return)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -811,6 +864,7 @@ TEST_F(analysis, function_call_return)
 
 TEST_F(analysis, function_call_invalid_parameter_count)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -826,6 +880,7 @@ TEST_F(analysis, function_call_invalid_parameter_count)
 
 TEST_F(analysis, function_call_undefined)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -841,6 +896,7 @@ TEST_F(analysis, function_call_undefined)
 
 TEST_F(analysis, if_statement_condition_boolean)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -857,6 +913,7 @@ TEST_F(analysis, if_statement_condition_boolean)
 
 TEST_F(analysis, if_statement_condition_not_boolean)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -873,6 +930,7 @@ TEST_F(analysis, if_statement_condition_not_boolean)
 
 TEST_F(analysis, if_statement_condition_boolean_variable)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -890,6 +948,7 @@ TEST_F(analysis, if_statement_condition_boolean_variable)
 
 TEST_F(analysis, if_statement_condition_not_boolean_variable)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -906,6 +965,7 @@ TEST_F(analysis, if_statement_condition_not_boolean_variable)
 
 TEST_F(analysis, if_statement_branch_scopes)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -926,6 +986,7 @@ TEST_F(analysis, if_statement_branch_scopes)
 
 TEST_F(analysis, if_statement_invalid_subindent_else)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -942,6 +1003,7 @@ TEST_F(analysis, if_statement_invalid_subindent_else)
 
 TEST_F(analysis, if_statement_invalid_missing_indent_else)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -958,6 +1020,7 @@ TEST_F(analysis, if_statement_invalid_missing_indent_else)
 
 TEST_F(analysis, if_statement_invalid_dedent_else)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -976,6 +1039,7 @@ TEST_F(analysis, if_statement_invalid_dedent_else)
 
 TEST_F(analysis, while_statement_condition_boolean)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -992,6 +1056,7 @@ TEST_F(analysis, while_statement_condition_boolean)
 
 TEST_F(analysis, while_statement_condition_not_boolean)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1008,6 +1073,7 @@ TEST_F(analysis, while_statement_condition_not_boolean)
 
 TEST_F(analysis, while_statement_condition_boolean_variable)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1026,6 +1092,7 @@ TEST_F(analysis, while_statement_condition_boolean_variable)
 
 TEST_F(analysis, while_statement_condition_not_boolean_variable)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1043,6 +1110,7 @@ TEST_F(analysis, while_statement_condition_not_boolean_variable)
 
 TEST_F(analysis, while_statement_branch_scopes)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1063,6 +1131,7 @@ TEST_F(analysis, while_statement_branch_scopes)
 
 TEST_F(analysis, expressions)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1083,6 +1152,7 @@ TEST_F(analysis, expressions)
 
 TEST_F(analysis, expressions_incompatible_types_string_arithmetic)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1097,6 +1167,7 @@ TEST_F(analysis, expressions_incompatible_types_string_arithmetic)
 
 TEST_F(analysis, expressions_incompatible_types_boolean_arithmetic)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1111,6 +1182,7 @@ TEST_F(analysis, expressions_incompatible_types_boolean_arithmetic)
 
 TEST_F(analysis, expressions_incompatible_types_int_logic)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1125,6 +1197,7 @@ TEST_F(analysis, expressions_incompatible_types_int_logic)
 
 TEST_F(analysis, expressions_valid_division_by_zero)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1141,6 +1214,7 @@ TEST_F(analysis, expressions_valid_division_by_zero)
 
 TEST_F(analysis, expressions_implicit_float_conversion)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1155,6 +1229,7 @@ TEST_F(analysis, expressions_implicit_float_conversion)
 
 TEST_F(analysis, expressions_implicit_float_conversion_check)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1171,6 +1246,7 @@ TEST_F(analysis, expressions_implicit_float_conversion_check)
 
 TEST_F(analysis, expressions_regular_int_check)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1187,6 +1263,7 @@ TEST_F(analysis, expressions_regular_int_check)
 
 TEST_F(analysis, expressions_int_division_check)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1200,6 +1277,7 @@ TEST_F(analysis, expressions_int_division_check)
 
 TEST_F(analysis, expressions_int_float_division_check)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1214,6 +1292,7 @@ TEST_F(analysis, expressions_int_float_division_check)
 
 TEST_F(analysis, expressions_unary_op)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1234,6 +1313,7 @@ TEST_F(analysis, expressions_unary_op)
 
 TEST_F(analysis, expressions_unary_op_invalid_string_plus)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1245,6 +1325,7 @@ TEST_F(analysis, expressions_unary_op_invalid_string_plus)
 
 TEST_F(analysis, expressions_unary_op_invalid_string_minus)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1256,6 +1337,7 @@ TEST_F(analysis, expressions_unary_op_invalid_string_minus)
 
 TEST_F(analysis, expressions_string_concatenation)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1268,6 +1350,7 @@ TEST_F(analysis, expressions_string_concatenation)
 
 TEST_F(analysis, expressions_string_invalid_type_concatenation)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1284,6 +1367,7 @@ TEST_F(analysis, expressions_string_invalid_type_concatenation)
 
 TEST_F(analysis, expressions_comparison)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1305,6 +1389,7 @@ TEST_F(analysis, expressions_comparison)
 
 TEST_F(analysis, expressions_comparison_strings)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1321,6 +1406,7 @@ TEST_F(analysis, expressions_comparison_strings)
 
 TEST_F(analysis, expressions_equality)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1343,6 +1429,7 @@ TEST_F(analysis, expressions_equality)
 
 TEST_F(analysis, expressions_comparison_invalid_chaining)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1356,6 +1443,7 @@ TEST_F(analysis, expressions_comparison_invalid_chaining)
 
 TEST_F(analysis, expressions_equality_invalid_chaining)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1369,6 +1457,7 @@ TEST_F(analysis, expressions_equality_invalid_chaining)
 
 TEST_F(analysis, expressions_combined_boolean)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1384,6 +1473,7 @@ TEST_F(analysis, expressions_combined_boolean)
 
 TEST_F(analysis, built_in_print)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1401,6 +1491,7 @@ TEST_F(analysis, built_in_print)
 
 TEST_F(analysis, built_in_print_unit_return_type)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1418,6 +1509,7 @@ TEST_F(analysis, built_in_print_unit_return_type)
 
 TEST_F(analysis, built_in_read_functions)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1433,6 +1525,7 @@ TEST_F(analysis, built_in_read_functions)
 
 TEST_F(analysis, built_in_read_functions_invalid_arguments)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1448,6 +1541,7 @@ TEST_F(analysis, built_in_read_functions_invalid_arguments)
 
 TEST_F(analysis, built_in_conversion_functions)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1468,6 +1562,7 @@ TEST_F(analysis, built_in_conversion_functions)
 
 TEST_F(analysis, built_in_to_str_invalid_arguments)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1481,6 +1576,7 @@ TEST_F(analysis, built_in_to_str_invalid_arguments)
 
 TEST_F(analysis, built_in_to_int_invalid_arguments)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1494,6 +1590,7 @@ TEST_F(analysis, built_in_to_int_invalid_arguments)
 
 TEST_F(analysis, built_in_str_length)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1507,6 +1604,7 @@ TEST_F(analysis, built_in_str_length)
 
 TEST_F(analysis, built_in_substr)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1520,6 +1618,7 @@ TEST_F(analysis, built_in_substr)
 
 TEST_F(analysis, built_in_ord)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();
@@ -1533,6 +1632,7 @@ TEST_F(analysis, built_in_ord)
 
 TEST_F(analysis, built_in_chr)
 {
+    /* language=.ifj26 */
     load_code(R"(
         import ifj26.*
         @main def nothing(): Unit = ();

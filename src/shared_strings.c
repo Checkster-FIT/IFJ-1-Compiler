@@ -1,7 +1,8 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    shared_strings.c
- * @brief
+ * @brief   Adds structure for sharing allocated strings across modules
+ *          and structure for dynamically allocated string
  * @author  Filip Hajdusek (xhajduf00)
  */
 
