@@ -209,14 +209,19 @@ database:
 	bear -- make -B $(DB_TARGETS)
 
 # -----------------------------------------------
-.PHONY: doc archive
+.PHONY: doc archive ok
 # -----------------------------------------------
 
 doc:
 	cd $(TEX_DIR) && pdflatex $(DOC_NAME).tex
 	mv $(TEX_DIR)/$(DOC_NAME).pdf $(DOC_NAME).pdf
 
-archive: doc
+ok: $(ARCHIVE_NAME).zip
+	@chmod +x is_it_ok.sh
+	@./is_it_ok.sh $(ARCHIVE_NAME).zip
+
+archive: $(ARCHIVE_NAME).zip
+$(ARCHIVE_NAME).zip: doc
 	zip -rD $(ARCHIVE_NAME).zip $(ARCHIVE_CONTAINS) -x $(ARCHIVE_EXCLUDES)
 
 # -----------------------------------------------
