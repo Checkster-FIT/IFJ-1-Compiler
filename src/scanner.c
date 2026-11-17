@@ -764,8 +764,15 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
                         context->scanned_string->chars);
                     return token;
-                } else if (c == '"') {
+                } else if (c == '"')
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_2;
+                else if (c == '$')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR;
+                else if (c == '\\')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE;
+                else if (c == '\n') {
+                    context->line += 1;
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 } else
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
 
@@ -777,8 +784,15 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
                         context->scanned_string->chars);
                     return token;
-                } else if (c == '"') {
+                } else if (c == '"')
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_3;
+                else if (c == '$')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR;
+                else if (c == '\\')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE;
+                else if (c == '\n') {
+                    context->line += 1;
+                    state = STATE_MULTILINE_STRING_INTERPOLATION;
                 } else
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
 
