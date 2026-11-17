@@ -25,7 +25,7 @@ ASTNode* new_ast()
         return NULL;
     }
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_PROGRAM,
         .next = NULL,
         .parent = NULL,
@@ -87,10 +87,10 @@ void free_ast_nodes(ASTNode* node)
         case AST_VAR_DEF:
             free_ast_nodes(node->vardef.expression);
             break;
-        case AST_VAR_ASSIGN: ;
+        case AST_VAR_ASSIGN:;
             free_ast_nodes(node->assignment.expression);
             break;
-        case AST_RETURN: ;
+        case AST_RETURN:;
             free_ast_nodes(node->return_st.expression);
             break;
         case AST_EXPRESSION:
@@ -197,14 +197,14 @@ ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_EXTENSION,
         .next = NULL,
         .parent = ast,
         .line = 0,
         .extension = {
-            .functions = {},
-            .parameter_groups = {},
+            .functions = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -222,15 +222,15 @@ ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtab
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_FUNCTION,
         .next = NULL,
         .parent = NULL,
         .line = 0,
         .function = {
             .identifier = identifier,
-            .statements = {},
-            .parameter_groups = {},
+            .statements = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -257,13 +257,13 @@ ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_PARAMETER_GROUP,
         .next = NULL,
         .parent = NULL,
         .line = 0,
         .parameter_group = {
-            .parameters = {},
+            .parameters = { },
         },
     };
 
@@ -286,7 +286,7 @@ ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_PARAMETER,
         .next = NULL,
         .parent = NULL,
@@ -315,7 +315,7 @@ ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_VAR_DEF,
         .next = NULL,
         .line = 0,
@@ -339,7 +339,7 @@ ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_VAR_ASSIGN,
         .next = NULL,
         .line = 0,
@@ -364,7 +364,7 @@ ASTNode* ast_add_return(ASTNode* ast)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_RETURN,
         .next = NULL,
         .line = 0,
@@ -388,14 +388,14 @@ ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_WHILE_DO,
         .next = NULL,
         .line = 0,
         .parent = NULL,
         .while_do = {
             .condition = NULL,
-            .statements = {},
+            .statements = { },
             .symtable = symtable },
     };
 
@@ -414,7 +414,7 @@ ASTNode* ast_add_if(ASTNode* ast)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_IF,
         .next = NULL,
         .line = 0,
@@ -440,26 +440,26 @@ ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Sym
         return NULL;
 
     if (type == AST_THEN) {
-        *node = (ASTNode){
+        *node = (ASTNode) {
             .type = AST_THEN,
             .next = NULL,
             .line = 0,
             .parent = NULL,
             .then_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.then_node = node;
     } else if (type == AST_ELSE) {
-        *node = (ASTNode){
+        *node = (ASTNode) {
             .type = AST_ELSE,
             .next = NULL,
             .line = 0,
             .parent = NULL,
             .else_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.else_node = node;
@@ -487,13 +487,13 @@ ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_ARGUMENT_GROUP,
         .next = NULL,
         .parent = NULL,
         .line = 0,
         .argument_group = {
-            .arguments = {},
+            .arguments = { },
         },
     };
 
@@ -603,7 +603,7 @@ ASTNode* ast_new_expression(const ASTExpression expression)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_EXPRESSION,
         .next = NULL,
         .parent = NULL,
@@ -624,7 +624,7 @@ ASTNode* ast_new_term(const char* identifier)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_TERM,
         .next = NULL,
         .parent = NULL,
@@ -644,13 +644,13 @@ ASTNode* ast_new_interpolated_string()
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_INTERPOLATED_STRING,
         .next = NULL,
         .parent = NULL,
         .line = 0,
         .interpolated_string = {
-            .expressions = {},
+            .expressions = { },
         },
     };
 
@@ -664,7 +664,7 @@ ASTNode* ast_new_literal(const ASTLiteral literal)
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_LITERAL,
         .next = NULL,
         .parent = NULL,
@@ -686,7 +686,7 @@ ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
 
     *child_node = *node;
 
-    *node = (ASTNode){
+    *node = (ASTNode) {
         .type = AST_CONVERSION,
         .next = child_node->next,
         .parent = child_node->parent,

@@ -225,7 +225,7 @@ void generate_expression(ASTNode* node)
         return;
     }
     switch (node->type) {
-        case AST_LITERAL:
+        case AST_LITERAL: {
             char* type;
             switch (node->literal.type) {
                 case AST_INTEGER:
@@ -264,6 +264,7 @@ void generate_expression(ASTNode* node)
                     exit(99);
             }
             break;
+        }
         case AST_TERM:
         case AST_VAR_USE:
             printf("PUSHS LF@%s\n", node->term.identifier);
@@ -668,7 +669,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             generate_expression(statement->vardef.expression);
             printf("POPS LF@%s\n", statement->vardef.identifier);
             break;
-        case AST_WHILE_DO:
+        case AST_WHILE_DO: {
             static int while_counter = 0;
             while_counter += 1;
             printf("LABEL while_start_%d\n", while_counter);
@@ -680,6 +681,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             printf("JUMP while_start_%d\n", while_counter);
             printf("LABEL while_end_%d\n", while_counter);
             break;
+        }
         case AST_RETURN:
             generate_expression(statement->return_st.expression);
             printf("POPFRAME\n");
@@ -706,7 +708,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
                 printf("POPS LF@$discard\n");
             }
             break;
-        case AST_IF:
+        case AST_IF: {
             static int if_counter = 0;
             if_counter += 1;
             int current_if = if_counter;
@@ -721,6 +723,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
                 generate_statements(statement->if_statement.else_node, false);
             printf("LABEL if_end_%d\n", current_if);
             break;
+        }
         case AST_ELSE:
             generate_statements(statement->if_statement.else_node, false);
             break;
@@ -762,10 +765,7 @@ bool is_string_expr(ASTNode* node)
         return true;
     }
     if (node->type == AST_BUILTIN_FUNCALL && node->term.identifier != NULL) {
-        return strcmp(node->term.identifier, "readLine") == 0 ||
-            strcmp(node->term.identifier, "chr") == 0 ||
-            strcmp(node->term.identifier, "subStr") == 0 ||
-            strcmp(node->term.identifier, "toStr") == 0;
+        return strcmp(node->term.identifier, "readLine") == 0 || strcmp(node->term.identifier, "chr") == 0 || strcmp(node->term.identifier, "subStr") == 0 || strcmp(node->term.identifier, "toStr") == 0;
     }
     if (node->type == AST_VAR_USE && node->term.identifier != NULL) {
         SymtableEntry* entry = get_closest_symtable_entry(node, node->term.identifier);

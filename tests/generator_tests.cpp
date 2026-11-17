@@ -26,7 +26,7 @@ protected:
         create_local_symtable(ast); // jinak spadne free_symtable(NULL)
 
         if (is_main) {
-            SymtableEntry e = {};
+            SymtableEntry e = { };
             e.defined = true;
             e.main = true;
             e.identifier = name;

@@ -1319,7 +1319,6 @@ TEST_F(analysis, expressions_comparison_strings)
     EXPECT_EQ(exit_code(), 0);
 }
 
-
 TEST_F(analysis, expressions_equality)
 {
     load_code(R"(

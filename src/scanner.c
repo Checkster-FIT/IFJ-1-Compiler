@@ -17,7 +17,7 @@
 
 #define LINE (context->line)
 
-static const char *keywords[NUMBER_OF_KEYWORDS] = {
+static const char* keywords[NUMBER_OF_KEYWORDS] = {
     "def",
     "do",
     "Double",
@@ -44,12 +44,13 @@ static const char *keywords[NUMBER_OF_KEYWORDS] = {
     "false"
 };
 
-int init_scanner(ScannerContext *scanner_context, AllocatedStrings *strings) {
-    DynamicString *scanned_string = init_dynamic_string();
+int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
+{
+    DynamicString* scanned_string = init_dynamic_string();
     if (!scanned_string)
         return 1;
 
-    Stack *indent_stack = init_stack();
+    Stack* indent_stack = init_stack();
     if (!indent_stack) {
         dispose_dynamic_string(scanned_string);
         return 1;
@@ -74,12 +75,14 @@ int init_scanner(ScannerContext *scanner_context, AllocatedStrings *strings) {
     return 0;
 }
 
-void destroy_scanner(const ScannerContext *scanner_context) {
+void destroy_scanner(const ScannerContext* scanner_context)
+{
     dispose_dynamic_string(scanner_context->scanned_string);
     dispose_stack(scanner_context->indent_stack);
 }
 
-int check_identifier_for_kw(DynamicString *string) {
+int check_identifier_for_kw(DynamicString* string)
+{
     if (!string)
         return -2;
 
@@ -91,14 +94,15 @@ int check_identifier_for_kw(DynamicString *string) {
     return IS_IDENTIFIER;
 }
 
-int check_indentation(ScannerContext *context, int current_indent, bool first_call) {
-    int const s_top = (int) (intptr_t) top(context->indent_stack);
+int check_indentation(ScannerContext* context, int current_indent, bool first_call)
+{
+    int const s_top = (int)(intptr_t)top(context->indent_stack);
     if (s_top == current_indent && first_call == true)
         return NO_INDENTATION;
     if (s_top == current_indent && first_call == false)
         return DEDENTATION;
     if (s_top < current_indent && first_call == true) {
-        push(context->indent_stack, (void *) (intptr_t) current_indent);
+        push(context->indent_stack, (void*)(intptr_t)current_indent);
         return INDENTATION;
     }
     if (s_top < current_indent && first_call == false) {
@@ -117,7 +121,8 @@ int check_indentation(ScannerContext *context, int current_indent, bool first_ca
  * nested interpolation - simple string x multiline string
  *
  */
-Token get_token(ScannerContext *context, FILE *stream) {
+Token get_token(ScannerContext* context, FILE* stream)
+{
     State state = STATE_START;
     Token token;
 
@@ -158,14 +163,14 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
     while (1) {
         char c;
-        char *str;
+        char* str;
         int status;
-        char *end_ptr;
+        char* end_ptr;
 
         if (context->read_buffer) {
             c = context->scanned_char_buffer;
         } else {
-            c = (char) fgetc(stream);
+            c = (char)fgetc(stream);
 
             if (ferror(stream)) {
                 token.type = ERROR;
@@ -182,8 +187,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
         switch (state) {
             case STATE_START:
 
-                if (context->scanning_variable_inside_string_interpolation == true && (
-                        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
+                if (context->scanning_variable_inside_string_interpolation == true && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
                     // handle the variable inside interpolated string as normal variable, then return back into interpolated string
                     context->scanning_variable_inside_string_interpolation = false;
                     state = STATE_IDENTIFIER;
@@ -275,7 +279,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, LINE, context->scanned_string->chars,
-                                                        "&&");
+                        "&&");
                     return token;
                 }
 
@@ -288,7 +292,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_UNKNOWN_OPERATOR, LINE, context->scanned_string->chars,
-                                                        "||");
+                        "||");
                     return token;
                 }
 
@@ -344,10 +348,8 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
-                        // STRING
+                // STRING
 
-
-            
             case STATE_STRING_WHICH:
 
                 // remove `"` from beginning of the scanned string since parser only needs the inside of the string
@@ -362,12 +364,12 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -384,12 +386,12 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -438,14 +440,14 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -502,7 +504,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -517,7 +519,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -532,7 +534,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -559,10 +561,8 @@ Token get_token(ScannerContext *context, FILE *stream) {
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
 
-                        // INTERPOLATED STRING
+                // INTERPOLATED STRING
 
-
-            
             case STATE_CHARACTER_S:
 
                 if (c == '"')
@@ -600,12 +600,12 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else if (c == '$')
                     state = STATE_STRING_INTERPOLATION_DOLLAR;
@@ -647,7 +647,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else if (c == '\n') {
                     context->line += 1;
@@ -664,7 +664,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -724,7 +724,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     if (str == NULL) {
                         token.type = ERROR;
                         token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE,
-                                                            "multiline string interpolation");
+                            "multiline string interpolation");
 
                         return token;
                     }
@@ -749,8 +749,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
-                    token.attribute_error =
-                            print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
 
                     return token;
                 }
@@ -763,7 +762,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else if (c == '"') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_2;
@@ -776,7 +775,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else if (c == '"') {
                     state = STATE_MULTILINE_STRING_INTERPOLATION_END_3;
@@ -799,8 +798,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 str = add_string_copy(context->strings, context->scanned_string->chars);
                 if (str == NULL) {
                     token.type = ERROR;
-                    token.attribute_error =
-                            print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
+                    token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "multiline string interpolation");
 
                     return token;
                 }
@@ -821,12 +819,12 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -945,14 +943,14 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == '\n') {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1075,7 +1073,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1085,7 +1083,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c >= '0' && c <= '9')
                     state = STATE_DOUBLE_DECIMAL_NUMBER;
 
-                    // dot notation (e.x. 12.toInt)
+                // dot notation (e.x. 12.toInt)
                 else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                     dynamic_string_remove_last(context->scanned_string); // remove .
 
@@ -1103,12 +1101,10 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     context->pending_dot = true;
                     RETURN_TOKEN_AND_SET_READ_BUFFER // read this c again
 
-
-                
                 } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_DOUBLE_INVALID_DECIMAL_POINT, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1127,7 +1123,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                     token.type = ERROR;
                     long valid_alternative = strtol(context->scanned_string->chars, &end_ptr, 10);
                     token.attribute_error = print_error(SCANNER_INT_LEADING_ZERO, LINE, context->scanned_string->chars,
-                                                        valid_alternative);
+                        valid_alternative);
                     return token;
                 }
 
@@ -1144,7 +1140,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1187,7 +1183,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1218,7 +1214,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1230,7 +1226,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_DOUBLE_MISSING_EXPONENT, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1269,7 +1265,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_NUM_INVALID_UNDERSCORE, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 
@@ -1503,7 +1499,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
                 if (c == '/') {
@@ -1524,7 +1520,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
                 if (c == '*') {
@@ -1540,17 +1536,15 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 if (c == EOF) {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_BLOCK_COMMENT, LINE, "end of file",
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
                 if (c == '/' && context->block_comment_counter != 0) {
                     context->block_comment_counter -= 1;
                     state = STATE_BLOCK_COMMENT_START;
-                } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment ==
-                           false) {
+                } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == false) {
                     state = STATE_BLOCK_COMMENT_END_WITHOUT_LF;
-                } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment ==
-                           true) {
+                } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == true) {
                     state = STATE_BLOCK_COMMENT_END_WITH_LF;
                 } else {
                     state = STATE_BLOCK_COMMENT_START;
@@ -1573,7 +1567,7 @@ Token get_token(ScannerContext *context, FILE *stream) {
                 } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS, LINE,
-                                                        context->scanned_string->chars);
+                        context->scanned_string->chars);
                     return token;
                 }
 

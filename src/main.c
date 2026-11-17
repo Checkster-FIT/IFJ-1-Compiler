@@ -23,14 +23,26 @@ int main()
         return EXIT_CODE_INTERNAL_ERROR;
     }
 
+    // Syntax analysis
     const int exit_code_parser = run_parser(ast, strings, NULL);
-    const int exit_code_semantic = run_semantic(ast);
+    if (exit_code_parser != 0) {
+        free_ast_nodes(ast);
+        free_strings(strings);
+        return exit_code_parser;
+    }
 
-    // print_ast(ast);
+    // Semantic analysis
+    const int exit_code_semantic = run_semantic(ast);
+    if (exit_code_semantic != 0) {
+        free_ast_nodes(ast);
+        free_strings(strings);
+        return exit_code_semantic;
+    }
+
+    // Code generation
     generate_program(ast);
 
     free_ast_nodes(ast);
     free_strings(strings);
-
-    return exit_code_parser || exit_code_semantic;
+    return 0;
 }

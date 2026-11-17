@@ -108,7 +108,7 @@ TEST_UNITS_H = $(addsuffix .h, $(TEST_UNITS))
 TEST_UNITS_O = $(addsuffix .o, $(TEST_UNITS))
 TEST_UNITS_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
-TEST_COMPLEX = analysis
+TEST_COMPLEX = analysis runtime
 TEST_COMPLEX_EXEC = $(addsuffix _tests, $(TEST_UNITS))
 
 TEST_SHARED = error shared_strings symtable ast bst debug stack
@@ -159,6 +159,15 @@ $(BUILD)/analysis_tests: $(OBJ)/analysis_tests.o \
 	$(TEST_MAIN_OBJECT)
 	$(CXX) $^ $(GTEST_FLAGS) -o $@
 
+$(BUILD)/runtime_tests: $(OBJ)/runtime_tests.o \
+	$(SHARED_OBJECTS) \
+	$(OBJ)/parser.o \
+	$(OBJ)/scanner.o \
+	$(OBJ)/semantic.o \
+	$(OBJ)/generator.o \
+	$(TEST_MAIN_OBJECT)
+	$(CXX) $^ $(GTEST_FLAGS) -o $@
+
 # [!] ANY ADDITIONAL TEST DEPENDENCIES GO HERE
 $(BUILD)/parser_tests: $(OBJ)/scanner.o
 $(BUILD)/scanner_tests: $(OBJ)/parser.o
@@ -184,6 +193,12 @@ test-analysis-build: $(BUILD)/analysis_tests
 test-analysis: $(BUILD)/analysis_tests
 	@$^ 2>/dev/null || true
 
+test-runtime-build: $(MAIN_EXEC) $(INTERPRET) $(BUILD)/runtime_tests
+	chmod +x $(INTERPRET)
+
+test-runtime: $(MAIN_EXEC) $(INTERPRET) $(BUILD)/runtime_tests
+	@$^ 2>/dev/null || true
+
 # -----------------------------------------------
 .PHONY: database
 # -----------------------------------------------
@@ -207,9 +222,9 @@ archive: doc
 .PHONY: interpret
 # -----------------------------------------------
 
-ic26int-linux-x86_64:
-	scp merlin.fit.vut.cz:/pub/courses/ifj/ic26int/linux/ic26int ic26int
-	chmod +x ic26int
+INTERPRET = ic26int-linux-x86_64
 
-interpret: ic26int-linux-x86_64
-	./ic26int
+interpret: $(INTERPRET)
+$(INTERPRET):
+	scp merlin.fit.vut.cz:/pub/courses/ifj/ic26int/linux/$(INTERPRET) $(INTERPRET)
+	chmod +x $(INTERPRET)
