@@ -17,6 +17,7 @@ typedef struct stack_el {
 
 typedef struct {
     StackEl* top;
+    int size;
 } Stack;
 
 /**
@@ -32,7 +33,7 @@ Stack* init_stack();
  * @param stack Pointer to checked stack.
  * @return true if empty, false if not empty.
  */
-bool is_empty_stack(Stack* stack);
+bool is_empty_stack(const Stack* stack);
 
 /**
  * @brief Tops all elements from stack and frees allocated stack space.
@@ -52,6 +53,16 @@ void dispose_stack(Stack* stack);
 int push(Stack* stack, void* data);
 
 /**
+ * @brief Allocates memory for new stack element and pushes the element into the stack.
+ * Integer value is stored into the element.
+ *
+ * @param stack Pointer to stack.
+ * @param value Integer value which is to be stored.
+ * @return 0 on success, 1 on memory allocation fail
+ */
+int push_value(Stack* stack, int value);
+
+/**
  * @brief Pops top element from stack and frees its space
  *
  * @param stack Pointer to stack from which the element will be popped.
@@ -64,6 +75,22 @@ void pop(Stack* stack);
  * @param stack Pointer to stack.
  * @return Pointer stored in the stack top element, NULL on empty stack.
  */
-void* top(Stack* stack);
+void* top(const Stack* stack);
+
+/**
+ * @brief Returns an integer value stored in stack top element.
+ *
+ * @param stack Pointer to stack.
+ * @return Integer value in the stack top element, -1 on empty stack.
+ */
+int top_value(const Stack* stack);
+
+/**
+ * @brief Returns the number of elements in the stack
+ *
+ * @param stack Pointer to stack.
+ * @return Integer value representing the stack size.
+ */
+int stack_size(const Stack* stack);
 
 #endif // IFJ_1_COMPILER_STACK_H

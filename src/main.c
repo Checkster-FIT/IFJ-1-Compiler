@@ -7,8 +7,8 @@
 
 #include "generator.h"
 #include "parser.h"
+#include "semantic.h"
 #include "shared_strings.h"
-#include "symtable.h"
 
 int main()
 {
@@ -23,11 +23,26 @@ int main()
         return EXIT_CODE_INTERNAL_ERROR;
     }
 
-    const int exit_code_parser = run_parser(ast, strings);
-    run_generator(ast);
+    // Syntax analysis
+    const int exit_code_parser = run_parser(ast, strings, NULL);
+    if (exit_code_parser != 0) {
+        free_ast_nodes(ast);
+        free_strings(strings);
+        return exit_code_parser;
+    }
 
-    free_strings(strings);
+    // Semantic analysis
+    const int exit_code_semantic = run_semantic(ast);
+    if (exit_code_semantic != 0) {
+        free_ast_nodes(ast);
+        free_strings(strings);
+        return exit_code_semantic;
+    }
+
+    // Code generation
+    generate_program(ast);
+
     free_ast_nodes(ast);
-
-    return exit_code_parser;
+    free_strings(strings);
+    return 0;
 }

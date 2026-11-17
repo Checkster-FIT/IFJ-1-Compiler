@@ -48,7 +48,6 @@ protected:
     {
         scanner_input(string);
         for (const auto desired_token : expected_tokens) {
-
             const Token token = get_token(&scanner_context, tmp_input);
             // printf("Token type: %d\n", token.type);
 
@@ -87,17 +86,30 @@ protected:
     {
         return { .type = type };
     }
+
     static Token token(const type_enum type, const char* value)
     {
         return { .type = type, .attribute_string = value };
     }
+
     static Token token(const type_enum type, const int value)
     {
         return { .type = type, .attribute_int = value };
     }
+
     static Token token(const type_enum type, const double value)
     {
         return { .type = type, .attribute_double = value };
+    }
+
+    void SetUp() override
+    {
+        testing::internal::CaptureStderr();
+    }
+
+    void TearDown() override
+    {
+        testing::internal::GetCapturedStderr();
     }
 };
 
@@ -235,6 +247,7 @@ TEST_F(scanner, int_zero)
             token(INTEGER, 0),
         });
 }
+
 TEST_F(scanner, underscore)
 {
     verify_token_sequence("_", { token(ERROR) });
@@ -387,6 +400,7 @@ TEST_F(scanner, mstring_quotes_inside)
     verify_token_sequence("\"\"\"a\"b\"\"\"", { token(MULTILINE_STRING, "a\"b") });
     verify_token_sequence("\"\"\"a\"\"b\"\"\"", { token(MULTILINE_STRING, "a\"\"b") });
 }
+
 // ===================== Identifiers (keyword prefixes)
 TEST_F(scanner, identifier_keyword_lookalikes)
 {

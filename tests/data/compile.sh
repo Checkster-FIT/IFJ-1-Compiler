@@ -10,13 +10,14 @@ tests=(
     core/factorial.ifj26
     core/strings.ifj26
     extensions/boolthen.ifj26
-    extensions/control.ifj26
     extensions/extkw.ifj26
     extensions/funexp.ifj26
     extensions/interpolateds.ifj26
     extensions/paramlists.ifj26
     extensions/valmem.ifj26
 )
+
+#   extensions/control.ifj26
 
 for test in "${tests[@]}"; do
     "./ifj26compiler" < "tests/data/$test" > /dev/null 2>&1

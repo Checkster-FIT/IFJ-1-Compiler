@@ -1,26 +1,72 @@
 import ifj26.*
 
+extension (value: Int)
+  def twice: Int = value * 2
+
+extension (value: Double)
+  def twice: Double = value * 2
+
 def factorial(n: Int): Int =
-    var result = 1
+    var result = 1 + (n * 8)
     var i: Int = n
     while i > 1 do
         result = result * i
         i = i - 1
     if i == 42 then
+        // return -42
         return 42;
+
+    if i < 0 || i > 50 then
+        return 0;
+    else if (i + n) == -9 then
+        return 5
+
     result
 
-@main def runFoo(): Unit =
+def pi_string() =
+    3.14159265359.toString
+
+@main
+def runFoo(): Unit =
     val n = readInt()
     val result = factorial(n)
     print(result)
     print("\n")
+    custom(1, 1.2, "Test", true, ());
 
 def custom(i: Int, d: Double, s: String, b: Boolean, u: Unit): Unit =
     var abc = 1; val _def = 65;
-    var xyz = if abc == 1 then "One" else "Not one"
 
     while abc < 5 do
         abc = abc + abc;
-
     ()
+
+//     val function = square(add(2, 3))
+    return ()
+
+def square(i: Int) = i*i
+def add(a: Int, b: Int) = a+b;
+
+def todo(): Int =
+    var todo: String = "todo";
+//     (5).toStr
+
+//     var xyz = if abc == 1 then "One" else "Not one"
+
+//     abc = (
+//         6 +
+//         5 +
+//     )
+
+    var i = 5;
+    if i < 0 || i > 50 then
+        return 0;
+    else if (i + add(i, 8) == -9) then
+        return 5
+    else
+        if i != 0 then
+            return -4
+    if i != 0 then
+        return -4
+
+    return 5

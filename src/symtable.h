@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    symtable.h
- * @brief
+ * @brief   Adds the 'Symbol Table' structure and structure related methods
  * @author  Filip Hajdusek (xhajduf00)
  */
 
@@ -9,22 +9,48 @@
 #define IFJ_1_COMPILER_SYMTABLE_H
 
 #include "bst.h"
+#include "shared_strings.h"
+
 #include <stdbool.h>
 
+typedef enum {
+    ANALYSIS_NONE,
+    ANALYSIS_IN_PROGRESS,
+    ANALYSIS_FINISHED
+} AnalysisStatus;
+
 typedef struct {
-    bool defined;
-    bool main;
     const char* identifier;
     char data_type;
+    DynamicString* parameters;
+
+    AnalysisStatus status;
+
+    bool defined;
+    bool builtin;
+    bool extension;
+    bool function;
+    bool constant;
+    bool main;
+    bool error;
+
 } SymtableEntry;
 
 typedef RBTree Symtable;
 
 Symtable* new_symtable();
+
+SymtableEntry* add_built_in_function(Symtable* symtable, char* identifier,
+    const char* parameters, char return_type, bool extension);
+
+Symtable* add_built_in_entries(Symtable* symtable);
+
 void free_symtable(const Symtable* symtable);
+
 void free_allocated_entries(const TNode* node);
 
-SymtableEntry* symtable_add(Symtable* symtable, SymtableEntry function);
-SymtableEntry* symtable_add_var(Symtable* symtable, SymtableEntry var);
+SymtableEntry* symtable_add_entry(Symtable* symtable, SymtableEntry entry);
+
+SymtableEntry* symtable_main_search(Symtable* symtable);
 
 #endif // IFJ_1_COMPILER_SYMTABLE_H
