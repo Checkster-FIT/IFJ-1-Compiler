@@ -133,10 +133,9 @@ TEST_F(runtime, squared)
 {
     /* language=.ifj26 */
     source = R"(
-
         import ifj26.*
 
-        @main def nothing(): Unit =
+        @main def main(): Unit =
             var in = readInt();
             print(squared(in));
 
@@ -152,14 +151,33 @@ TEST_F(runtime, undefined)
 {
     /* language=.ifj26 */
     source = R"(
-
         import ifj26.*
 
-        @main def nothing(): Unit =
+        @main def main(): Unit =
             var in = readInt();
             print(squared(in));
 
     )";
 
     expect_code = 3;
+}
+
+// ========================================================
+
+TEST_F(runtime, case_sensitivity)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var a = readInt();
+            var A = readInt();
+            print(A);
+            print("\n");
+            print(a);
+    )";
+
+    input = "1\n2";
+    output = "2\n1";
 }

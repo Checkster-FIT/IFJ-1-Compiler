@@ -178,9 +178,13 @@ TEST_EXECUTABLES = \
 	$(addprefix $(BUILD)/,$(addsuffix _tests,$(TEST_UNITS))) \
 	$(addprefix $(BUILD)/,$(addsuffix _tests,$(TEST_COMPLEX)))
 
-build-test: $(TEST_EXECUTABLES)
-test: $(TEST_EXECUTABLES)
-	@for test in $^; do echo; $$test 2>/dev/null || true; done
+TEST_EXECUTABLES_LIST = \
+	$(addsuffix _tests,$(TEST_UNITS)) \
+	$(addsuffix _tests,$(TEST_COMPLEX))
+
+build-test: $(TEST_EXECUTABLES) $(MAIN_EXEC)
+test: $(TEST_EXECUTABLES) $(MAIN_EXEC)
+	@cd $(BUILD) && for test in $(TEST_EXECUTABLES_LIST); do echo; ./$$test 2>/dev/null || true; done
 
 test-parser-build: $(BUILD)/parser_tests
 test-parser: $(BUILD)/parser_tests
@@ -194,11 +198,11 @@ test-analysis-build: $(BUILD)/analysis_tests
 test-analysis: $(BUILD)/analysis_tests
 	@$^ 2>/dev/null || true
 
-test-runtime-build: $(MAIN_EXEC) $(INTERPRET) $(BUILD)/runtime_tests
+test-runtime-build: $(BUILD)/runtime_tests $(MAIN_EXEC) $(INTERPRET)
 	chmod +x $(INTERPRET)
 
-test-runtime: $(MAIN_EXEC) $(INTERPRET) $(BUILD)/runtime_tests
-	@$^ 2>/dev/null || true
+test-runtime: $(BUILD)/runtime_tests $(MAIN_EXEC) $(INTERPRET)
+	@cd $(BUILD) && ./runtime_tests 2>/dev/null || true
 
 # -----------------------------------------------
 .PHONY: database
