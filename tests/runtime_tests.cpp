@@ -131,7 +131,9 @@ private:
 
 TEST_F(runtime, squared)
 {
+    /* language=.ifj26 */
     source = R"(
+
         import ifj26.*
 
         @main def nothing(): Unit =
@@ -139,6 +141,7 @@ TEST_F(runtime, squared)
             print(squared(in));
 
         def squared(value: Int) = value * value
+
     )";
 
     input = "8";
@@ -147,7 +150,9 @@ TEST_F(runtime, squared)
 
 TEST_F(runtime, undefined)
 {
+    /* language=.ifj26 */
     source = R"(
+
         import ifj26.*
 
         @main def nothing(): Unit =

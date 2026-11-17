@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    symtable.c
- * @brief
+ * @brief   Adds the 'Symbol Table' structure and structure related methods
  * @author  Filip Hajdusek (xhajduf00)
  */
 

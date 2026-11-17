@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    ast.h
- * @brief
+ * @brief   Adds the 'Abstract Syntax Tree' structure and structure related methods
  * @author  Filip Hajdusek (xhajduf00)
  */
 
