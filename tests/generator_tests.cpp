@@ -15,18 +15,17 @@ extern "C" {
 
 class Generator : public ::testing::Test {
 protected:
-    ASTNode* ast = nullptr;
+    ASTNode *ast = nullptr;
 
     void SetUp() override { ast = new_ast(); }
     void TearDown() override { free_ast_nodes(ast); }
 
-    void add_function(const char* name, bool is_main)
-    {
+    void add_function(const char *name, bool is_main) {
         ast_add_function(ast, name, ast->program.global_symtable);
         create_local_symtable(ast); // jinak spadne free_symtable(NULL)
 
         if (is_main) {
-            SymtableEntry e = { };
+            SymtableEntry e = {};
             e.defined = true;
             e.main = true;
             e.identifier = name;
@@ -35,8 +34,7 @@ protected:
     }
 };
 
-TEST_F(Generator, main_function)
-{
+TEST_F(Generator, main_function) {
     add_function("foo", false);
     add_function("bonq", false);
     add_function("main", true);
@@ -51,9 +49,8 @@ TEST_F(Generator, main_function)
     EXPECT_NE(out.find("LABEL $main\n"), std::string::npos);
 }
 
-TEST_F(Generator, no_main_function)
-{
+TEST_F(Generator, no_main_function) {
     add_function("foo", false);
     EXPECT_EXIT(generator(ast), ::testing::ExitedWithCode(99),
-        "entry function not found");
+                "entry function not found");
 }

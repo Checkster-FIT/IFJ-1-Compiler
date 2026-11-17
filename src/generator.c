@@ -50,6 +50,10 @@ void generate_program(ASTNode* node)
 
 void generate_function(ASTNode* node)
 {
+    if (node->parent == NULL) {
+        return;
+    }
+
     printf("LABEL %s\n", node->function.identifier);
 
     printf("CREATEFRAME\n");
@@ -62,7 +66,7 @@ void generate_function(ASTNode* node)
     printf("DEFVAR LF@$tmp_char\n");
 
     generate_local_variables(node->function.symtable);
-    if (node->parent != NULL && node->parent->type == AST_EXTENSION) {
+    if (node->parent->type == AST_EXTENSION) {
         generate_local_variables(node->parent->extension.symtable);
     }
     generate_nested_local_variables(node->function.statements.first);
@@ -70,19 +74,20 @@ void generate_function(ASTNode* node)
     if (node->parent->type == AST_EXTENSION) {
         generate_parameters(&node->parent->extension.parameter_groups);
     }
-    generate_statements(node->function.statements.first, true);
 
-    if (node->parent->type == AST_PROGRAM) {
-        SymtableEntry* main = symtable_main_search(node->parent->program.global_symtable);
-        if (strcmp(main->identifier, node->function.identifier) == 0) {
-            printf("EXIT int@0\n\n");
-        } else {
-            printf("POPFRAME\n");
-            printf("RETURN\n\n");
-        }
-    } else if (node->parent->type == AST_EXTENSION) {
-        printf("POPFRAME\n");
-        printf("RETURN\n\n");
+    bool is_main = (node->parent->type == AST_PROGRAM) && strcmp(symtable_main_search(node->parent->program.global_symtable)->identifier, node->function.identifier) == 0;
+
+    ASTNode* last = node->function.statements.last;
+    bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL || last->type == AST_BUILTIN_FUNCALL || last->type == AST_VAR_USE || last->type == AST_INTERPOLATED_STRING);
+
+    generate_statements(node->function.statements.first, has_expr_ret);
+
+    if (is_main) {
+        printf("EXIT int@0\n\n");
+    } else {
+        if (!has_expr_ret)
+            printf("PUSHS nil@nil\n");
+        printf("POPFRAME\nRETURN\n\n");
     }
 }
 
@@ -703,6 +708,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
         case AST_FUNCALL:
         case AST_BUILTIN_FUNCALL:
         case AST_VAR_USE:
+        case AST_INTERPOLATED_STRING:
             generate_expression(statement);
             if (!is_last) {
                 printf("POPS LF@$discard\n");
