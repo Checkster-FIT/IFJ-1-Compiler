@@ -1,7 +1,8 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    runtime_tests.cpp
- * @brief   Automated complex tests for lexical, syntax and semantic analysis
+ * @brief   Automated complex tests for lexical, syntax, semantic analysis,
+ *          code generation and interpretation
  * @author  Filip Hajdusek (xhajduf00)
  */
 
