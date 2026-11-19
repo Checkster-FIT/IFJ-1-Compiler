@@ -410,7 +410,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                         return token;
                     }
                     state = STATE_STRING_BEGIN;
-                    break;
+                    continue;
                 }
 
                 if (c == 'n') {
