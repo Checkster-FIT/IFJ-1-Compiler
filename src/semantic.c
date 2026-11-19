@@ -279,6 +279,9 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 dynamic_string_append_str(identifier_tmp, statement_node->term.identifier);
             }
 
+            // Save the original funcall type
+            const char tmp_type = dot_funcall_type ? *dot_funcall_type : '\0';
+
             // get closest either function or defined variable
             entry = get_closest_defined_symtable_entry(statement_node, identifier_tmp->chars);
             if (dot_funcall_type) {
@@ -295,7 +298,14 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
             entry = get_closest_defined_symtable_entry(statement_node, identifier_tmp->chars);
 
             if (!entry) {
-                int exit_code = print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, identifier_tmp->chars);
+                int exit_code = 0;
+
+                if (!dot_funcall_type)
+                    exit_code = print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, identifier_tmp->chars);
+                else
+                    exit_code =  print_error(SEMANTIC_EXTENSION_INVALID_CALL_TYPE, statement_node->line,
+                        statement_node->term.identifier, str_type(tmp_type));
+
                 dispose_dynamic_string(identifier_tmp);
                 return exit_code;
             }

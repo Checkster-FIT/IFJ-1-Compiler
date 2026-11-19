@@ -359,6 +359,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 1;
             error.code = 3;
             break;
+        case SEMANTIC_EXTENSION_INVALID_CALL_TYPE:
+            error.message = "Cannot resolve function call '%s' on the '%s' type";
+            error.fix = "Function or variable must be defined before use with this type";
+            error.param_count = 2;
+            error.code = 6;
+            break;
         case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
             error.message = "'%s' function call does not match the defined number of parameters or group of parameters";
             error.param_count = 2;

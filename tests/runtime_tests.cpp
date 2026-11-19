@@ -22,6 +22,7 @@ using std::string;
 using std::stringstream;
 
 struct CompilerResult {
+    string flags = "";
     int code = -1;
     string errors;
 };
@@ -44,13 +45,14 @@ protected:
     string input;
     string output;
 
+    bool ast = false; // Add --ast and other flags to the compiler?
     int expect_code = 0;
 
     bool run_compiler(const string& ifj26, const string& ifj26code, const string& err)
     {
         ofstream(tmp(ifj26)) << source;
 
-        string cmd = COMPILER;
+        string cmd = COMPILER + (' ') + compiler.flags;
         cmd += " < " + tmp(ifj26);
         cmd += " > " + tmp(ifj26code);
         cmd += " 2> " + tmp(err);
@@ -98,10 +100,14 @@ protected:
 
     void TearDown() override
     {
+        // Show the the line of the actual test as well
+        const auto *info = testing::UnitTest::GetInstance()->current_test_info();
+        testing::ScopedTrace trace(info->file(), info->line(), "Failed test");
+
         EXPECT_EQ(exit_code(), expect_code);
         EXPECT_EQ(interpreter.output, output);
 
-        if (HasFailure())
+        if (HasFailure() || compiler.flags != "")
             std::cout << compiler.errors << interpreter.errors;
     }
 
