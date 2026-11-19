@@ -43,20 +43,13 @@ make run
 ```
  1. FUNEXP         1.5 b
  2. BOOLTHEN       1.0 b
- 3. CONTROL        1.5 b
  4. VALMEM         0.5 b
  6. INTERPOLATEDS  0.5 b
  9. EXTKW          0.5 b
 10. PARAMLISTS     0.5 b
 ------------------------
-    Součet         6.0 b 
+    Součet         4.5 b 
 ```
-
-[//]: # (```)
-[//]: # ( 5. ALGEBDT        2.0 b  )
-[//]: # ( 7. LAMBDAS        2.5 b)
-[//]: # ( 8. LISTS          2.0 b           )
-[//]: # (```)
 
 ---
 

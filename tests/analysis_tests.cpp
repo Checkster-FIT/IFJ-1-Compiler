@@ -1643,6 +1643,124 @@ TEST_F(analysis, built_in_chr)
 }
 
 // ===========================================================
+
+TEST_F(analysis, comment_as_newline)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") // \n
+            print("B")
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, multiline_comment_nesting)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /* /* /* /* */ */ */ */
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, multiline_comment_nesting_invalid)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /* /* /* /* */ */
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+TEST_F(analysis, multiline_comment_white_char)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(1/*SPACE*/+ /*SPACE*/ 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, multiline_comment_newline)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /*
+                newline
+            */
+            print("B")
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(analysis, multiline_comment_newline_invalid)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /*
+                newline
+            */ print("B")
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+TEST_F(analysis, multiline_comment_newline_invalid_nested)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(1 + /* /*
+                newline
+            */ */ 2);
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+// ===========================================================
+
+// TODO: Trailing comma before newline
+TEST_F(analysis, trailing_comma_invalid)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit =
+            print(5,);
+
+    )");
+
+    EXPECT_EQ(exit_code(), 2);
+}
+
+
+// ===========================================================
 // > VarDef
 // > Extensions
 // > Parser/Scanner errors

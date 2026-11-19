@@ -1,7 +1,8 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    runtime_tests.cpp
- * @brief   Automated complex tests for lexical, syntax and semantic analysis
+ * @brief   Automated complex tests for lexical, syntax, semantic analysis,
+ *          code generation and interpretation
  * @author  Filip Hajdusek (xhajduf00)
  */
 
@@ -21,6 +22,7 @@ using std::string;
 using std::stringstream;
 
 struct CompilerResult {
+    string flags = "";
     int code = -1;
     string errors;
 };
@@ -43,13 +45,14 @@ protected:
     string input;
     string output;
 
+    bool ast = false; // Add --ast and other flags to the compiler?
     int expect_code = 0;
 
     bool run_compiler(const string& ifj26, const string& ifj26code, const string& err)
     {
         ofstream(tmp(ifj26)) << source;
 
-        string cmd = COMPILER;
+        string cmd = COMPILER + (' ') + compiler.flags;
         cmd += " < " + tmp(ifj26);
         cmd += " > " + tmp(ifj26code);
         cmd += " 2> " + tmp(err);
@@ -97,10 +100,14 @@ protected:
 
     void TearDown() override
     {
+        // Show the the line of the actual test as well
+        const auto *info = testing::UnitTest::GetInstance()->current_test_info();
+        testing::ScopedTrace trace(info->file(), info->line(), "Failed test");
+
         EXPECT_EQ(exit_code(), expect_code);
         EXPECT_EQ(interpreter.output, output);
 
-        if (HasFailure())
+        if (HasFailure() || compiler.flags != "")
             std::cout << compiler.errors << interpreter.errors;
     }
 
@@ -181,3 +188,164 @@ TEST_F(runtime, case_sensitivity)
     input = "1\n2";
     output = "2\n1";
 }
+
+TEST_F(runtime, invalid_character)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(`x`);
+    )";
+
+    expect_code = 1;
+}
+
+TEST_F(runtime, invalid_escape_sequence)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("Test \h");
+    )";
+
+    expect_code = 1;
+}
+
+TEST_F(runtime, multiline_ignore_escape_sequence)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("""Hello \n world""");
+    )";
+
+    output = "Hello \\n world";
+    expect_code = 0;
+}
+
+// ========================================================
+
+TEST_F(runtime, statement_order)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A");
+            var x = 0
+            print("B");
+            print(x);
+            x = x + 8
+            print("C");
+            print(x);
+    )";
+
+    output = "AB0C8";
+    expect_code = 0;
+}
+
+TEST_F(runtime, variable_initalization)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var x = "Test";
+            val y = something(x);
+            print(y);
+            print(x);
+            var z = y + 8 * 5;
+            print(z);
+
+        def something(s: String) = strLength(s);
+    )";
+
+    output = "4Test44";
+    expect_code = 0;
+}
+
+// ========================================================
+
+TEST_F(runtime, scope_functions)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            something();
+            nothing();
+
+        def something() =
+            var x = 5;
+            print(x);
+
+        def nothing() =
+            var x = 0;
+            print(x);
+    )";
+
+    output = "50";
+    expect_code = 0;
+}
+
+TEST_F(runtime, scope_conditional_block)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var x = 0;
+            print(x);
+
+            if true then
+                print(x);
+                var x = 1;
+                print(x);
+            else
+                print(x);
+                var x = 2;
+                print(x);
+
+            print(x);
+    )";
+
+    output = "0010";
+    expect_code = 0;
+}
+
+TEST_F(runtime, scope_cycle_block)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var x = "-";
+            print(x);
+
+            var counter = 0;
+            while counter < 3 do
+                print(x);
+                var x = "=";
+                print(counter);
+                print(x);
+                counter = counter + 1;
+
+            print(x);
+    )";
+
+    output = "--0=-1=-2=-";
+    expect_code = 0;
+}
+
+// ========================================================

@@ -68,6 +68,8 @@ clean:
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
 	@rm -fv *.pdf
+	@rm -fv *.log
+	@rm -fv $(ARCHIVE_NAME).zip
 
 # -----------------------------------------------
 .PHONY: check format tidy tidy-cpp checklist examples

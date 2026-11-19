@@ -756,7 +756,7 @@ bool is_string_expr(ASTNode* node)
     if (node->type == AST_EXPRESSION) {
         if (node->expression.result_type == 's')
             return true;
-        return is_string_expr(node->expression.left) || is_string_expr(node->expression.right);
+        return false;
     }
     if (node->type == AST_LITERAL) {
         return node->literal.type == AST_STRING;

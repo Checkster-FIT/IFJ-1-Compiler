@@ -5,13 +5,17 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
+#include "debug.h"
 #include "generator.h"
 #include "parser.h"
 #include "semantic.h"
 #include "shared_strings.h"
 
-int main()
+#include <string.h>
+
+int main(const int argc, char* argv[])
 {
+
     AllocatedStrings* strings = new_strings();
     if (strings == NULL) {
         return EXIT_CODE_INTERNAL_ERROR;
@@ -41,6 +45,12 @@ int main()
 
     // Code generation
     generate_program(ast);
+
+    // Flags
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--ast") == 0)
+            print_ast(ast);
+    }
 
     free_ast_nodes(ast);
     free_strings(strings);
