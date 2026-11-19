@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 static int builtin_label_id = 0;
 
@@ -122,7 +123,7 @@ void generate_local_variables_recursive(TNode* node)
     }
     generate_local_variables_recursive(node->left);
     SymtableEntry* entry = (SymtableEntry*)node->value;
-    printf("DEFVAR LF@%s\n", entry->identifier);
+    printf("DEFVAR LF@%s_%zx\n", entry->identifier, (uintptr_t)entry);
     generate_local_variables_recursive(node->right);
 }
 
@@ -146,7 +147,8 @@ void generate_parameter(ASTNode* param_node)
     generate_parameter(param_node->next);
 
     if (param_node->parameter.identifier != NULL) {
-        printf("POPS LF@%s\n", param_node->parameter.identifier);
+        SymtableEntry* entry = get_closest_symtable_entry(param_node, param_node->parameter.identifier);
+        printf("POPS LF@%s_%zx\n", param_node->parameter.identifier, (uintptr_t)entry);
     }
 }
 
@@ -272,7 +274,8 @@ void generate_expression(ASTNode* node)
         }
         case AST_TERM:
         case AST_VAR_USE:
-            printf("PUSHS LF@%s\n", node->term.identifier);
+            SymtableEntry* entry = get_closest_symtable_entry(node, node->term.identifier);
+            printf("PUSHS LF@%s_%zx\n", node->term.identifier, (uintptr_t)entry);
             break;
         case AST_EXPRESSION:
             if (node->expression.operation == OP_AND) {
@@ -668,11 +671,13 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
     switch (statement->type) {
         case AST_VAR_ASSIGN:
             generate_expression(statement->assignment.expression);
-            printf("POPS LF@%s\n", statement->assignment.target);
+            SymtableEntry* entry = get_closest_symtable_entry(statement, statement->assignment.target);
+            printf("POPS LF@%s_%zx\n", statement->assignment.target, (uintptr_t)entry);
             break;
         case AST_VAR_DEF:
             generate_expression(statement->vardef.expression);
-            printf("POPS LF@%s\n", statement->vardef.identifier);
+            SymtableEntry* entry_var_def = get_closest_symtable_entry(statement, statement->vardef.identifier);
+            printf("POPS LF@%s_%zx\n", statement->vardef.identifier, (uintptr_t)entry_var_def);
             break;
         case AST_WHILE_DO: {
             static int while_counter = 0;
@@ -731,10 +736,10 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             break;
         }
         case AST_ELSE:
-            generate_statements(statement->if_statement.else_node, false);
+            generate_statements(statement->else_statement.statements.first, false);
             break;
         case AST_THEN:
-            generate_statements(statement->if_statement.then_node, false);
+            generate_statements(statement->then_statement.statements.first, false);
             break;
         default:
             fprintf(stderr, "generate_statements_switch: accessed wrong statement type %d\n", statement->type);
@@ -762,7 +767,7 @@ bool is_string_expr(ASTNode* node)
     if (node->type == AST_EXPRESSION) {
         if (node->expression.result_type == 's')
             return true;
-        return is_string_expr(node->expression.left) || is_string_expr(node->expression.right);
+        return false;
     }
     if (node->type == AST_LITERAL) {
         return node->literal.type == AST_STRING;
