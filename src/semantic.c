@@ -181,6 +181,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
             return 0;
 
         case AST_RETURN: {
+            // find node of function inside which the return is used
             ASTNode* node = statement_node->parent;
             while (node->type != AST_FUNCTION) // parser doesn't let return slip outside function
                 node = node->parent;
@@ -218,7 +219,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
             }
 
             if (!entry->data_type)
-                return print_error(SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE, statement_node->line, entry->identifier);
+                return print_error(SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE, statement_node->line, entry->identifier[2]); // remove e.x. `i#` from the function identifier
 
             // compare return type with declared type
             if (entry->data_type != *result_type)
@@ -330,13 +331,19 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 // ----- PARAM CHECKS -----
 
                 for (ASTNode* group = statement_node->term.argument_groups.first; group; group = group->next) {
-                    if (param_string[i] != '#')
+                    if (param_string[i] != '#') {
+                        if (entry->extension)
+                            return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier[2]);
                         return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
+                    }
                     i++;
 
                     for (ASTNode* arg = group->argument_group.arguments.first; arg; arg = arg->next) {
-                        if (param_string[i] == '#' || param_string[i] == '\0') // called with too many args
+                        if (param_string[i] == '#' || param_string[i] == '\0') { // called with too many args
+                            if (entry->extension)
+                                return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier[2]);
                             return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
+                        }
 
                         result = handle_expression(arg, result_type);
                         if (result)
@@ -357,8 +364,11 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                     }
                 }
 
-                if (param_string[i] != '\0') // called with too little args
+                if (param_string[i] != '\0') { // called with too little args
+                    if (entry->extension)
+                        return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier[2]);
                     return print_error(SEMANTIC_FUNCALL_PARAMETER_MISMATCH, statement_node->line, entry->identifier);
+                }
 
                 if (entry->builtin)
                     statement_node->type = AST_BUILTIN_FUNCALL;
