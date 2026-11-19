@@ -349,3 +349,55 @@ TEST_F(runtime, scope_cycle_block)
 }
 
 // ========================================================
+
+class boolthen : public runtime {};
+
+TEST_F(boolthen, print)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(true)
+            print(" ")
+            print(false)
+            print(" ")
+            print(!true)
+            print(" ")
+            print(!false)
+            print(" ")
+            print(true && false)
+            print(" ")
+            print(true || false)
+    )";
+
+    output = "true false false true false true";
+    expect_code = 0;
+}
+
+TEST_F(boolthen, read)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(readBoolean())
+            print(" ")
+            print(readBoolean())
+            print(" ")
+            print(!readBoolean())
+            print(" ")
+            print(!readBoolean())
+            print(" ")
+            print(readBoolean() && readBoolean())
+            print(" ")
+            print(readBoolean() || readBoolean())
+    )";
+
+    input = "true\nfalse\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\n";
+    output = "true false false true false true";
+    expect_code = 0;
+}
+
