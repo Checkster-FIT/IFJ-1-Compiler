@@ -1722,7 +1722,7 @@ int failed(ParserContext* parser, const int err, ...)
     if (parser->token_error != 0)
         return FAILED;
 
-    va_list args = {};
+    va_list args = { };
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);

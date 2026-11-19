@@ -11,31 +11,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-ASTNode *new_ast() {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* new_ast()
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    Symtable *symtable = new_symtable();
+    Symtable* symtable = new_symtable();
 
     if (symtable == NULL) {
         free(node);
         return NULL;
     }
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_PROGRAM,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        program = {
+    *node = (ASTNode) {
+        .type = AST_PROGRAM,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .program = {
             .functions = {
                 .first = NULL,
                 .active = NULL,
@@ -63,7 +58,8 @@ ASTNode *new_ast() {
     return node;
 }
 
-void free_ast_nodes(ASTNode *node) {
+void free_ast_nodes(ASTNode* node)
+{
     if (node == NULL)
         return;
 
@@ -91,10 +87,10 @@ void free_ast_nodes(ASTNode *node) {
         case AST_VAR_DEF:
             free_ast_nodes(node->vardef.expression);
             break;
-        case AST_VAR_ASSIGN: ;
+        case AST_VAR_ASSIGN:;
             free_ast_nodes(node->assignment.expression);
             break;
-        case AST_RETURN: ;
+        case AST_RETURN:;
             free_ast_nodes(node->return_st.expression);
             break;
         case AST_EXPRESSION:
@@ -145,17 +141,19 @@ void free_ast_nodes(ASTNode *node) {
     free(node);
 }
 
-void free_node_list(ASTNodeList *list) {
+void free_node_list(ASTNodeList* list)
+{
     list->active = list->first;
 
     while (list->active) {
-        ASTNode *next = list->active->next;
+        ASTNode* next = list->active->next;
         free_ast_nodes(list->active);
         list->active = next;
     }
 }
 
-void ast_list_add(ASTNodeList *list, ASTNode *node) {
+void ast_list_add(ASTNodeList* list, ASTNode* node)
+{
     if (list == NULL)
         return;
 
@@ -171,8 +169,9 @@ void ast_list_add(ASTNodeList *list, ASTNode *node) {
     }
 }
 
-ASTNodeList *get_top_statement_block(const ASTNode *ast) {
-    ASTNode *node = top(ast->program.block_stack);
+ASTNodeList* get_top_statement_block(const ASTNode* ast)
+{
+    ASTNode* node = top(ast->program.block_stack);
 
     if (node == NULL)
         return NULL;
@@ -191,26 +190,21 @@ ASTNodeList *get_top_statement_block(const ASTNode *ast) {
 
 // ========================================
 
-ASTNode *ast_add_extension(ASTNode *ast, Symtable *symtable) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_extension(ASTNode* ast, Symtable* symtable)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_EXTENSION,
-        .
-        next = NULL,
-        .
-        parent = ast,
-        .
-        line = 0,
-        .
-        extension = {
-            .functions = {},
-            .parameter_groups = {},
+    *node = (ASTNode) {
+        .type = AST_EXTENSION,
+        .next = NULL,
+        .parent = ast,
+        .line = 0,
+        .extension = {
+            .functions = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -221,27 +215,22 @@ ASTNode *ast_add_extension(ASTNode *ast, Symtable *symtable) {
     return node;
 }
 
-ASTNode *ast_add_function(ASTNode *ast, const char *identifier, Symtable *symtable, const ASTTarget target) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_function(ASTNode* ast, const char* identifier, Symtable* symtable, const ASTTarget target)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_FUNCTION,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        function = {
+    *node = (ASTNode) {
+        .type = AST_FUNCTION,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .function = {
             .identifier = identifier,
-            .statements = {},
-            .parameter_groups = {},
+            .statements = { },
+            .parameter_groups = { },
             .symtable = symtable,
         },
     };
@@ -261,25 +250,20 @@ ASTNode *ast_add_function(ASTNode *ast, const char *identifier, Symtable *symtab
     return node;
 }
 
-ASTNode *ast_add_parameter_group(ASTNode *ast, const ASTTarget target) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_parameter_group(ASTNode* ast, const ASTTarget target)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_PARAMETER_GROUP,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        parameter_group = {
-            .parameters = {},
+    *node = (ASTNode) {
+        .type = AST_PARAMETER_GROUP,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .parameter_group = {
+            .parameters = { },
         },
     };
 
@@ -295,24 +279,19 @@ ASTNode *ast_add_parameter_group(ASTNode *ast, const ASTTarget target) {
     return node;
 }
 
-ASTNode *ast_add_parameter(ASTNode *ast, const char *identifier, const ASTTarget target) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_parameter(ASTNode* ast, const char* identifier, const ASTTarget target)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_PARAMETER,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        parameter = {
+    *node = (ASTNode) {
+        .type = AST_PARAMETER,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .parameter = {
             .identifier = identifier,
         },
     };
@@ -329,22 +308,18 @@ ASTNode *ast_add_parameter(ASTNode *ast, const char *identifier, const ASTTarget
     return node;
 }
 
-ASTNode *ast_add_vardef(ASTNode *ast, const char *identifier) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_vardef(ASTNode* ast, const char* identifier)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_VAR_DEF,
-        .
-        next = NULL,
-        .
-        line = 0,
-        .
-        vardef = {
+    *node = (ASTNode) {
+        .type = AST_VAR_DEF,
+        .next = NULL,
+        .line = 0,
+        .vardef = {
             .identifier = identifier,
             .expression = NULL,
         },
@@ -357,24 +332,19 @@ ASTNode *ast_add_vardef(ASTNode *ast, const char *identifier) {
     return node;
 }
 
-ASTNode *ast_add_assignment(ASTNode *ast, const char *identifier) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_assignment(ASTNode* ast, const char* identifier)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_VAR_ASSIGN,
-        .
-        next = NULL,
-        .
-        line = 0,
-        .
-        parent = NULL,
-        .
-        assignment = {
+    *node = (ASTNode) {
+        .type = AST_VAR_ASSIGN,
+        .next = NULL,
+        .line = 0,
+        .parent = NULL,
+        .assignment = {
             .target = identifier,
             .expression = NULL,
         },
@@ -387,24 +357,19 @@ ASTNode *ast_add_assignment(ASTNode *ast, const char *identifier) {
     return node;
 }
 
-ASTNode *ast_add_return(ASTNode *ast) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_return(ASTNode* ast)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_RETURN,
-        .
-        next = NULL,
-        .
-        line = 0,
-        .
-        parent = NULL,
-        .
-        return_st = {
+    *node = (ASTNode) {
+        .type = AST_RETURN,
+        .next = NULL,
+        .line = 0,
+        .parent = NULL,
+        .return_st = {
             .expression = NULL,
         },
     };
@@ -416,28 +381,22 @@ ASTNode *ast_add_return(ASTNode *ast) {
     return node;
 }
 
-ASTNode *ast_add_while_do(ASTNode *ast, Symtable *symtable) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_while_do(ASTNode* ast, Symtable* symtable)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_WHILE_DO,
-        .
-        next = NULL,
-        .
-        line = 0,
-        .
-        parent = NULL,
-        .
-        while_do = {
+    *node = (ASTNode) {
+        .type = AST_WHILE_DO,
+        .next = NULL,
+        .line = 0,
+        .parent = NULL,
+        .while_do = {
             .condition = NULL,
-            .statements = {},
-            .symtable = symtable
-        },
+            .statements = { },
+            .symtable = symtable },
     };
 
     node->parent = top(ast->program.block_stack);
@@ -448,24 +407,19 @@ ASTNode *ast_add_while_do(ASTNode *ast, Symtable *symtable) {
     return node;
 }
 
-ASTNode *ast_add_if(ASTNode *ast) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_if(ASTNode* ast)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_IF,
-        .
-        next = NULL,
-        .
-        line = 0,
-        .
-        parent = NULL,
-        .
-        if_statement = {
+    *node = (ASTNode) {
+        .type = AST_IF,
+        .next = NULL,
+        .line = 0,
+        .parent = NULL,
+        .if_statement = {
             .condition = NULL,
             .then_node = NULL,
             .else_node = NULL,
@@ -478,45 +432,34 @@ ASTNode *ast_add_if(ASTNode *ast) {
     return node;
 }
 
-ASTNode *ast_add_if_branch(ASTNode *ast, ASTNodeType type, ASTNode *if_node, Symtable *symtable) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_if_branch(ASTNode* ast, ASTNodeType type, ASTNode* if_node, Symtable* symtable)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
     if (type == AST_THEN) {
-        *node = (ASTNode)
-        {
-            .
-            type = AST_THEN,
-            .
-            next = NULL,
-            .
-            line = 0,
-            .
-            parent = NULL,
-            .
-            then_statement = {
+        *node = (ASTNode) {
+            .type = AST_THEN,
+            .next = NULL,
+            .line = 0,
+            .parent = NULL,
+            .then_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.then_node = node;
     } else if (type == AST_ELSE) {
-        *node = (ASTNode)
-        {
-            .
-            type = AST_ELSE,
-            .
-            next = NULL,
-            .
-            line = 0,
-            .
-            parent = NULL,
-            .
-            else_statement = {
+        *node = (ASTNode) {
+            .type = AST_ELSE,
+            .next = NULL,
+            .line = 0,
+            .parent = NULL,
+            .else_statement = {
                 .symtable = symtable,
-                .statements = {},
+                .statements = { },
             },
         };
         if_node->if_statement.else_node = node;
@@ -528,7 +471,8 @@ ASTNode *ast_add_if_branch(ASTNode *ast, ASTNodeType type, ASTNode *if_node, Sym
     return node;
 }
 
-ASTNode *ast_add_expression(ASTNode *ast, ASTNode *expression) {
+ASTNode* ast_add_expression(ASTNode* ast, ASTNode* expression)
+{
     expression->parent = top(ast->program.block_stack);
     ast_list_add(get_top_statement_block(ast), expression);
 
@@ -536,25 +480,20 @@ ASTNode *ast_add_expression(ASTNode *ast, ASTNode *expression) {
     return expression;
 }
 
-ASTNode *ast_add_argument_group(ASTNode *ast, ASTNode *funcall_node) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_add_argument_group(ASTNode* ast, ASTNode* funcall_node)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_ARGUMENT_GROUP,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        argument_group = {
-            .arguments = {},
+    *node = (ASTNode) {
+        .type = AST_ARGUMENT_GROUP,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .argument_group = {
+            .arguments = { },
         },
     };
 
@@ -567,7 +506,8 @@ ASTNode *ast_add_argument_group(ASTNode *ast, ASTNode *funcall_node) {
 
 // ===============================================
 
-Symtable *get_node_symtable(const ASTNode *node) {
+Symtable* get_node_symtable(const ASTNode* node)
+{
     switch (node->type) {
         case AST_PROGRAM:
             return node->program.global_symtable;
@@ -586,21 +526,22 @@ Symtable *get_node_symtable(const ASTNode *node) {
     }
 }
 
-SymtableEntry *get_closest_defined_symtable_entry(const ASTNode *node, const char *identifier) {
+SymtableEntry* get_closest_defined_symtable_entry(const ASTNode* node, const char* identifier)
+{
     if (node == NULL)
         return NULL;
 
-    const ASTNode *current = node->parent;
+    const ASTNode* current = node->parent;
 
     while (current != NULL) {
-        const Symtable *symtable = get_node_symtable(current);
+        const Symtable* symtable = get_node_symtable(current);
 
         if (symtable == NULL) {
             current = current->parent;
             continue;
         }
 
-        const TNode *search_result = search(symtable, identifier);
+        const TNode* search_result = search(symtable, identifier);
 
         if (search_result == NULL || search_result->value == NULL) {
             current = current->parent;
@@ -608,12 +549,12 @@ SymtableEntry *get_closest_defined_symtable_entry(const ASTNode *node, const cha
         }
 
         // Skip undefined entries
-        if (((SymtableEntry *) search_result->value)->defined == false) {
+        if (((SymtableEntry*)search_result->value)->defined == false) {
             current = current->parent;
             continue;
         }
 
-        SymtableEntry *entry = search_result->value;
+        SymtableEntry* entry = search_result->value;
         if (entry->function || entry->defined)
             return entry;
 
@@ -625,21 +566,22 @@ SymtableEntry *get_closest_defined_symtable_entry(const ASTNode *node, const cha
     return NULL;
 }
 
-SymtableEntry *get_closest_symtable_entry(const ASTNode *node, const char *identifier) {
+SymtableEntry* get_closest_symtable_entry(const ASTNode* node, const char* identifier)
+{
     if (node == NULL)
         return NULL;
 
-    const ASTNode *current = node->parent;
+    const ASTNode* current = node->parent;
 
     while (current != NULL) {
-        const Symtable *symtable = get_node_symtable(current);
+        const Symtable* symtable = get_node_symtable(current);
 
         if (symtable == NULL) {
             current = current->parent;
             continue;
         }
 
-        const TNode *search_result = search(symtable, identifier);
+        const TNode* search_result = search(symtable, identifier);
 
         if (search_result == NULL) {
             current = current->parent;
@@ -654,24 +596,19 @@ SymtableEntry *get_closest_symtable_entry(const ASTNode *node, const char *ident
 
 // ============================================================
 
-ASTNode *ast_new_expression(const ASTExpression expression) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_new_expression(const ASTExpression expression)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_EXPRESSION,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        expression = {
+    *node = (ASTNode) {
+        .type = AST_EXPRESSION,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .expression = {
             .left = expression.left,
             .right = expression.right,
         }
@@ -680,24 +617,19 @@ ASTNode *ast_new_expression(const ASTExpression expression) {
     return node;
 }
 
-ASTNode *ast_new_term(const char *identifier) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_new_term(const char* identifier)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_TERM,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        term = {
+    *node = (ASTNode) {
+        .type = AST_TERM,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .term = {
             .identifier = identifier,
         },
     };
@@ -705,49 +637,39 @@ ASTNode *ast_new_term(const char *identifier) {
     return node;
 }
 
-ASTNode *ast_new_interpolated_string() {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_new_interpolated_string()
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_INTERPOLATED_STRING,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        interpolated_string = {
-            .expressions = {},
+    *node = (ASTNode) {
+        .type = AST_INTERPOLATED_STRING,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .interpolated_string = {
+            .expressions = { },
         },
     };
 
     return node;
 }
 
-ASTNode *ast_new_literal(const ASTLiteral literal) {
-    ASTNode *node = malloc(sizeof(ASTNode));
+ASTNode* ast_new_literal(const ASTLiteral literal)
+{
+    ASTNode* node = malloc(sizeof(ASTNode));
 
     if (node == NULL)
         return NULL;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_LITERAL,
-        .
-        next = NULL,
-        .
-        parent = NULL,
-        .
-        line = 0,
-        .
-        literal = literal
+    *node = (ASTNode) {
+        .type = AST_LITERAL,
+        .next = NULL,
+        .parent = NULL,
+        .line = 0,
+        .literal = literal
     };
 
     return node;
@@ -755,26 +677,21 @@ ASTNode *ast_new_literal(const ASTLiteral literal) {
 
 // ========================================
 
-ASTNode *ast_insert_conversion(ASTNode *node, const char new_type) {
-    ASTNode *child_node = malloc(sizeof(ASTNode));
+ASTNode* ast_insert_conversion(ASTNode* node, const char new_type)
+{
+    ASTNode* child_node = malloc(sizeof(ASTNode));
 
     if (child_node == NULL)
         return NULL;
 
     *child_node = *node;
 
-    *node = (ASTNode)
-    {
-        .
-        type = AST_CONVERSION,
-        .
-        next = child_node->next,
-        .
-        parent = child_node->parent,
-        .
-        line = child_node->line,
-        .
-        conversion = {
+    *node = (ASTNode) {
+        .type = AST_CONVERSION,
+        .next = child_node->next,
+        .parent = child_node->parent,
+        .line = child_node->line,
+        .conversion = {
             .result_type = new_type,
             .expression = NULL,
         },

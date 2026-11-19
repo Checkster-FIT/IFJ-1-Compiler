@@ -512,7 +512,6 @@ TEST_F(interpolateds, variables)
     output = "true + 54 + 3.14 + () + ???";
 }
 
-
 TEST_F(interpolateds, expressions)
 {
     /* language=.ifj26 */

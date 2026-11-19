@@ -284,10 +284,11 @@ void generate_expression(ASTNode* node)
             break;
         }
         case AST_TERM:
-        case AST_VAR_USE:
+        case AST_VAR_USE: {
             SymtableEntry* entry = get_closest_defined_symtable_entry(node, node->term.identifier);
             printf("PUSHS LF@%s_%zx\n", node->term.identifier, (uintptr_t)entry);
             break;
+        }
         case AST_EXPRESSION:
             if (node->expression.operation == OP_AND) {
                 int id_and = builtin_label_id++;
