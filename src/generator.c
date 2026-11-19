@@ -539,7 +539,7 @@ void generate_expression(ASTNode* node)
                         printf("INT2CHARS\n");
                         printf("JUMP chr_success_%d\n", builtin_label_id);
                         printf("LABEL chr_fail_%d\n", builtin_label_id);
-                        printf("EXIT int@57\n");
+                        printf("INT2CHAR LF@$op1 int@-1\n");
                         printf("LABEL chr_success_%d\n", builtin_label_id);
                         builtin_label_id++;
                     }
@@ -625,34 +625,49 @@ void generate_expression(ASTNode* node)
                     printf("POPS LF@$op2\n");
                     printf("POPS LF@$op1\n");
                     printf("MOVE LF@$discard string@\n");
+                    printf("STRLEN LF@$tmp_type LF@$op1\n");
+
                     printf("PUSHS LF@$op2\n");
                     printf("PUSHS int@0\n");
                     printf("LTS\n");
                     printf("PUSHS bool@true\n");
-                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
+
+                    printf("PUSHS LF@$op2\n");
                     printf("PUSHS LF@$op3\n");
-                    printf("PUSHS int@0\n");
                     printf("GTS\n");
-                    printf("PUSHS bool@false\n");
-                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
 
-                    printf("STRLEN LF@$tmp_type LF@$op1\n");
-                    printf("LABEL $substr_loop_%d\n", id);
-
-                    printf("JUMPIFEQ $substr_end_%d LF@$op3 int@0\n", id);
                     printf("PUSHS LF@$op2\n");
                     printf("PUSHS LF@$tmp_type\n");
                     printf("LTS\n");
                     printf("PUSHS bool@false\n");
-                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
 
+                    printf("PUSHS LF@$op3\n");
+                    printf("PUSHS LF@$tmp_type\n");
+                    printf("GTS\n");
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
+
+                    printf("SUB LF@$op3 LF@$op3 LF@$op2\n");
+
+                    printf("LABEL $substr_loop_%d\n", id);
+                    printf("JUMPIFEQ $substr_end_%d LF@$op3 int@0\n", id);
                     printf("GETCHAR LF@$tmp_char LF@$op1 LF@$op2\n");
                     printf("CONCAT LF@$discard LF@$discard LF@$tmp_char\n");
                     printf("ADD LF@$op2 LF@$op2 int@1\n");
                     printf("SUB LF@$op3 LF@$op3 int@1\n");
                     printf("JUMP $substr_loop_%d\n", id);
+
                     printf("LABEL $substr_end_%d\n", id);
                     printf("PUSHS LF@$discard\n");
+                    printf("JUMP $substr_ok_%d\n", id);
+
+                    printf("LABEL $substr_err_%d\n", id);
+                    printf("EXIT int@40\n");
+                    printf("LABEL $substr_ok_%d\n", id);
                 }
             }
             break;
