@@ -1251,6 +1251,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_DOUBLE_EXPONENT_NUMBER;
                 else if (c == '_')
                     state = STATE_DOUBLE_EXPONENT_NUMBER_UNDERSCORE;
+                else if (c == 'd' || c == 'D')
+                    state = STATE_DOUBLE_END_D;
                 else {
                     double double_value = strtod(context->scanned_string->chars, &end_ptr);
 
