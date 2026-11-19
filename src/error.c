@@ -97,6 +97,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id) {
             error.param_count = 0;
             error.code = 1;
             break;
+        case SCANNER_INVALID_ESCAPE_SEQUENCE:
+            error.message = "Unable to use escape sequence in string for char '%c'";
+            error.param_count = 1;
+            error.code = 1;
+            break;
         // Syntax errors
         case SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL:
             error.message = "The '@' symbol must be directly followed by the identifier 'main'";
