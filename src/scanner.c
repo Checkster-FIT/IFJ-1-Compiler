@@ -401,6 +401,18 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 dynamic_string_remove_last(context->scanned_string); // remove '\'
 
+                if (c == '\\' || c == '"') {
+                    status = dynamic_string_append(context->scanned_string, c);
+                    if (status == 1) {
+                        // memory allocation fail
+                        token.type = ERROR;
+                        token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "scanned_string");
+                        return token;
+                    }
+                    state = STATE_STRING_BEGIN;
+                    break;
+                }
+
                 if (c == 'n') {
                     state = STATE_STRING_BEGIN;
                     status = dynamic_string_append(context->scanned_string, '\n');
@@ -437,22 +449,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     continue;
                 }
 
-                if (c == '\n') {
-                    token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "a new line character",
-                        context->scanned_string->chars);
-                    return token;
-                }
-
-                if (c == EOF) {
-                    token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_STRING, LINE, "end of file",
-                        context->scanned_string->chars);
-                    return token;
-                }
-
-                state = STATE_STRING_BEGIN;
-                break;
+                // no other escape sequence is allowed
+                token.type = ERROR;
+                token.attribute_error = print_error(SCANNER_INVALID_ESCAPE_SEQUENCE, LINE, c);
+                return token;
 
             case STATE_STRING_END:
 
