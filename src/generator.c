@@ -457,8 +457,14 @@ void generate_expression(ASTNode* node)
                         ASTNode* arg = builtin_group->argument_group.arguments.first;
                         while (arg != NULL) {
                             generate_expression(arg);
+                            int id_print = builtin_label_id++;
                             printf("POPS LF@$discard\n");
+                            printf("JUMPIFEQ write_unit_%d LF@$discard nil@nil\n", id_print);
                             printf("WRITE LF@$discard\n");
+                            printf("JUMP write_end_%d\n", id_print);
+                            printf("LABEL write_unit_%d\n", id_print);
+                            printf("WRITE string@()\n");
+                            printf("LABEL write_end_%d\n", id_print);
                             arg = arg->next;
                         }
                         builtin_group = builtin_group->next;
