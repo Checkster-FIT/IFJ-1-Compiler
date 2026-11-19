@@ -304,7 +304,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 if (!dot_funcall_type)
                     exit_code = print_error(SEMANTIC_USE_OF_UNDEFINED_VAL_FUN, statement_node->line, identifier_tmp->chars);
                 else
-                    exit_code =  print_error(SEMANTIC_EXTENSION_INVALID_CALL_TYPE, statement_node->line,
+                    exit_code = print_error(SEMANTIC_EXTENSION_INVALID_CALL_TYPE, statement_node->line,
                         statement_node->term.identifier, str_type(tmp_type));
 
                 dispose_dynamic_string(identifier_tmp);

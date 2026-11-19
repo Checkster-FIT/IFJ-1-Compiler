@@ -101,7 +101,7 @@ protected:
     void TearDown() override
     {
         // Show the the line of the actual test as well
-        const auto *info = testing::UnitTest::GetInstance()->current_test_info();
+        const auto* info = testing::UnitTest::GetInstance()->current_test_info();
         testing::ScopedTrace trace(info->file(), info->line(), "Failed test");
 
         EXPECT_EQ(exit_code(), expect_code);
@@ -134,12 +134,12 @@ private:
     }
 };
 
-class boolthen : public runtime {};
-class funexp : public runtime {};
-class valmem : public runtime {};
-class extkw : public runtime {};
-class interpolateds : public runtime {};
-class paramlists : public runtime {};
+class boolthen : public runtime { };
+class funexp : public runtime { };
+class valmem : public runtime { };
+class extkw : public runtime { };
+class interpolateds : public runtime { };
+class paramlists : public runtime { };
 
 // ========================================================
 
@@ -550,4 +550,3 @@ TEST_F(valmem, to_string)
 
     output = ".toString: 5 3.14 true () str";
 }
-
