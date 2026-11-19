@@ -49,6 +49,8 @@ void generate_program(ASTNode* node)
     printf("EXIT int@0\n");
 }
 
+static ASTNode* current_function_node = NULL;
+
 void generate_function(ASTNode* node)
 {
     if (node->parent == NULL) {
@@ -65,12 +67,12 @@ void generate_function(ASTNode* node)
     printf("DEFVAR LF@$op3\n");
     printf("DEFVAR LF@$tmp_type\n");
     printf("DEFVAR LF@$tmp_char\n");
-
     generate_local_variables(node->function.symtable);
     if (node->parent->type == AST_EXTENSION) {
         generate_local_variables(node->parent->extension.symtable);
     }
     generate_nested_local_variables(node->function.statements.first);
+    current_function_node = node;
     generate_parameters(&node->function.parameter_groups);
     if (node->parent->type == AST_EXTENSION) {
         generate_parameters(&node->parent->extension.parameter_groups);
@@ -124,6 +126,7 @@ void generate_local_variables_recursive(TNode* node)
     generate_local_variables_recursive(node->left);
     SymtableEntry* entry = (SymtableEntry*)node->value;
     printf("DEFVAR LF@%s_%zx\n", entry->identifier, (uintptr_t)entry);
+    entry->defined = false;
     generate_local_variables_recursive(node->right);
 }
 
@@ -148,6 +151,14 @@ void generate_parameter(ASTNode* param_node)
 
     if (param_node->parameter.identifier != NULL) {
         SymtableEntry* entry = get_closest_symtable_entry(param_node, param_node->parameter.identifier);
+        if (entry == NULL) {
+            entry = get_closest_symtable_entry(current_function_node, param_node->parameter.identifier);
+        }
+        if (entry == NULL) {
+            fprintf(stderr, "generate_parameter: parameter '%s' not found in symtable\n", param_node->parameter.identifier);
+            exit(99);
+        }
+        entry->defined = true;
         printf("POPS LF@%s_%zx\n", param_node->parameter.identifier, (uintptr_t)entry);
     }
 }
@@ -274,7 +285,7 @@ void generate_expression(ASTNode* node)
         }
         case AST_TERM:
         case AST_VAR_USE:
-            SymtableEntry* entry = get_closest_symtable_entry(node, node->term.identifier);
+            SymtableEntry* entry = get_closest_defined_symtable_entry(node, node->term.identifier);
             printf("PUSHS LF@%s_%zx\n", node->term.identifier, (uintptr_t)entry);
             break;
         case AST_EXPRESSION:
@@ -671,12 +682,13 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
     switch (statement->type) {
         case AST_VAR_ASSIGN:
             generate_expression(statement->assignment.expression);
-            SymtableEntry* entry = get_closest_symtable_entry(statement, statement->assignment.target);
+            SymtableEntry* entry = get_closest_defined_symtable_entry(statement, statement->assignment.target);
             printf("POPS LF@%s_%zx\n", statement->assignment.target, (uintptr_t)entry);
             break;
         case AST_VAR_DEF:
             generate_expression(statement->vardef.expression);
             SymtableEntry* entry_var_def = get_closest_symtable_entry(statement, statement->vardef.identifier);
+            entry_var_def->defined = true;
             printf("POPS LF@%s_%zx\n", statement->vardef.identifier, (uintptr_t)entry_var_def);
             break;
         case AST_WHILE_DO: {
@@ -779,7 +791,7 @@ bool is_string_expr(ASTNode* node)
         return strcmp(node->term.identifier, "readLine") == 0 || strcmp(node->term.identifier, "chr") == 0 || strcmp(node->term.identifier, "subStr") == 0 || strcmp(node->term.identifier, "toStr") == 0;
     }
     if (node->type == AST_VAR_USE && node->term.identifier != NULL) {
-        SymtableEntry* entry = get_closest_symtable_entry(node, node->term.identifier);
+        SymtableEntry* entry = get_closest_defined_symtable_entry(node, node->term.identifier);
         if (entry != NULL && entry->data_type == 's')
             return true;
     }
