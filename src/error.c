@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-ErrorMessage get_error_by_id(const enum error_enum error_id)
-{
+ErrorMessage get_error_by_id(const enum error_enum error_id) {
     ErrorMessage error;
     error.id = error_id;
     error.fix = "";
@@ -51,7 +50,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 1;
             break;
         case SCANNER_DOUBLE_MISSING_EXPONENT:
-            error.message = "Missing exponent of Double: '%s'; e/E (may be followed by a sign) must be followed by a number";
+            error.message =
+                    "Missing exponent of Double: '%s'; e/E (may be followed by a sign) must be followed by a number";
             error.fix = "Remove the e/E or add an exponent";
             error.param_count = 1;
             error.code = 1;
@@ -185,7 +185,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         case PARSER_INVALID_PARAM_LIST_END:
             error.message = "Missing comma separator or closing bracket after function parameter list";
-            error.fix = "Add ',' between function parameters or ')' to close the parameter list: '(param1 : Int, param2: Int)'";
+            error.fix =
+                    "Add ',' between function parameters or ')' to close the parameter list: '(param1 : Int, param2: Int)'";
             error.param_count = 0;
             error.code = 2;
             break;
@@ -360,7 +361,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             break;
         case SEMANTIC_NOT_MATCHING_VAR_TYPE:
             error.message = "Unable to assign '%s' value to variable of type '%s'",
-            error.param_count = 2;
+                    error.param_count = 2;
             error.code = 6;
             break;
         case SEMANTIC_USE_OF_UNDEFINED_VAL_FUN:
@@ -430,7 +431,8 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.code = 6;
             break;
         case SEMANTIC_DOT_NOTATION_TYPE_MISMATCH:
-            error.message = "Unable to perform dot notation on mismatching types. Left side type: '%s', right side type: '%s'";
+            error.message =
+                    "Unable to perform dot notation on mismatching types. Left side type: '%s', right side type: '%s'";
             error.param_count = 3;
             error.code = 6;
             break;
@@ -479,8 +481,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
     return error;
 }
 
-char* get_error_type_str(const int exit_code)
-{
+char *get_error_type_str(const int exit_code) {
     if (exit_code == 1)
         return "Lexical error";
     if (exit_code == 2)
@@ -495,9 +496,8 @@ char* get_error_type_str(const int exit_code)
     return "Unknown error";
 }
 
-int print_error(const int error_id, const int line, ...)
-{
-    va_list args = { };
+int print_error(const int error_id, const int line, ...) {
+    va_list args = {};
     va_start(args, line);
 
     const int code = va_print_error(error_id, line, args);
@@ -506,8 +506,7 @@ int print_error(const int error_id, const int line, ...)
     return code;
 }
 
-int va_print_error(const int error_id, const int line, va_list args)
-{
+int va_print_error(const int error_id, const int line, va_list args) {
     // Gets the full error message for the error with this id
     const ErrorMessage error = get_error_by_id(error_id);
 
@@ -515,12 +514,12 @@ int va_print_error(const int error_id, const int line, va_list args)
     char error_message[1024];
 
     // Create the format with or without the fix
-    const char* format = "\033[1;31m[%s] on line %i: \n"
-                         "     | %s\n"
-                         "     | %s\033[0m\n";
+    const char *format = "\033[1;31m[%s] on line %i: \n"
+            "     | %s\n"
+            "     | %s\033[0m\n";
     if (strlen(error.fix) <= 0)
         format = "\033[1;31m[%s] on line %i: \n"
-                 "     | %s\033[0m\n";
+                "     | %s\033[0m\n";
 
     snprintf(
         error_message,
