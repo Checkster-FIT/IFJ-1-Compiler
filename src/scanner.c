@@ -265,7 +265,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_END_OF_FILE;
                 else {
                     token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_NO_TRANSITION, LINE, state, c);
+                    token.attribute_error = print_error(SCANNER_INVALID_CHARACTER, LINE, c);
                     return token;
                 }
 

@@ -188,3 +188,164 @@ TEST_F(runtime, case_sensitivity)
     input = "1\n2";
     output = "2\n1";
 }
+
+TEST_F(runtime, invalid_character)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(`x`);
+    )";
+
+    expect_code = 1;
+}
+
+TEST_F(runtime, invalid_escape_sequence)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("Test \h");
+    )";
+
+    expect_code = 1;
+}
+
+TEST_F(runtime, multiline_ignore_escape_sequence)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("""Hello \n world""");
+    )";
+
+    output = "Hello \\n world";
+    expect_code = 0;
+}
+
+// ========================================================
+
+TEST_F(runtime, statement_order)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A");
+            var x = 0
+            print("B");
+            print(x);
+            x = x + 8
+            print("C");
+            print(x);
+    )";
+
+    output = "AB0C8";
+    expect_code = 0;
+}
+
+TEST_F(runtime, variable_initalization)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var x = "Test";
+            val y = something(x);
+            print(y);
+            print(x);
+            var z = y + 8 * 5;
+            print(z);
+
+        def something(s: String) = strLength(s);
+    )";
+
+    output = "4Test44";
+    expect_code = 0;
+}
+
+// ========================================================
+
+TEST_F(runtime, scope_functions)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            something();
+            nothing();
+
+        def something() =
+            var x = 5;
+            print(x);
+
+        def nothing() =
+            var x = 0;
+            print(x);
+    )";
+
+    output = "50";
+    expect_code = 0;
+}
+
+TEST_F(runtime, scope_conditional_block)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var x = 0;
+            print(x);
+
+            if true then
+                print(x);
+                var x = 1;
+                print(x);
+            else
+                print(x);
+                var x = 2;
+                print(x);
+
+            print(x);
+    )";
+
+    output = "0010";
+    expect_code = 0;
+}
+
+TEST_F(runtime, scope_cycle_block)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            var x = "-";
+            print(x);
+
+            var counter = 0;
+            while counter < 3 do
+                print(x);
+                var x = "=";
+                print(counter);
+                print(x);
+                counter = counter + 1;
+
+            print(x);
+    )";
+
+    output = "--0=-1=-2=-";
+    expect_code = 0;
+}
+
+// ========================================================
