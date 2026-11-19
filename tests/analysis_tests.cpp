@@ -245,7 +245,6 @@ TEST_F(function, empty) {
     EXPECT_EQ(exit_code(), 0);
 }
 
-
 TEST_F(function, missing_block) {
     /* language=.ifj26 */
     load_code(R"(
@@ -852,7 +851,6 @@ TEST_F(function_call, undefined) {
 // ===========================================================
 class if_statement : public analysis {
 };
-
 
 TEST_F(if_statement, condition_boolean) {
     /* language=.ifj26 */
@@ -1673,7 +1671,6 @@ TEST_F(analysis, trailing_comma_invalid) {
 
     EXPECT_EQ(exit_code(), 2);
 }
-
 
 // ===========================================================
 // > VarDef

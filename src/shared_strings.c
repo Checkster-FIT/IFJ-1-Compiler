@@ -59,7 +59,7 @@ char *add_string_copy(const AllocatedStrings *strings, const char *str) {
 
     
     new
-                                                        = malloc(length);
+                                = malloc(length);
     if (new == NULL)
         return NULL;
 
