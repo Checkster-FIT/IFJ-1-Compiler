@@ -50,6 +50,9 @@ run: $(MAIN_EXEC)
 custom basic: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/$@.ifj26
 
+tree: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) -t < $(TEST_DATA_DIR)/$@.ifj26
+
 strings factorial: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/core/$@.ifj26
 
@@ -68,6 +71,8 @@ clean:
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
 	@rm -fv *.pdf
+	@rm -fv *.log
+	@rm -fv $(ARCHIVE_NAME).zip
 
 # -----------------------------------------------
 .PHONY: check format tidy tidy-cpp checklist examples

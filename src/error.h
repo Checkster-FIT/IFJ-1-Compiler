@@ -26,6 +26,7 @@ typedef enum error_enum {
     SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS,
     SCANNER_INVALID_INDENTATION,
     SCANNER_INVALID_INDENTATION_USING_TAB,
+    SCANNER_INVALID_CHARACTER,
 
     // Parser error
     PARSER_SYNTAX_ERROR,
@@ -65,7 +66,6 @@ typedef enum error_enum {
     PARSER_MULTIPLE_IMPORT_HEADERS,
 
     PARSER_RULE_INCOMPLETE,
-    PARSER_RULE_INCORRECT_CALL,
 
     // Syntax error
     SYNTAX_INCORRECT_USAGE_OF_AT_SYMBOL,
@@ -97,19 +97,19 @@ typedef enum error_enum {
     SEMANTIC_RECURSION_WITHOUT_TYPE_DEF,
     SEMANTIC_DOT_NOTATION_TYPE_MISMATCH,
     SEMANTIC_UNABLE_TO_DETERMINE_RETURN_TYPE,
+    SEMANTIC_EXTENSION_INVALID_CALL_TYPE,
 
     // Internal error
     MEMORY_ALLOCATION_ERROR,
     STREAM_READ_ERROR,
     CORRUPTED_MEMORY,
     NUMBER_CONVERT_ERROR,
-    SYMTABLE_ENTRY_NOT_FOUND,
 } ErrorEnum;
 
 typedef struct {
     ErrorEnum id;
-    char* message;
-    char* fix;
+    char *message;
+    char *fix;
     int code;
     int param_count;
 } ErrorMessage;
@@ -139,6 +139,6 @@ int va_print_error(int error_id, int line, va_list args);
  * @param exit_code the error exit code
  * @return the error type string ("Syntax error", "Semantic error", ...)
  */
-char* get_error_type_str(int exit_code);
+char *get_error_type_str(int exit_code);
 
 #endif // IFJ_1_COMPILER_ERROR_H
