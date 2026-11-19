@@ -134,6 +134,13 @@ private:
     }
 };
 
+class boolthen : public runtime {};
+class funexp : public runtime {};
+class valmem : public runtime {};
+class extkw : public runtime {};
+class interpolateds : public runtime {};
+class paramlists : public runtime {};
+
 // ========================================================
 
 TEST_F(runtime, squared)
@@ -349,8 +356,6 @@ TEST_F(runtime, scope_cycle_block)
 }
 
 // ========================================================
-
-class boolthen : public runtime {};
 
 TEST_F(boolthen, print)
 {
