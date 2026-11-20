@@ -19,8 +19,7 @@ MAIN_EXEC = ifj26compiler
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
 
-
-ARCHIVE_NAME = archive
+ARCHIVE_NAME = xhajduf00
 ARCHIVE_CONTAINS = src/* tests/* tests/data/* dokumentace.pdf Makefile rozdeleni rozsireni
 ARCHIVE_EXCLUDES = tests/data/* tests/data/*/* tests/build/* tests/build/*/* tests/compile
 
