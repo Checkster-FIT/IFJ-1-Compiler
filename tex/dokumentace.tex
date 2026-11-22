@@ -1,12 +1,204 @@
 \documentclass[a4paper, 11pt]{article}
-\usepackage[left=2cm,text={17cm, 24cm},top=3cm]{geometry}
+
+\usepackage[left=2.15cm,text={16.7cm, 25.8cm},top=1.95cm]{geometry}
 
 \usepackage[czech,shorthands=off]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{times}
-\usepackage{multirow}
+\usepackage{lmodern}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
 
 \begin{document}
-    Dokumentace
+
+    \begin{titlepage}
+
+        \centering
+
+        \textsc {
+            {\Huge Vysoké učení technické v~Brně \\[0.5em]}
+            {\huge Fakulta informačních technologií}
+        }\\
+
+        \vspace{\stretch{0.382}}
+
+        {
+            \Huge
+            Formální jazyky a překladače
+            \\[0.8em]
+            \huge
+            Dokumentace k~překladači IFJ26
+        }
+
+        \vspace{\stretch{0.618}}
+
+        {
+            \Large
+            \today
+        }
+
+        \setcounter{page}{0}
+
+    \end{titlepage}
+
+    \setlength{\parindent}{0cm}
+
+    \section{Základní informace o~projektu}
+    \label{sec:info}
+
+    Cílem projektu bylo vytvořit překladač, který umožňuje přeložení kódu ve zdrojovém jazyce IFJ26
+    do cílového jazyka IFJ26code.
+
+    \subsection{Autoři a rozdělení bodů v týmu}
+        \begin{itemize}
+            \setlength\itemsep{0em}
+            \item
+            \begin{tabbing}
+                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
+                Andrea Drahovská             \> (\texttt{xdrahoa00, 282465}) \> $25\,\%$ bodů
+            \end{tabbing}
+            \item
+            \begin{tabbing}
+                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
+                \textbf{Filip Hajdušek}      \> (\texttt{xhajduf00, 282063}) \> $25\,\%$ bodů
+            \end{tabbing}
+            \item
+            \begin{tabbing}
+                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
+                Tobiáš Mikan                 \> (\texttt{xmikant00, 282285}) \> $25\,\%$ bodů
+            \end{tabbing}
+            \item
+            \begin{tabbing}
+                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
+                Vojtěch Wyslych              \> (\texttt{xwyslyv00, 282281}) \> $25\,\%$ bodů
+            \end{tabbing}
+        \end{itemize}
+
+    \subsection{Zvolená varianta}
+        Pro implementace tabulky symbolů byla zvolena varianta \texttt{vv-BVS}.
+
+    \subsection{Implementovaná rozšíření}
+
+        \begin{itemize}
+            \setlength{\itemsep}{-3pt}
+            \item[] \texttt{FUNEXP}
+            \item[] \texttt{BOOLTHEN}
+            \item[] \texttt{VALMEM}
+            \item[] \texttt{INTERPOLATEDS}
+            \item[] \texttt{EXTKW}
+            \item[] \texttt{PARAMLISTS}
+        \end{itemize}
+
+    \subsection{Git repozitář}
+
+        \begin{itemize}
+            \setlength{\itemsep}{-3pt}
+            \item[] \url{https://github.com/Checkster-FIT/IFJ-1-Compiler}
+        \end{itemize}
+
+    \newpage
+
+    \section{Rozdělení práce v týmu}
+
+        \subsection*{Andrea Drahovská}
+
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item lexikální analyzátor
+                \begin{itemize}
+                    \vspace{-6pt}
+                    \item[-] návrh konečného automatu
+                    \item[-] diagram konečného automatu
+                    \vspace{-4pt}
+                \end{itemize}
+
+                \item jednotkové testy pro lexikální analyzátor
+
+            \end{itemize}
+
+        \subsection*{Filip Hajdušek}
+
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item vedení týmu
+                \item dokumentace
+                \item Makefile, GoogleTest a další pomocné nástroje
+
+                \item syntaktický analyzátor
+                    \begin{itemize}
+                        \vspace{-6pt}
+                        \item[-] návrh LL gramatiky a z ní vycházející LL tabulky
+                        \item[-] návrh precedenční tabulky
+                        \item[-] abstraktní syntaktický strom
+                        \item[-] tabulka symbolů
+                        \vspace{-4pt}
+                    \end{itemize}
+
+                \item jednotkové testy pro syntaktický analyzátor
+                \item integrační testy analýzy a interpretace cílového kódu
+                \item moduly pro zpracování chyb a ladící výpisy
+
+
+
+            \end{itemize}
+
+        \subsection*{Vojtěch Wyslych}
+
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item lexikální analyzátor
+                \begin{itemize}
+                    \vspace{-6pt}
+                    \item[-] návrh konečného automatu
+                    \vspace{-4pt}
+                \end{itemize}
+
+                \item sémantický analyzátor
+                \item implementace datových struktur zásobníku a dynamicky alokovaného řetězce
+
+            \end{itemize}
+
+        \subsection*{Tobiáš Mikan}
+
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item generátor kódu
+                \item implementace výškově vyváženého binárního vyhledávacího stromu
+
+            \end{itemize}
+
+    \section{Spolupráce v týmu}
+
+    \newpage
+
+    \section{Architektura projektu}
+
+    \newpage
+
+    \section{Diagram konečného automatu pro lexikální analýzu}
+
+    \newpage
+
+    \section{LL gramatika, LL tabulka}
+
+    \section{Precedenční tabulka}
+
+    \newpage
+
+    \section{Moduly překladače}
+
+    \newpage
+
+    \section{Využití prostředků AI}
+
+    \newpage
+
+    \section{Zdroje}
+
+
 \end{document}
