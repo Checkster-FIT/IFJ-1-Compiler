@@ -220,8 +220,8 @@ int parse_extension(ParserContext* parser)
     ASTNode* group_node = ast_add_parameter_group(parser->ast, AST_TARGET_EXTENSION);
     group_node->line = get_line(parser);
     if (!parse_param(parser, NULL))
-        return failed(parser, PARSER_MISSING_EXT_PARAM_END);
-    char ext_type = parser->last_type;
+        return parser->exit_code == 0 ? failed(parser, PARSER_MISSING_EXT_PARAM_END) : FAILED;
+    const char ext_type = parser->last_type;
 
     if (!accept_next(RIGHT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
@@ -1722,7 +1722,7 @@ int failed(ParserContext* parser, const int err, ...)
     if (parser->token_error != 0)
         return FAILED;
 
-    va_list args = {};
+    va_list args = { };
     va_start(args, err);
 
     parser->exit_code = va_print_error(err, get_line(parser), args);
