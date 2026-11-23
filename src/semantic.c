@@ -219,8 +219,10 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
                 return 0;
             }
 
-            if (!entry->data_type)
+            if (entry->extension && !entry->data_type)
                 return print_error(SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE, statement_node->line, &entry->identifier[2]); // remove e.x. `i#` from the function identifier
+            if (!entry->extension && !entry->data_type)
+                return print_error(SEMANTIC_RETURN_IN_F_WITHOUT_RETURN_TYPE, statement_node->line, entry->identifier);
 
             // compare return type with declared type
             if (entry->data_type != *result_type)
@@ -322,7 +324,7 @@ int handle_statement(ASTNode* statement_node, char* result_type, char* dot_funca
 
                     // reach program
                     ASTNode* node = statement_node->parent;
-                    while (node->type != AST_PROGRAM) // parser doesn't let return slip outside function
+                    while (node->type != AST_PROGRAM)
                         node = node->parent;
 
                     node = find_function(node, entry->identifier);

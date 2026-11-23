@@ -69,6 +69,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->pending_eof = false;
     scanner_context->block_comment_counter = 0;
     scanner_context->pending_dot = false;
+    scanner_context->lf_inside_block_comment = false;
 
     scanner_context->strings = strings;
     scanner_context->line = 1;
@@ -116,7 +117,7 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
 
 /** TODO:
  *
- * TAB on empty line should not throw an error
+ * new lines in ()
  *
  * nested interpolation - simple string x multiline string
  *
@@ -207,6 +208,10 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_MULTILINE_STRING_INTERPOLATION_DOLLAR;
                 else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c != EOF && c != '\n' && c != '"')
                     state = STATE_MULTILINE_STRING_INTERPOLATION;
+                else if (context->interpolation == MULTILINE_INTERPOLATED_STRING && c == '\\')
+                    state = STATE_MULTILINE_STRING_INTERPOLATION_ESCAPE;
+                else if (context->interpolation == SIMPLE_INTERPOLATED_STRING && c == '\\')
+                    state = STATE_STRING_INTERPOLATION_ESCAPE;
                 else if (c == '&')
                     state = STATE_AMPERSAND_1;
                 else if (c == '|')
@@ -251,11 +256,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_RIGHT_BRACKET;
                 else if (c == '}')
                     state = STATE_RIGHT_CURLY_BRACKET;
-                else if (c == 9) {
-                    // tab
-                    token.type = ERROR;
-                    token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB, LINE);
-                    return token;
+                else if (c == '\t') {
+                    state = STATE_TAB;
                 } else if (c == ' ' && context->beginning_of_file == true) {
                     indent_value = 1;
                     state = STATE_INDENT;
@@ -609,6 +611,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                     return token;
                 } else if (c == '$')
                     state = STATE_STRING_INTERPOLATION_DOLLAR;
+                else if (c == '\\')
+                    state = STATE_STRING_INTERPOLATION_ESCAPE;
                 else
                     state = STATE_STRING_INTERPOLATION;
 
@@ -1571,6 +1575,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 clear_dynamic_string(context->scanned_string);
                 state = STATE_START;
 
+                context->lf_inside_block_comment = false; // reset
                 context->read_buffer = true;
                 continue;
 
@@ -1588,6 +1593,22 @@ Token get_token(ScannerContext* context, FILE* stream)
                 }
 
                 break;
+
+            case STATE_TAB:
+                if (c == ' ' || c == '\r' || c == '\t' || c == '\v' || c == '\f') {
+                    state = STATE_TAB;
+                    break;
+                }
+
+                if (c == '\n') {
+                    state = STATE_LINE_FEED;
+                    break;
+                }
+
+                // non-empty line cannot begin with tab
+                token.type = ERROR;
+                token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB, LINE);
+                return token;
 
             default:
                 token.attribute_error = print_error(SCANNER_NO_TRANSITION, LINE, state, c);
