@@ -1,0 +1,47 @@
+\begin{center}
+    \begin{longtable}{|>{\centering\arraybackslash}m{2cm}|*{12}{>{\centering\arraybackslash}m{0.47cm}|}}
+        \hline
+        &
+        \texttt{(} &
+        \texttt{t} &
+        \texttt{)} &
+        \texttt{! +x -x} &
+        \texttt{* /} &
+        \texttt{+ -} &
+        \texttt{< <= > >=} &
+        \texttt{== !=} &
+        \texttt{\&\&} &
+        \texttt{\textbar\textbar} &
+        \texttt{\$} &
+        \texttt{.}
+        \\
+        \hline
+        \endfirsthead
+
+        \hline
+        & \multicolumn{12}{c|}{\textbf{Precedence table (continued)}} \\
+        \hline
+        \endhead
+
+        \hline
+        \endfoot
+
+        \endlastfoot
+
+        \texttt{(}                & $<$ & $<$ & $=$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & $<$ \\ \hline
+        \texttt{t}                & & & $>$ & & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ \\ \hline
+        \texttt{)}                & & & $>$ & & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ \\ \hline
+        \texttt{! +x -x}        & $<$ & $<$ & $>$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{* /}             & $<$ & $<$ & $>$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{+ -}             & $<$ & $<$ & $>$ & $<$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{< <= >,>=}     & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{== !=}           & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & $<$ & & $>$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{\&\&}             & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & $<$ & $<$ & $>$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{\textbar\textbar}  & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $>$ & $>$ & $<$ \\ \hline
+        \texttt{\$}               & $<$ & $<$ & & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & $<$ \\ \hline
+        \texttt{.}                & & $<$ & $>$ & & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ \\ \hline
+
+    \end{longtable}
+
+    \captionof{table}{Precedenční tabulka}
+\end{center}

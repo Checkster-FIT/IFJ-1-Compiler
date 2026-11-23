@@ -7,13 +7,18 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
+\usepackage{multicol}
 
 \usepackage{longtable}
 \usepackage{pdflscape}
 \usepackage{array}
 \usepackage{refcount}
+\usepackage{caption}
 
 \usepackage{enumitem}
 
@@ -183,6 +188,63 @@
     \newpage
 
     \section{Architektura projektu}
+
+    \bigskip
+
+
+    \begin{figure}[ht]
+        \centering
+
+            \begin{tikzpicture}[
+                node distance=2cm,
+                box/.style={
+                    draw,
+                    rectangle,
+                    minimum width=3cm,
+                    minimum height=1.5cm,
+                    align=center
+                },
+                arrow/.style={->, >=stealth, thick}
+            ]
+
+                \node[box] (scanner) {Lexikální \\ analyzátor};
+                \node[box, right= 6cm of scanner] (parser) {Syntaktický \\ analyzátor};
+
+                \node[box, below= 3cm of parser] (semantic) {Sémantický \\ analyzátor};
+                \node[box, below= 3cm of scanner] (generator) {Generátor \\ kódu};
+
+                \draw[arrow] (scanner) ++(0, 1.7) --
+                node[midway, above, yshift=0.55cm] {zdrojový kód}
+                (scanner);
+
+                \draw[arrow, bend left=5] (parser) to
+                node[midway, above, yshift=0.65cm] {tokeny}
+                (scanner);
+
+                \draw[arrow, bend left=5] (scanner) to
+                node[midway, below, yshift=-0.75cm] {žádost o token}
+                (parser);
+
+                \draw[arrow] (parser) --
+                node[midway, right, xshift=0.25cm, text width=2cm, align=center]
+                {abstraktní syntaktický strom}
+                (semantic);
+
+                \draw[arrow] (semantic) --
+                node[midway, above, yshift=0.25cm, text width=4cm, align=center]
+                {sémanticky ověřený a obohacenný AS strom}
+                (generator);
+
+                \draw[arrow] (generator) --
+                node[midway, below, yshift=-0.55cm] {cílový kód}
+                ++(0, -1.7);
+
+            \end{tikzpicture}
+
+            \captionof{figure}{Blokové schéma architektury překladače}
+    \end{figure}
+
+
     \newpage
 
     \section{Diagram konečného automatu pro lexikální analýzu}
@@ -240,15 +302,92 @@
             \input{ll_table}
 
         \end{longtable}
+
+        \setcounter{table}{0}
+        \captionof{table}{LL tabulka}
     \end{center}
 
     \newpage
 
 
     \section{Precedenční tabulka}
+
+    Precedenční tabulka slouží ke zpracování výrazů.
+
+    \setlength{\tabcolsep}{3pt}
+    \input{precedence_table}
+
+    Pravidla pro redukci výrazů.
+
+    \begin{multicols}{4}
+        \begin{enumerate}[label=\textbf{\arabic*)}, ref=\arabic*, leftmargin=*]
+
+            \setlength\itemsep{-0.125em}
+
+            \item \label{prod:expression-a} \NT{E} $\rightarrow$ \T{(} \ \T{)}
+            \item \label{prod:expression-b} \NT{E} $\rightarrow$ \T{term}
+            \item \label{prod:expression-c} \NT{E} $\rightarrow$ \T{(} \ \NT{E} \ \T{)}
+            \item \label{prod:expression-d} \NT{E} $\rightarrow$ \NT{E} \ \T{.} \ \NT{E}
+            \item \label{prod:expression-e} \NT{E} $\rightarrow$ \T{+} \ \NT{E}
+            \item \label{prod:expression-f} \NT{E} $\rightarrow$ \T{-} \ \NT{E}
+            \item \label{prod:expression-g} \NT{E} $\rightarrow$ \T{!} \ \NT{E}
+            \item \label{prod:expression-h} \NT{E} $\rightarrow$ \NT{E} \ \T{*} \ \NT{E}
+            \item \label{prod:expression-i} \NT{E} $\rightarrow$ \NT{E} \ \T{/} \ \NT{E}
+            \item \label{prod:expression-j} \NT{E} $\rightarrow$ \NT{E} \ \T{+} \ \NT{E}
+            \item \label{prod:expression-k} \NT{E} $\rightarrow$ \NT{E} \ \T{-} \ \NT{E}
+            \item \label{prod:expression-l} \NT{E} $\rightarrow$ \NT{E} \ \T{<} \ \NT{E}
+            \item \label{prod:expression-m} \NT{E} $\rightarrow$ \NT{E} \ \T{<=} \ \NT{E}
+            \item \label{prod:expression-n} \NT{E} $\rightarrow$ \NT{E} \ \T{>} \ \NT{E}
+            \item \label{prod:expression-o} \NT{E} $\rightarrow$ \NT{E} \ \T{>=} \ \NT{E}
+            \item \label{prod:expression-p} \NT{E} $\rightarrow$ \NT{E} \ \T{==} \ \NT{E}
+            \item \label{prod:expression-q} \NT{E} $\rightarrow$ \NT{E} \ \T{!=} \ \NT{E}
+            \item \label{prod:expression-r} \NT{E} $\rightarrow$ \NT{E} \ \T{\&\&} \ \NT{E}
+            \item \label{prod:expression-s} \NT{E} $\rightarrow$ \NT{E} \ \T{\textbar\textbar} \ \NT{E}
+
+        \end{enumerate}
+    \end{multicols}
+
     \newpage
 
+
     \section{Moduly překladače}
+
+    \subsection{\texttt{ast}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{bst}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{debug}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{error}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{generator}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{main}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{parser}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{scanner}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{semantic}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{shared\_strings}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{stack}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
+    \subsection{\texttt{symtable}}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+
     \newpage
 
     \section{Využití prostředků AI}
