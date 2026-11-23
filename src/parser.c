@@ -1006,7 +1006,7 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_s
     if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
         // Empty interpolated string that are not END can be discarded
         if (*parser->accepted.attribute_string == '\0')
-            return parse_interpolated_string(parser, target_string_node);
+            return parse_multiline_interpolated_string(parser, target_string_node);
 
         ASTNode* string = ast_new_literal((ASTLiteral) {
             .type = AST_STRING,
