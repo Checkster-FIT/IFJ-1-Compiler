@@ -1,0 +1,178 @@
+\newcommand{\NT}[1]{\texttt{#1}}
+\newcommand{\T}[1]{\texttt{#1}}
+
+\begin{enumerate}[label=\textbf{\arabic*)}, ref=\arabic*, leftmargin=*]
+
+    \setlength\itemsep{-0.125em}
+
+    % -------------------------------------------------
+    % Program and header
+    \item \label{prod:program-a} \NT{program} $\rightarrow$ \T{LF} \NT{program}
+    \item \label{prod:program-b} \NT{program} $\rightarrow$ \T{INDENT} \NT{program}
+    \item \label{prod:program-c} \NT{program} $\rightarrow$ \NT{header} \NT{body}
+    \medskip
+
+    \item \label{prod:header-a} \NT{header} $\rightarrow$ \T{import} \ \T{IDENTIFIER} \ \T{.} \ \T{*}
+    \medskip
+
+    % -------------------------------------------------
+    % Body
+    \item \label{prod:body-a} \NT{body} $\rightarrow$ \T{LF} \NT{body}
+    \item \label{prod:body-b} \NT{body} $\rightarrow$ \T{DEDENT} \NT{body}
+    \item \label{prod:body-c} \NT{body} $\rightarrow$ \T{EOF}
+    \item \label{prod:body-d} \NT{body} $\rightarrow$ \NT{function} \NT{body}
+    \item \label{prod:body-e} \NT{body} $\rightarrow$ \NT{extension} \NT{body}
+    \item \label{prod:body-f} \NT{body} $\rightarrow$ \T{@main} \ \NT{optional-LF} \ \NT{function} \ \NT{body}
+    \medskip
+
+    % -------------------------------------------------
+    % Extensions
+    \item \label{prod:extension-a} \NT{extension} $\rightarrow$ \T{extension} \ \T{(} \ \NT{param} \ \T{)} \ \T{LF} \ \T{INDENT} \ \NT{extension-body}
+    \medskip
+
+    \item \label{prod:extension-body-a} \NT{extension-body} $\rightarrow$ \NT{function} \ \NT{extension-body}
+    \item \label{prod:extension-body-b} \NT{extension-body} $\rightarrow$ \T{DEDENT}
+    \medskip
+
+    % -------------------------------------------------
+    % Functions and types
+    \item \label{prod:function-a} \NT{function} $\rightarrow$ \T{def} \ \T{IDENTIFIER} \ \NT{param-group-list} \ \NT{type-specifier} \ \T{=} \ \NT{function-body}
+    \medskip
+
+    \item \label{prod:type-specifier-a} \NT{type-specifier} $\rightarrow$ \T{:} \ \NT{type}
+    \item \label{prod:type-specifier-b} \NT{type-specifier} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    \item \label{prod:type-a} \NT{type} $\rightarrow$ \T{String}
+    \item \label{prod:type-b} \NT{type} $\rightarrow$ \T{Int}
+    \item \label{prod:type-c} \NT{type} $\rightarrow$ \T{Double}
+    \item \label{prod:type-d} \NT{type} $\rightarrow$ \T{Unit}
+    \item \label{prod:type-e} \NT{type} $\rightarrow$ \T{Boolean}
+    \medskip
+
+    % -------------------------------------------------
+    % Parameters
+    \item \label{prod:param-group-list-a} \NT{param-group-list} $\rightarrow$ \T{(} \ \NT{param-list-first} \ \T{)} \ \NT{param-group-list}
+    \item \label{prod:param-group-list-b} \NT{param-group-list} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    \item \label{prod:param-list-first-a} \NT{param-list-first} $\rightarrow$ \NT{param} \ \NT{param-list}
+    \item \label{prod:param-list-first-b} \NT{param-list-first} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    \item \label{prod:param-list-a} \NT{param-list} $\rightarrow$ \T{,} \ \NT{param} \ \NT{param-list}
+    \item \label{prod:param-list-b} \NT{param-list} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    \item \label{prod:param-a} \NT{param} $\rightarrow$ \T{IDENTIFIER} \ \T{:} \ \NT{type}
+    \medskip
+
+    % -------------------------------------------------
+    % Function body and statements
+
+    \item \label{prod:function-body-a} \NT{function-body} $\rightarrow$ \T{LF} \ \T{INDENT} \ \NT{statement-list} \ \T{DEDENT}
+    \item \label{prod:function-body-b} \NT{function-body} $\rightarrow$ \NT{EXPR} \ \NT{separator}
+    \medskip
+
+    \item \label{prod:statement-list-a} \NT{statement-list} $\rightarrow$ \NT{statement} \ \NT{separator} \ \NT{statement-list}
+    \item \label{prod:statement-list-b} \NT{statement-list} $\rightarrow$ \NT{construct} \ \NT{statement-list}
+    \item \label{prod:statement-list-c} \NT{statement-list} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    % -------------------------------------------------
+    % Separators
+    \item \label{prod:separator-a} \NT{separator} $\rightarrow$ \T{LF}
+    \item \label{prod:separator-b} \NT{separator} $\rightarrow$ \T{;} \NT{optional-LF}
+    \medskip
+
+    \item \label{prod:optional-lf-a} \NT{optional-LF} $\rightarrow$ \T{LF}
+    \item \label{prod:optional-lf-b} \NT{optional-LF} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    % -------------------------------------------------
+    % Statements
+    \item \label{prod:statement-a} \NT{statement} $\rightarrow$ \NT{st-vardef}
+    \item \label{prod:statement-b} \NT{statement} $\rightarrow$ \NT{st-assign}
+    \item \label{prod:statement-c} \NT{statement} $\rightarrow$ \NT{st-return}
+    \item \label{prod:statement-d} \NT{statement} $\rightarrow$ \NT{EXPR}
+    \medskip
+
+    \item \label{prod:st-assign-a} \NT{st-assign} $\rightarrow$ \T{IDENTIFIER} \ \T{=} \ \NT{EXPR}
+    \medskip
+
+    \item \label{prod:st-vardef-a} \NT{st-vardef} $\rightarrow$ \T{val} \ \T{IDENTIFIER} \ \NT{type-specifier} \ \T{=} \ \NT{EXPR}
+    \item \label{prod:st-vardef-b} \NT{st-vardef} $\rightarrow$ \T{var} \ \T{IDENTIFIER} \ \NT{type-specifier} \ \T{=} \ \NT{EXPR}
+    \medskip
+
+    \item \label{prod:st-return-a} \NT{st-return} $\rightarrow$ \T{return} \ \NT{EXPR}
+    \item \label{prod:st-return-b} \NT{st-return} $\rightarrow$ \T{return}
+    \medskip
+
+    % -------------------------------------------------
+    % Constructs
+
+    \item \label{prod:construct-a} \NT{construct} $\rightarrow$ \NT{c-while}
+    \item \label{prod:construct-b} \NT{construct} $\rightarrow$ \NT{c-if-then}
+    \medskip
+
+    \item \label{prod:c-while-a} \NT{c-while} $\rightarrow$ \T{while} \ \NT{EXPR} \ \T{do} \ \T{LF} \ \T{INDENT} \ \NT{statement-list} \ \T{DEDENT}
+    \medskip
+
+    \item \label{prod:c-if-then-a} \NT{c-if-then} $\rightarrow$ \T{if} \ \NT{EXPR} \ \T{then} \ \T{LF*} \ \T{INDENT*} \ \NT{statement-list} \ \T{DEDENT*} \ \NT{c-else}
+    \medskip
+
+    \item \label{prod:c-else-a} \NT{c-else} $\rightarrow$ \T{else} \ \NT{c-if-then}
+    \item \label{prod:c-else-b} \NT{c-else} $\rightarrow$ \T{else} \ \T{LF*} \ \T{INDENT*} \ \NT{statement-list} \ \T{DEDENT*}
+    \medskip
+
+    % -------------------------------------------------
+    % Expressions
+    \item \label{prod:expr-a} \NT{EXPR} $\rightarrow$ $\ldots$ \ \NT{term} \ \ldots
+    \medskip
+
+    \item \label{prod:term-a} \NT{term} $\rightarrow$ \NT{fun-call}
+    \item \label{prod:term-b} \NT{term} $\rightarrow$ \T{INTEGER}
+    \item \label{prod:term-c} \NT{term} $\rightarrow$ \T{DOUBLE}
+    \item \label{prod:term-d} \NT{term} $\rightarrow$ \T{BOOLEAN}
+    \item \label{prod:term-e} \NT{term} $\rightarrow$ \T{UNIT}
+    \item \label{prod:term-f} \NT{term} $\rightarrow$ \NT{string}
+    \medskip
+
+    % -------------------------------------------------
+    % Function calls
+    \item \label{prod:fun-call-a} \NT{fun-call} $\rightarrow$ \T{IDENTIFIER} \ \NT{fun-call-group-list}
+    \medskip
+
+    \item \label{prod:fun-call-group-list-a} \NT{fun-call-group-list} $\rightarrow$ \T{(} \ \NT{fun-call-param-first} \ \T{)} \ \NT{fun-call-group-list}
+    \item \label{prod:fun-call-group-list-b} \NT{fun-call-group-list} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    \item \label{prod:fun-call-param-first-a} \NT{fun-call-param-first} $\rightarrow$ \NT{EXPR} \ \NT{fun-call-param-list}
+    \item \label{prod:fun-call-param-first-b} \NT{fun-call-param-first} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    \item \label{prod:fun-call-param-list-a} \NT{fun-call-param-list} $\rightarrow$ \T{,} \ \NT{EXPR} \ \NT{fun-call-param-list}
+    \item \label{prod:fun-call-param-list-b} \NT{fun-call-param-list} $\rightarrow$ $\varepsilon$
+    \medskip
+
+    % -------------------------------------------------
+   % String
+    \item \label{prod:string-a} \NT{string} $\rightarrow$ \T{STRING}
+    \item \label{prod:string-b} \NT{string} $\rightarrow$ \T{MULTILINE-STRING}
+    \item \label{prod:string-c} \NT{string} $\rightarrow$ \NT{i-string}
+    \item \label{prod:string-d} \NT{string} $\rightarrow$ \NT{multiline-i-string}
+    \medskip
+
+    % Interpolated string
+    \item \label{prod:i-string-a} \NT{i-string} $\rightarrow$ \T{STRING-INTERPOLATION} \NT{i-string}
+    \item \label{prod:i-string-b} \NT{i-string} $\rightarrow$ \NT{EXPR} \NT{i-string}
+    \item \label{prod:i-string-c} \NT{i-string} $\rightarrow$ \T{STRING-INTERPOLATION-END}
+    \medskip
+
+    % Multiline interpolated string
+    \item \label{prod:multiline-i-string-a} \NT{multiline-i-string} $\rightarrow$ \T{STRING-INTERPOLATION} \NT{multiline-i-string}
+    \item \label{prod:multiline-i-string-b} \NT{multiline-i-string} $\rightarrow$ \NT{EXPR} \NT{multiline-i-string}
+    \item \label{prod:multiline-i-string-c} \NT{multiline-i-string} $\rightarrow$ \T{STRING-INTERPOLATION-END}
+    \medskip
+
+\end{enumerate}

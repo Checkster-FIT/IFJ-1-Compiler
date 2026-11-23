@@ -8,6 +8,9 @@
 *.log
 *.o
 *.te~
+*.err
+
+tmp
 
 # Compilation database
 compile_commands.json

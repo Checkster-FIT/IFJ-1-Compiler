@@ -219,7 +219,7 @@ database:
 # -----------------------------------------------
 
 doc:
-	cd $(TEX_DIR) && pdflatex $(DOC_NAME).tex
+	cd $(TEX_DIR) && pdflatex $(DOC_NAME).tex && pdflatex $(DOC_NAME).tex
 	mv $(TEX_DIR)/$(DOC_NAME).pdf $(DOC_NAME).pdf
 
 ok: $(ARCHIVE_NAME).zip

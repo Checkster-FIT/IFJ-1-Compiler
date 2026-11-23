@@ -10,6 +10,13 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
 
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage{array}
+\usepackage{refcount}
+
+\usepackage{enumitem}
+
 \begin{document}
 
     \begin{titlepage}
@@ -173,29 +180,78 @@
             \end{itemize}
 
     \section{Spolupráce v týmu}
-
     \newpage
 
     \section{Architektura projektu}
-
     \newpage
 
     \section{Diagram konečného automatu pro lexikální analýzu}
+    \newpage
+
+    \section{Pravidla LL gramatiky}
+    \input{ll_rules}
+    \newpage
+
+    \section{LL tabulka}
+
+    \newcommand{\nonterminal}[1]{}
+    \newcommand{\pr}[2]{\small\vspace{-0.76em}\texttt{\ref{prod:#1-#2}}}
+
+    \setlength{\tabcolsep}{1.3pt}
+
+    \begin{center}
+        \begin{longtable}{|l|*{22}{>{\centering\arraybackslash}p{0.47cm}|}}
+            \hline
+            \rotatebox{90}{\texttt{}} &
+            \rotatebox{90}{\texttt{def}} &
+            \rotatebox{90}{\texttt{extension}} &
+            \rotatebox{90}{\texttt{@\,main}} &
+            \rotatebox{90}{\texttt{import}} &
+            \rotatebox{90}{\texttt{IDENTIFIER\ }} &
+            \rotatebox{90}{\texttt{LF}} &
+            \rotatebox{90}{\texttt{INDENT}} &
+            \rotatebox{90}{\texttt{DEDENT}} &
+            \rotatebox{90}{\texttt{EOF}} &
+            \rotatebox{90}{\texttt{val}} &
+            \rotatebox{90}{\texttt{var}} &
+            \rotatebox{90}{\texttt{return}} &
+            \rotatebox{90}{\texttt{while}} &
+            \rotatebox{90}{\texttt{if}} &
+            \rotatebox{90}{\texttt{else}} &
+            \rotatebox{0}{\texttt{;}} &
+            \rotatebox{0}{\texttt{(}} &
+            \rotatebox{0}{\texttt{)}} &
+            \rotatebox{0}{\texttt{,}} &
+            \rotatebox{0}{\texttt{=}} &
+            \rotatebox{0}{\texttt{:}} &
+            \rotatebox{90}{\texttt{ostatní terminály\ }}
+            \\
+            \hline
+            \endfirsthead
+
+            \hline
+            & \multicolumn{22}{c|}{\textbf{Terminals (continued)}} \\
+            \hline
+            \endhead
+
+            \hline
+            \endfoot
+
+            \input{ll_table}
+
+        \end{longtable}
+    \end{center}
 
     \newpage
 
-    \section{LL gramatika, LL tabulka}
 
     \section{Precedenční tabulka}
-
     \newpage
 
     \section{Moduly překladače}
-
     \newpage
 
     \section{Využití prostředků AI}
-
     \newpage
 
     \section{Zdroje}

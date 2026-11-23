@@ -1,0 +1,768 @@
+
+\verb|program|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    & \pr{program}{c}
+    \nonterminal{id}        &
+    \nonterminal{LF}        & \pr{program}{a}
+    \nonterminal{in}        & \pr{program}{b}
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|header|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    & \pr{header}{a}
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|body|
+    \nonterminal{def}       & \pr{body}{d}
+    \nonterminal{extension} & \pr{body}{e}
+    \nonterminal{@m}        & \pr{body}{f}
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        & \pr{body}{a}
+    \nonterminal{in}        &
+    \nonterminal{de}        & \pr{body}{b}
+    \nonterminal{EF}        & \pr{body}{c}
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|extension|
+    \nonterminal{def}       &
+    \nonterminal{extension} & \pr{extension}{a}
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|extension-body|
+    \nonterminal{def}       & \pr{extension-body}{a}
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        & \pr{extension-body}{b}
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|function|
+    \nonterminal{def}       & \pr{function}{a}
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|type-specifier|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         & \pr{type-specifier}{b}
+    \nonterminal{:}         & \pr{type-specifier}{a}
+    \nonterminal{...}       & \\ \hline
+
+\verb|param-group-list|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         & \pr{param-group-list}{a}
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         & \pr{param-group-list}{b}
+    \nonterminal{:}         & \pr{param-group-list}{b}
+    \nonterminal{...}       & \\ \hline
+
+\verb|param-list-first|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        & \pr{param-list-first}{a}
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         & \pr{param-list-first}{b}
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|param-list|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         & \pr{param-list}{b}
+    \nonterminal{,}         & \pr{param-list}{a}
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|param|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        & \pr{param}{a}
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|function-body|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        & \pr{function-body}{b}
+    \nonterminal{LF}        & \pr{function-body}{a}
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         & \pr{function-body}{b}
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \pr{function-body}{b} \\ \hline
+
+\verb|statement-list|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        & \pr{function-body}{a}
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        & \pr{function-body}{a}
+    \nonterminal{vr}        & \pr{function-body}{a}
+    \nonterminal{re}        &
+    \nonterminal{wh}        & \pr{function-body}{b}
+    \nonterminal{if}        & \pr{function-body}{b}
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         & \pr{function-body}{a}
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \pr{function-body}{a} \\ \hline
+
+\verb|separator|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        & \pr{separator}{a}
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         & \pr{separator}{b}
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|optional-LF|
+    \nonterminal{def}       & \pr{optional-lf}{b}
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        & \pr{optional-lf}{b}
+    \nonterminal{LF}        & \pr{optional-lf}{a}
+    \nonterminal{in}        & \pr{optional-lf}{b}
+    \nonterminal{de}        & \pr{optional-lf}{b}
+    \nonterminal{EF}        &
+    \nonterminal{va}        & \pr{optional-lf}{b}
+    \nonterminal{vr}        & \pr{optional-lf}{b}
+    \nonterminal{re}        & \pr{optional-lf}{b}
+    \nonterminal{wh}        & \pr{optional-lf}{b}
+    \nonterminal{if}        & \pr{optional-lf}{b}
+    \nonterminal{el}        & \pr{optional-lf}{b}
+    \nonterminal{;}         & \pr{optional-lf}{b}
+    \nonterminal{(}         & \pr{optional-lf}{b}
+    \nonterminal{)}         & \pr{optional-lf}{b}
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \pr{optional-lf}{b} \\ \hline
+
+\verb|statement|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|st-assign|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|st-vardef|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|st-return|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|construct|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|c-while|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|c-if-then|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|c-else|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|EXPR|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|term|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|fun-call|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|fun-call-group-list|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|fun-call-param-first|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|fun-call-param-list|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|string|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|i-string|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \\ \hline
+
+\verb|multiline-i-string|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       &

@@ -6,7 +6,6 @@
 
 <body> -> [LF] <body>
 <body> -> [DEDENT] <body>
-<body> -> 3 // TODO: Correct?
 <body> -> [EOF]
 <body> -> <function> <body>
 <body> -> <extension> <body>
@@ -36,7 +35,6 @@
         <param_list_first> -> 3
 
         <param_list> -> , <param> <param_list>
-        <param_list> -> , [LF]  // TODO: ???
         <param_list> -> 3
 
             <param> -> [IDENTIFIER] : <type>
