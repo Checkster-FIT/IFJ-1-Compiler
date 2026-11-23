@@ -78,10 +78,22 @@ void generate_function(ASTNode* node)
         generate_parameters(&node->parent->extension.parameter_groups);
     }
 
-    bool is_main = (node->parent->type == AST_PROGRAM) && strcmp(symtable_main_search(node->parent->program.global_symtable)->identifier, node->function.identifier) == 0;
+    ASTNode* prog = (node->parent->type == AST_PROGRAM) ? node->parent : node->parent->parent;
+    TNode* func_tnode = search(prog->program.global_symtable, node->function.identifier);
+    SymtableEntry* func_entry = (func_tnode != NULL) ? (SymtableEntry*)func_tnode->value : NULL;
+
+    bool is_main = (func_entry != NULL && func_entry->main);
+    bool returns_value = (func_entry != NULL) && (
+        func_entry->data_type == 'i' ||
+        func_entry->data_type == 'd' ||
+        func_entry->data_type == 's' ||
+        func_entry->data_type == 'b'
+    );
 
     ASTNode* last = node->function.statements.last;
-    bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL || last->type == AST_BUILTIN_FUNCALL || last->type == AST_VAR_USE || last->type == AST_INTERPOLATED_STRING);
+    bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL ||
+        last->type == AST_BUILTIN_FUNCALL || last->type == AST_VAR_USE || last->type == AST_INTERPOLATED_STRING ||
+        last->type == AST_CONVERSION || last->type == AST_TERM || last->type == AST_LITERAL) && returns_value;
 
     generate_statements(node->function.statements.first, has_expr_ret);
 
@@ -359,6 +371,7 @@ void generate_expression(ASTNode* node)
                         printf("NOTS\n");
                         break;
                     case OP_UNARY_PLUS:
+                        generate_expression(node->expression.left);
                         break;
                     case OP_UNARY_MINUS:
                         generate_expression(node->expression.left);
@@ -540,7 +553,7 @@ void generate_expression(ASTNode* node)
                         printf("POPS LF@$op1\n");
                         printf("LT LF@$tmp_type LF@$op1 int@0\n");
                         printf("JUMPIFEQ chr_fail_%d LF@$tmp_type bool@true\n", builtin_label_id);
-                        printf("GT LF@$tmp_type LF@$op1 int@127\n");
+                        printf("GT LF@$tmp_type LF@$op1 int@255\n");
                         printf("JUMPIFEQ chr_fail_%d LF@$tmp_type bool@true\n", builtin_label_id);
                         printf("PUSHS LF@$op1\n");
                         printf("INT2CHARS\n");
@@ -648,8 +661,8 @@ void generate_expression(ASTNode* node)
 
                     printf("PUSHS LF@$op2\n");
                     printf("PUSHS LF@$tmp_type\n");
-                    printf("LTS\n");
-                    printf("PUSHS bool@false\n");
+                    printf("GTS\n");
+                    printf("PUSHS bool@true\n");
                     printf("JUMPIFEQS $substr_err_%d\n", id);
 
                     printf("PUSHS LF@$op3\n");
@@ -727,7 +740,11 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             break;
         }
         case AST_RETURN:
-            generate_expression(statement->return_st.expression);
+            if (statement->return_st.expression != NULL) {
+                generate_expression(statement->return_st.expression);
+            } else {
+                printf("PUSHS nil@nil\n");
+            }
             printf("POPFRAME\n");
             printf("RETURN\n");
             break;
@@ -747,6 +764,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
         case AST_FUNCALL:
         case AST_BUILTIN_FUNCALL:
         case AST_VAR_USE:
+        case AST_CONVERSION:
         case AST_INTERPOLATED_STRING:
             generate_expression(statement);
             if (!is_last) {
