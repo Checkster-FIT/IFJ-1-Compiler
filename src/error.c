@@ -406,7 +406,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Unable to use return in function '%s' as it has no explicit return type";
             error.fix = "Return can only be used inside function with explicit return type";
             error.param_count = 1;
-            error.code = 10;
+            error.code = 6;
             break;
         case SEMANTIC_MAIN_WITH_PARAMETERS:
             error.message = "Function with the '@main' tag cannot accept any parameters";
