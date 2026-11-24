@@ -90,20 +90,10 @@ protected:
 };
 
 // ========================================================
+class header : public analysis {
+};
 
-TEST_F(analysis, empty_function)
-{
-    /* language=.ifj26 */ /* language=.ifj26 */
-    load_code(R"(
-        import ifj26.*
-        @main def nothing(): Unit =
-            ()
-    )");
-
-    EXPECT_EQ(exit_code(), 0);
-}
-
-TEST_F(analysis, header_with_comments)
+TEST_F(header, comments)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -117,7 +107,7 @@ TEST_F(analysis, header_with_comments)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, header_missing)
+TEST_F(header, missing)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -128,7 +118,7 @@ TEST_F(analysis, header_missing)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, header_twice)
+TEST_F(header, twice)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -142,8 +132,10 @@ TEST_F(analysis, header_twice)
 }
 
 // ===========================================================
+class main : public analysis {
+};
 
-TEST_F(analysis, main_newline)
+TEST_F(main, newline)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -156,7 +148,7 @@ TEST_F(analysis, main_newline)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, main_missing)
+TEST_F(main, missing)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -168,7 +160,7 @@ TEST_F(analysis, main_missing)
     EXPECT_EQ(exit_code(), 3);
 }
 
-TEST_F(analysis, main_twice)
+TEST_F(main, twice)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -182,7 +174,7 @@ TEST_F(analysis, main_twice)
     EXPECT_EQ(exit_code(), 4);
 }
 
-TEST_F(analysis, main_invalid_tag)
+TEST_F(main, invalid_tag)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -195,7 +187,7 @@ TEST_F(analysis, main_invalid_tag)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, main_invalid_params)
+TEST_F(main, invalid_params)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -207,7 +199,7 @@ TEST_F(analysis, main_invalid_params)
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, main_type_implicit)
+TEST_F(main, type_implicit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -219,7 +211,7 @@ TEST_F(analysis, main_type_implicit)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, main_type_implicit_incorrect)
+TEST_F(main, type_implicit_incorrect)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -231,7 +223,7 @@ TEST_F(analysis, main_type_implicit_incorrect)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, main_type_explicit)
+TEST_F(main, type_explicit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -243,7 +235,7 @@ TEST_F(analysis, main_type_explicit)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, main_type_explicit_incorrect)
+TEST_F(main, type_explicit_incorrect)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -257,7 +249,22 @@ TEST_F(analysis, main_type_explicit_incorrect)
 
 // ===========================================================
 
-TEST_F(analysis, function_block_missing)
+class function : public analysis {
+};
+
+TEST_F(function, empty)
+{
+    /* language=.ifj26 */ /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit =
+            ()
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(function, missing_block)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -268,7 +275,7 @@ TEST_F(analysis, function_block_missing)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_inline)
+TEST_F(function, inline_expression)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -280,7 +287,7 @@ TEST_F(analysis, function_inline)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_identifier_missing)
+TEST_F(function, missing_identifier)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -292,7 +299,7 @@ TEST_F(analysis, function_identifier_missing)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_missing_comma)
+TEST_F(function, params_missing_comma)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -304,7 +311,7 @@ TEST_F(analysis, function_params_missing_comma)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_missing_type)
+TEST_F(function, params_missing_type)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -316,7 +323,7 @@ TEST_F(analysis, function_params_missing_type)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_missing_identifier)
+TEST_F(function, params_missing_identifier)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -328,7 +335,7 @@ TEST_F(analysis, function_params_missing_identifier)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, function_params_invalid_assignment)
+TEST_F(function, params_invalid_assignment)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -342,8 +349,10 @@ TEST_F(analysis, function_params_invalid_assignment)
 }
 
 // ===========================================================
+class return_statement : public analysis {
+};
 
-TEST_F(analysis, return_statement_invalid_implicit_type)
+TEST_F(return_statement, invalid_implicit_type)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -356,7 +365,7 @@ TEST_F(analysis, return_statement_invalid_implicit_type)
     EXPECT_EQ(exit_code(), 10);
 }
 
-TEST_F(analysis, return_statement_invalid_explicit_type)
+TEST_F(return_statement, invalid_explicit_type)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -370,8 +379,10 @@ TEST_F(analysis, return_statement_invalid_explicit_type)
 }
 
 // ===========================================================
+class return_value : public analysis {
+};
 
-TEST_F(analysis, return_value_valid)
+TEST_F(return_value, valid)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -383,7 +394,7 @@ TEST_F(analysis, return_value_valid)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_expression)
+TEST_F(return_value, valid_expression)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -396,7 +407,7 @@ TEST_F(analysis, return_value_valid_expression)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_expression_single_line)
+TEST_F(return_value, valid_expression_single_line)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -408,7 +419,7 @@ TEST_F(analysis, return_value_valid_expression_single_line)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_funcall)
+TEST_F(return_value, valid_funcall)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -422,7 +433,7 @@ TEST_F(analysis, return_value_valid_funcall)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_funcall_single_line)
+TEST_F(return_value, valid_funcall_single_line)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -435,7 +446,7 @@ TEST_F(analysis, return_value_valid_funcall_single_line)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_valid_not_unit)
+TEST_F(return_value, valid_not_unit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -447,7 +458,7 @@ TEST_F(analysis, return_value_valid_not_unit)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, return_value_after_vardef)
+TEST_F(return_value, after_vardef)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -460,7 +471,7 @@ TEST_F(analysis, return_value_after_vardef)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, return_value_after_assignment)
+TEST_F(return_value, after_assignment)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -474,7 +485,7 @@ TEST_F(analysis, return_value_after_assignment)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, return_value_after_while)
+TEST_F(return_value, after_while)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -490,7 +501,7 @@ TEST_F(analysis, return_value_after_while)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, return_value_unit_discard_return)
+TEST_F(return_value, unit_discard_return)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -504,8 +515,10 @@ TEST_F(analysis, return_value_unit_discard_return)
 }
 
 // ===========================================================
+class conditional_return : public analysis {
+};
 
-TEST_F(analysis, if_return_valid_explicit_unit)
+TEST_F(conditional_return, valid_explicit_unit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -521,7 +534,7 @@ TEST_F(analysis, if_return_valid_explicit_unit)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_implicit_unit)
+TEST_F(conditional_return, invalid_implicit_unit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -537,7 +550,7 @@ TEST_F(analysis, if_return_invalid_implicit_unit)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_implicit_unit_not_return)
+TEST_F(conditional_return, valid_implicit_unit_not_return)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -554,7 +567,7 @@ TEST_F(analysis, if_return_valid_implicit_unit_not_return)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_explicit_type)
+TEST_F(conditional_return, invalid_explicit_type)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -570,7 +583,7 @@ TEST_F(analysis, if_return_invalid_explicit_type)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_explicit_type_all_branches_return)
+TEST_F(conditional_return, valid_explicit_type_all_branches_return)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -586,7 +599,7 @@ TEST_F(analysis, if_return_valid_explicit_type_all_branches_return)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return)
+TEST_F(conditional_return, invalid_explicit_type_not_all_branches_return)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -602,7 +615,7 @@ TEST_F(analysis, if_return_invalid_explicit_type_not_all_branches_return)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_implicit_all_branches_unit)
+TEST_F(conditional_return, valid_implicit_all_branches_unit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -618,7 +631,7 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive)
+TEST_F(conditional_return, valid_implicit_all_branches_unit_recursive)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -637,7 +650,7 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_recursive)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive)
+TEST_F(conditional_return, invalid_implicit_all_branches_unit_recursive)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -656,7 +669,7 @@ TEST_F(analysis, if_return_invalid_implicit_all_branches_unit_recursive)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else)
+TEST_F(conditional_return, valid_implicit_all_branches_unit_without_else)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -671,8 +684,10 @@ TEST_F(analysis, if_return_valid_implicit_all_branches_unit_without_else)
 }
 
 // ===========================================================
+class recursion : public analysis {
+};
 
-TEST_F(analysis, recursion_direct_valid_explicit)
+TEST_F(recursion, direct_valid_explicit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -687,7 +702,7 @@ TEST_F(analysis, recursion_direct_valid_explicit)
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, recursion_direct_invalid_implicit)
+TEST_F(recursion, direct_invalid_implicit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -701,7 +716,7 @@ TEST_F(analysis, recursion_direct_invalid_implicit)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, recursion_indirect_valid_explicit)
+TEST_F(recursion, indirect_valid_explicit)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -719,7 +734,7 @@ TEST_F(analysis, recursion_indirect_valid_explicit)
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, recursion_indirect_valid_explicit_partial)
+TEST_F(recursion, indirect_valid_explicit_partial)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -736,7 +751,7 @@ TEST_F(analysis, recursion_indirect_valid_explicit_partial)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, recursion_indirect_invalid_implicit_all)
+TEST_F(recursion, indirect_invalid_implicit_all)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -755,8 +770,10 @@ TEST_F(analysis, recursion_indirect_invalid_implicit_all)
 }
 
 // ===========================================================
+class function_call : public analysis {
+};
 
-TEST_F(analysis, function_call_statement)
+TEST_F(function_call, statement)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -774,7 +791,7 @@ TEST_F(analysis, function_call_statement)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_call_statement_before_definition)
+TEST_F(function_call, statement_before_definition)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -792,7 +809,7 @@ TEST_F(analysis, function_call_statement_before_definition)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_call_var_initialization)
+TEST_F(function_call, var_initialization)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -810,7 +827,7 @@ TEST_F(analysis, function_call_var_initialization)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, function_call_assignment_value)
+TEST_F(function_call, assignment_value)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -829,7 +846,7 @@ TEST_F(analysis, function_call_assignment_value)
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, function_call_single_line_function)
+TEST_F(function_call, single_line_function)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -846,7 +863,7 @@ TEST_F(analysis, function_call_single_line_function)
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, function_call_return)
+TEST_F(function_call, return_statement)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -862,7 +879,7 @@ TEST_F(analysis, function_call_return)
     EXPECT_EQ(exit_code(true), 0);
 }
 
-TEST_F(analysis, function_call_invalid_parameter_count)
+TEST_F(function_call, invalid_parameter_count)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -878,7 +895,7 @@ TEST_F(analysis, function_call_invalid_parameter_count)
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, function_call_undefined)
+TEST_F(function_call, undefined)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -893,8 +910,10 @@ TEST_F(analysis, function_call_undefined)
 }
 
 // ===========================================================
+class if_statement : public analysis {
+};
 
-TEST_F(analysis, if_statement_condition_boolean)
+TEST_F(if_statement, condition_boolean)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -911,7 +930,7 @@ TEST_F(analysis, if_statement_condition_boolean)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_statement_condition_not_boolean)
+TEST_F(if_statement, condition_not_boolean)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -928,7 +947,7 @@ TEST_F(analysis, if_statement_condition_not_boolean)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_statement_condition_boolean_variable)
+TEST_F(if_statement, condition_boolean_variable)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -946,7 +965,7 @@ TEST_F(analysis, if_statement_condition_boolean_variable)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_statement_condition_not_boolean_variable)
+TEST_F(if_statement, condition_not_boolean_variable)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -963,7 +982,7 @@ TEST_F(analysis, if_statement_condition_not_boolean_variable)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, if_statement_branch_scopes)
+TEST_F(if_statement, branch_scopes)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -984,7 +1003,7 @@ TEST_F(analysis, if_statement_branch_scopes)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, if_statement_invalid_subindent_else)
+TEST_F(if_statement, invalid_subindent_else)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1001,7 +1020,7 @@ TEST_F(analysis, if_statement_invalid_subindent_else)
     EXPECT_EQ(exit_code(), 1);
 }
 
-TEST_F(analysis, if_statement_invalid_missing_indent_else)
+TEST_F(if_statement, invalid_missing_indent_else)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1018,7 +1037,7 @@ TEST_F(analysis, if_statement_invalid_missing_indent_else)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, if_statement_invalid_dedent_else)
+TEST_F(if_statement, invalid_dedent_else)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1036,8 +1055,10 @@ TEST_F(analysis, if_statement_invalid_dedent_else)
 }
 
 // ===========================================================
+class while_statement : public analysis {
+};
 
-TEST_F(analysis, while_statement_condition_boolean)
+TEST_F(while_statement, condition_boolean)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1054,7 +1075,7 @@ TEST_F(analysis, while_statement_condition_boolean)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, while_statement_condition_not_boolean)
+TEST_F(while_statement, condition_not_boolean)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1071,7 +1092,7 @@ TEST_F(analysis, while_statement_condition_not_boolean)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, while_statement_condition_boolean_variable)
+TEST_F(while_statement, condition_boolean_variable)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1090,7 +1111,7 @@ TEST_F(analysis, while_statement_condition_boolean_variable)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, while_statement_condition_not_boolean_variable)
+TEST_F(while_statement, condition_not_boolean_variable)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1108,7 +1129,7 @@ TEST_F(analysis, while_statement_condition_not_boolean_variable)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, while_statement_branch_scopes)
+TEST_F(while_statement, branch_scopes)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1128,8 +1149,10 @@ TEST_F(analysis, while_statement_branch_scopes)
 }
 
 // ===========================================================
+class expression : public analysis {
+};
 
-TEST_F(analysis, expressions)
+TEST_F(expression, valid)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1150,7 +1173,7 @@ TEST_F(analysis, expressions)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_incompatible_types_string_arithmetic)
+TEST_F(expression, incompatible_types_string_arithmetic)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1165,7 +1188,7 @@ TEST_F(analysis, expressions_incompatible_types_string_arithmetic)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_incompatible_types_boolean_arithmetic)
+TEST_F(expression, incompatible_types_boolean_arithmetic)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1180,7 +1203,7 @@ TEST_F(analysis, expressions_incompatible_types_boolean_arithmetic)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_incompatible_types_int_logic)
+TEST_F(expression, incompatible_types_int_logic)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1195,7 +1218,7 @@ TEST_F(analysis, expressions_incompatible_types_int_logic)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_valid_division_by_zero)
+TEST_F(expression, valid_division_by_zero)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1212,7 +1235,7 @@ TEST_F(analysis, expressions_valid_division_by_zero)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_implicit_float_conversion)
+TEST_F(expression, implicit_float_conversion)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1227,7 +1250,7 @@ TEST_F(analysis, expressions_implicit_float_conversion)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_implicit_float_conversion_check)
+TEST_F(expression, implicit_float_conversion_check)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1244,7 +1267,7 @@ TEST_F(analysis, expressions_implicit_float_conversion_check)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_regular_int_check)
+TEST_F(expression, regular_int_check)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1261,7 +1284,7 @@ TEST_F(analysis, expressions_regular_int_check)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_int_division_check)
+TEST_F(expression, int_division_check)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1275,7 +1298,7 @@ TEST_F(analysis, expressions_int_division_check)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_int_float_division_check)
+TEST_F(expression, int_float_division_check)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1290,7 +1313,7 @@ TEST_F(analysis, expressions_int_float_division_check)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_unary_op)
+TEST_F(expression, unary_op)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1311,7 +1334,7 @@ TEST_F(analysis, expressions_unary_op)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_unary_op_invalid_string_plus)
+TEST_F(expression, unary_op_invalid_string_plus)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1323,7 +1346,7 @@ TEST_F(analysis, expressions_unary_op_invalid_string_plus)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_unary_op_invalid_string_minus)
+TEST_F(expression, unary_op_invalid_string_minus)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1335,7 +1358,7 @@ TEST_F(analysis, expressions_unary_op_invalid_string_minus)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_string_concatenation)
+TEST_F(expression, string_concatenation)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1348,7 +1371,7 @@ TEST_F(analysis, expressions_string_concatenation)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_string_invalid_type_concatenation)
+TEST_F(expression, string_invalid_type_concatenation)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1365,7 +1388,7 @@ TEST_F(analysis, expressions_string_invalid_type_concatenation)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, expressions_comparison)
+TEST_F(expression, comparison)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1387,7 +1410,7 @@ TEST_F(analysis, expressions_comparison)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_comparison_strings)
+TEST_F(expression, comparison_strings)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1404,7 +1427,7 @@ TEST_F(analysis, expressions_comparison_strings)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_equality)
+TEST_F(expression, equality)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1427,7 +1450,7 @@ TEST_F(analysis, expressions_equality)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, expressions_comparison_invalid_chaining)
+TEST_F(expression, comparison_invalid_chaining)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1441,7 +1464,7 @@ TEST_F(analysis, expressions_comparison_invalid_chaining)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, expressions_equality_invalid_chaining)
+TEST_F(expression, equality_invalid_chaining)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1455,7 +1478,7 @@ TEST_F(analysis, expressions_equality_invalid_chaining)
     EXPECT_EQ(exit_code(), 2);
 }
 
-TEST_F(analysis, expressions_combined_boolean)
+TEST_F(expression, combined_boolean)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1470,8 +1493,10 @@ TEST_F(analysis, expressions_combined_boolean)
 }
 
 // ===========================================================
+class built_in : public analysis {
+};
 
-TEST_F(analysis, built_in_print)
+TEST_F(built_in, print)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1489,7 +1514,7 @@ TEST_F(analysis, built_in_print)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, built_in_print_unit_return_type)
+TEST_F(built_in, print_unit_return_type)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1507,7 +1532,7 @@ TEST_F(analysis, built_in_print_unit_return_type)
     EXPECT_EQ(exit_code(), 6);
 }
 
-TEST_F(analysis, built_in_read_functions)
+TEST_F(built_in, read_functions)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1523,7 +1548,7 @@ TEST_F(analysis, built_in_read_functions)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, built_in_read_functions_invalid_arguments)
+TEST_F(built_in, read_functions_invalid_arguments)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1539,7 +1564,7 @@ TEST_F(analysis, built_in_read_functions_invalid_arguments)
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, built_in_conversion_functions)
+TEST_F(built_in, conversion_functions)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1560,7 +1585,7 @@ TEST_F(analysis, built_in_conversion_functions)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, built_in_to_str_invalid_arguments)
+TEST_F(built_in, to_str_invalid_arguments)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1574,7 +1599,7 @@ TEST_F(analysis, built_in_to_str_invalid_arguments)
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, built_in_to_int_invalid_arguments)
+TEST_F(built_in, to_int_invalid_arguments)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1588,7 +1613,7 @@ TEST_F(analysis, built_in_to_int_invalid_arguments)
     EXPECT_EQ(exit_code(), 5);
 }
 
-TEST_F(analysis, built_in_str_length)
+TEST_F(built_in, str_length)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1602,7 +1627,7 @@ TEST_F(analysis, built_in_str_length)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, built_in_substr)
+TEST_F(built_in, substr)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1616,7 +1641,7 @@ TEST_F(analysis, built_in_substr)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, built_in_ord)
+TEST_F(built_in, ord)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1630,7 +1655,7 @@ TEST_F(analysis, built_in_ord)
     EXPECT_EQ(exit_code(), 0);
 }
 
-TEST_F(analysis, built_in_chr)
+TEST_F(built_in, chr)
 {
     /* language=.ifj26 */
     load_code(R"(
@@ -1640,6 +1665,125 @@ TEST_F(analysis, built_in_chr)
     )");
 
     EXPECT_EQ(exit_code(), 0);
+}
+
+// ===========================================================
+class comments : public analysis {
+};
+
+TEST_F(comments, as_newline)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") // \n
+            print("B")
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(comments, multiline_nesting)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /* /* /* /* */ */ */ */
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(comments, multiline_nesting_invalid)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /* /* /* /* */ */
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+TEST_F(comments, multiline_white_char)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(1/*SPACE*/+ /*SPACE*/ 1)
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(comments, multiline_newline)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /*
+                newline
+            */
+            print("B")
+    )");
+
+    EXPECT_EQ(exit_code(), 0);
+}
+
+TEST_F(comments, multiline_newline_invalid)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print("A") /*
+                newline
+            */ print("B")
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+TEST_F(comments, multiline_newline_invalid_nested)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            print(1 + /* /*
+                newline
+            */ */ 2);
+    )");
+
+    EXPECT_EQ(exit_code(), 1);
+}
+
+// ===========================================================
+
+// TODO: Trailing comma before newline
+TEST_F(analysis, trailing_comma_invalid)
+{
+    /* language=.ifj26 */
+    load_code(R"(
+        import ifj26.*
+        @main def nothing(): Unit =
+            print(5,);
+
+    )");
+
+    EXPECT_EQ(exit_code(), 2);
 }
 
 // ===========================================================

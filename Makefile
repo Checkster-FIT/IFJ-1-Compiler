@@ -19,8 +19,7 @@ MAIN_EXEC = ifj26compiler
 # Compilation database, used for project integration
 DB_OUTPUT = compile_commands.json
 
-
-ARCHIVE_NAME = archive
+ARCHIVE_NAME = xhajduf00
 ARCHIVE_CONTAINS = src/* tests/* tests/data/* dokumentace.pdf Makefile rozdeleni rozsireni
 ARCHIVE_EXCLUDES = tests/data/* tests/data/*/* tests/build/* tests/build/*/* tests/compile
 
@@ -50,6 +49,9 @@ run: $(MAIN_EXEC)
 custom basic: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/$@.ifj26
 
+tree: $(MAIN_EXEC)
+	@./$(MAIN_EXEC) -t < $(TEST_DATA_DIR)/$@.ifj26
+
 strings factorial: $(MAIN_EXEC)
 	@./$(MAIN_EXEC) < $(TEST_DATA_DIR)/core/$@.ifj26
 
@@ -68,6 +70,8 @@ clean:
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
 	@rm -fv *.pdf
+	@rm -fv *.log
+	@rm -fv $(ARCHIVE_NAME).zip
 
 # -----------------------------------------------
 .PHONY: check format tidy tidy-cpp checklist examples

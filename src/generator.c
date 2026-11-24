@@ -8,6 +8,7 @@
 #include "generator.h"
 #include "ast.h"
 #include "debug.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,8 +49,14 @@ void generate_program(ASTNode* node)
     printf("EXIT int@0\n");
 }
 
+static ASTNode* current_function_node = NULL;
+
 void generate_function(ASTNode* node)
 {
+    if (node->parent == NULL) {
+        return;
+    }
+
     printf("LABEL %s\n", node->function.identifier);
 
     printf("CREATEFRAME\n");
@@ -60,29 +67,42 @@ void generate_function(ASTNode* node)
     printf("DEFVAR LF@$op3\n");
     printf("DEFVAR LF@$tmp_type\n");
     printf("DEFVAR LF@$tmp_char\n");
-
     generate_local_variables(node->function.symtable);
-    if (node->parent != NULL && node->parent->type == AST_EXTENSION) {
+    if (node->parent->type == AST_EXTENSION) {
         generate_local_variables(node->parent->extension.symtable);
     }
     generate_nested_local_variables(node->function.statements.first);
+    current_function_node = node;
     generate_parameters(&node->function.parameter_groups);
     if (node->parent->type == AST_EXTENSION) {
         generate_parameters(&node->parent->extension.parameter_groups);
     }
-    generate_statements(node->function.statements.first, true);
 
-    if (node->parent->type == AST_PROGRAM) {
-        SymtableEntry* main = symtable_main_search(node->parent->program.global_symtable);
-        if (strcmp(main->identifier, node->function.identifier) == 0) {
-            printf("EXIT int@0\n\n");
-        } else {
-            printf("POPFRAME\n");
-            printf("RETURN\n\n");
-        }
-    } else if (node->parent->type == AST_EXTENSION) {
-        printf("POPFRAME\n");
-        printf("RETURN\n\n");
+    ASTNode* prog = (node->parent->type == AST_PROGRAM) ? node->parent : node->parent->parent;
+    TNode* func_tnode = search(prog->program.global_symtable, node->function.identifier);
+    SymtableEntry* func_entry = (func_tnode != NULL) ? (SymtableEntry*)func_tnode->value : NULL;
+
+    bool is_main = (func_entry != NULL && func_entry->main);
+    bool returns_value = (func_entry != NULL) && (
+        func_entry->data_type == 'i' ||
+        func_entry->data_type == 'd' ||
+        func_entry->data_type == 's' ||
+        func_entry->data_type == 'b'
+    );
+
+    ASTNode* last = node->function.statements.last;
+    bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL ||
+        last->type == AST_BUILTIN_FUNCALL || last->type == AST_VAR_USE || last->type == AST_INTERPOLATED_STRING ||
+        last->type == AST_CONVERSION || last->type == AST_TERM || last->type == AST_LITERAL) && returns_value;
+
+    generate_statements(node->function.statements.first, has_expr_ret);
+
+    if (is_main) {
+        printf("EXIT int@0\n\n");
+    } else {
+        if (!has_expr_ret)
+            printf("PUSHS nil@nil\n");
+        printf("POPFRAME\nRETURN\n\n");
     }
 }
 
@@ -117,7 +137,8 @@ void generate_local_variables_recursive(TNode* node)
     }
     generate_local_variables_recursive(node->left);
     SymtableEntry* entry = (SymtableEntry*)node->value;
-    printf("DEFVAR LF@%s\n", entry->identifier);
+    printf("DEFVAR LF@%s_%zx\n", entry->identifier, (uintptr_t)entry);
+    entry->defined = false;
     generate_local_variables_recursive(node->right);
 }
 
@@ -141,7 +162,16 @@ void generate_parameter(ASTNode* param_node)
     generate_parameter(param_node->next);
 
     if (param_node->parameter.identifier != NULL) {
-        printf("POPS LF@%s\n", param_node->parameter.identifier);
+        SymtableEntry* entry = get_closest_symtable_entry(param_node, param_node->parameter.identifier);
+        if (entry == NULL) {
+            entry = get_closest_symtable_entry(current_function_node, param_node->parameter.identifier);
+        }
+        if (entry == NULL) {
+            fprintf(stderr, "generate_parameter: parameter '%s' not found in symtable\n", param_node->parameter.identifier);
+            exit(99);
+        }
+        entry->defined = true;
+        printf("POPS LF@%s_%zx\n", param_node->parameter.identifier, (uintptr_t)entry);
     }
 }
 
@@ -266,9 +296,11 @@ void generate_expression(ASTNode* node)
             break;
         }
         case AST_TERM:
-        case AST_VAR_USE:
-            printf("PUSHS LF@%s\n", node->term.identifier);
+        case AST_VAR_USE: {
+            SymtableEntry* entry = get_closest_defined_symtable_entry(node, node->term.identifier);
+            printf("PUSHS LF@%s_%zx\n", node->term.identifier, (uintptr_t)entry);
             break;
+        }
         case AST_EXPRESSION:
             if (node->expression.operation == OP_AND) {
                 int id_and = builtin_label_id++;
@@ -339,6 +371,7 @@ void generate_expression(ASTNode* node)
                         printf("NOTS\n");
                         break;
                     case OP_UNARY_PLUS:
+                        generate_expression(node->expression.left);
                         break;
                     case OP_UNARY_MINUS:
                         generate_expression(node->expression.left);
@@ -438,8 +471,14 @@ void generate_expression(ASTNode* node)
                         ASTNode* arg = builtin_group->argument_group.arguments.first;
                         while (arg != NULL) {
                             generate_expression(arg);
+                            int id_print = builtin_label_id++;
                             printf("POPS LF@$discard\n");
+                            printf("JUMPIFEQ write_unit_%d LF@$discard nil@nil\n", id_print);
                             printf("WRITE LF@$discard\n");
+                            printf("JUMP write_end_%d\n", id_print);
+                            printf("LABEL write_unit_%d\n", id_print);
+                            printf("WRITE string@()\n");
+                            printf("LABEL write_end_%d\n", id_print);
                             arg = arg->next;
                         }
                         builtin_group = builtin_group->next;
@@ -514,13 +553,13 @@ void generate_expression(ASTNode* node)
                         printf("POPS LF@$op1\n");
                         printf("LT LF@$tmp_type LF@$op1 int@0\n");
                         printf("JUMPIFEQ chr_fail_%d LF@$tmp_type bool@true\n", builtin_label_id);
-                        printf("GT LF@$tmp_type LF@$op1 int@127\n");
+                        printf("GT LF@$tmp_type LF@$op1 int@255\n");
                         printf("JUMPIFEQ chr_fail_%d LF@$tmp_type bool@true\n", builtin_label_id);
                         printf("PUSHS LF@$op1\n");
                         printf("INT2CHARS\n");
                         printf("JUMP chr_success_%d\n", builtin_label_id);
                         printf("LABEL chr_fail_%d\n", builtin_label_id);
-                        printf("EXIT int@57\n");
+                        printf("INT2CHAR LF@$op1 int@-1\n");
                         printf("LABEL chr_success_%d\n", builtin_label_id);
                         builtin_label_id++;
                     }
@@ -606,34 +645,49 @@ void generate_expression(ASTNode* node)
                     printf("POPS LF@$op2\n");
                     printf("POPS LF@$op1\n");
                     printf("MOVE LF@$discard string@\n");
+                    printf("STRLEN LF@$tmp_type LF@$op1\n");
+
                     printf("PUSHS LF@$op2\n");
                     printf("PUSHS int@0\n");
                     printf("LTS\n");
                     printf("PUSHS bool@true\n");
-                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
+
+                    printf("PUSHS LF@$op2\n");
                     printf("PUSHS LF@$op3\n");
-                    printf("PUSHS int@0\n");
                     printf("GTS\n");
-                    printf("PUSHS bool@false\n");
-                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
 
-                    printf("STRLEN LF@$tmp_type LF@$op1\n");
-                    printf("LABEL $substr_loop_%d\n", id);
-
-                    printf("JUMPIFEQ $substr_end_%d LF@$op3 int@0\n", id);
                     printf("PUSHS LF@$op2\n");
                     printf("PUSHS LF@$tmp_type\n");
-                    printf("LTS\n");
-                    printf("PUSHS bool@false\n");
-                    printf("JUMPIFEQS $substr_end_%d\n", id);
+                    printf("GTS\n");
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
 
+                    printf("PUSHS LF@$op3\n");
+                    printf("PUSHS LF@$tmp_type\n");
+                    printf("GTS\n");
+                    printf("PUSHS bool@true\n");
+                    printf("JUMPIFEQS $substr_err_%d\n", id);
+
+                    printf("SUB LF@$op3 LF@$op3 LF@$op2\n");
+
+                    printf("LABEL $substr_loop_%d\n", id);
+                    printf("JUMPIFEQ $substr_end_%d LF@$op3 int@0\n", id);
                     printf("GETCHAR LF@$tmp_char LF@$op1 LF@$op2\n");
                     printf("CONCAT LF@$discard LF@$discard LF@$tmp_char\n");
                     printf("ADD LF@$op2 LF@$op2 int@1\n");
                     printf("SUB LF@$op3 LF@$op3 int@1\n");
                     printf("JUMP $substr_loop_%d\n", id);
+
                     printf("LABEL $substr_end_%d\n", id);
                     printf("PUSHS LF@$discard\n");
+                    printf("JUMP $substr_ok_%d\n", id);
+
+                    printf("LABEL $substr_err_%d\n", id);
+                    printf("EXIT int@40\n");
+                    printf("LABEL $substr_ok_%d\n", id);
                 }
             }
             break;
@@ -663,11 +717,14 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
     switch (statement->type) {
         case AST_VAR_ASSIGN:
             generate_expression(statement->assignment.expression);
-            printf("POPS LF@%s\n", statement->assignment.target);
+            SymtableEntry* entry = get_closest_defined_symtable_entry(statement, statement->assignment.target);
+            printf("POPS LF@%s_%zx\n", statement->assignment.target, (uintptr_t)entry);
             break;
         case AST_VAR_DEF:
             generate_expression(statement->vardef.expression);
-            printf("POPS LF@%s\n", statement->vardef.identifier);
+            SymtableEntry* entry_var_def = get_closest_symtable_entry(statement, statement->vardef.identifier);
+            entry_var_def->defined = true;
+            printf("POPS LF@%s_%zx\n", statement->vardef.identifier, (uintptr_t)entry_var_def);
             break;
         case AST_WHILE_DO: {
             static int while_counter = 0;
@@ -683,7 +740,11 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             break;
         }
         case AST_RETURN:
-            generate_expression(statement->return_st.expression);
+            if (statement->return_st.expression != NULL) {
+                generate_expression(statement->return_st.expression);
+            } else {
+                printf("PUSHS nil@nil\n");
+            }
             printf("POPFRAME\n");
             printf("RETURN\n");
             break;
@@ -703,6 +764,8 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
         case AST_FUNCALL:
         case AST_BUILTIN_FUNCALL:
         case AST_VAR_USE:
+        case AST_CONVERSION:
+        case AST_INTERPOLATED_STRING:
             generate_expression(statement);
             if (!is_last) {
                 printf("POPS LF@$discard\n");
@@ -725,10 +788,10 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             break;
         }
         case AST_ELSE:
-            generate_statements(statement->if_statement.else_node, false);
+            generate_statements(statement->else_statement.statements.first, false);
             break;
         case AST_THEN:
-            generate_statements(statement->if_statement.then_node, false);
+            generate_statements(statement->then_statement.statements.first, false);
             break;
         default:
             fprintf(stderr, "generate_statements_switch: accessed wrong statement type %d\n", statement->type);
@@ -756,7 +819,7 @@ bool is_string_expr(ASTNode* node)
     if (node->type == AST_EXPRESSION) {
         if (node->expression.result_type == 's')
             return true;
-        return is_string_expr(node->expression.left) || is_string_expr(node->expression.right);
+        return false;
     }
     if (node->type == AST_LITERAL) {
         return node->literal.type == AST_STRING;
@@ -768,7 +831,7 @@ bool is_string_expr(ASTNode* node)
         return strcmp(node->term.identifier, "readLine") == 0 || strcmp(node->term.identifier, "chr") == 0 || strcmp(node->term.identifier, "subStr") == 0 || strcmp(node->term.identifier, "toStr") == 0;
     }
     if (node->type == AST_VAR_USE && node->term.identifier != NULL) {
-        SymtableEntry* entry = get_closest_symtable_entry(node, node->term.identifier);
+        SymtableEntry* entry = get_closest_defined_symtable_entry(node, node->term.identifier);
         if (entry != NULL && entry->data_type == 's')
             return true;
     }

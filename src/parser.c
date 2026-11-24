@@ -220,8 +220,8 @@ int parse_extension(ParserContext* parser)
     ASTNode* group_node = ast_add_parameter_group(parser->ast, AST_TARGET_EXTENSION);
     group_node->line = get_line(parser);
     if (!parse_param(parser, NULL))
-        return failed(parser, PARSER_MISSING_EXT_PARAM_END);
-    char ext_type = parser->last_type;
+        return parser->exit_code == 0 ? failed(parser, PARSER_MISSING_EXT_PARAM_END) : FAILED;
+    const char ext_type = parser->last_type;
 
     if (!accept_next(RIGHT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
@@ -1006,7 +1006,7 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_s
     if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
         // Empty interpolated string that are not END can be discarded
         if (*parser->accepted.attribute_string == '\0')
-            return parse_interpolated_string(parser, target_string_node);
+            return parse_multiline_interpolated_string(parser, target_string_node);
 
         ASTNode* string = ast_new_literal((ASTLiteral) {
             .type = AST_STRING,
