@@ -36,17 +36,40 @@
         \vspace{\stretch{0.382}}
 
         {
-            \Huge
-            Formální jazyky a překladače
-            \\[0.8em]
+            \Huge Formální jazyky a překladače \\ \vspace{0.4em}
+            \huge Dokumentace k~překladači IFJ26 \\ \vspace{0.4em}
+
+            \vspace{2em}
             \huge
-            Dokumentace k~překladači IFJ26
+                Varianta \texttt{vv-BVS}  \\
+            \vspace{0.4em}
+            \Large
+                \texttt{FUNEXP},
+                \texttt{BOOLTHEN},
+                \texttt{VALMEM}, \\
+                \texttt{INTERPOLATEDS},
+                \texttt{EXTKW},
+                \texttt{PARAMLISTS} \\
+            \vspace{3em}
+
         }
 
         \vspace{\stretch{0.618}}
-
         {
             \Large
+
+            \url{https://github.com/checkster-fit/ifj-1-compiler} \\
+
+            \vspace{1em}
+
+            \begin{tabular}{l l r}
+                Andrea Drahovská & (\texttt{xdrahoa00, 282465}) & $25\,\%$ bodů \\
+                \textbf{Filip Hajdušek} & (\texttt{xhajduf00, 282063}) & $25\,\%$ bodů \\
+                Tobiáš Mikan & (\texttt{xmikant00, 282285}) & $25\,\%$ bodů \\
+                Vojtěch Wyslych & (\texttt{xwyslyv00, 282281}) & $25\,\%$ bodů \\
+            \end{tabular}
+
+            \vspace{1em}
             \today
         }
 
@@ -54,71 +77,25 @@
 
     \end{titlepage}
 
+    \tableofcontents
+
     \setlength{\parindent}{0cm}
-
-    \section{Základní informace o~projektu}
-    \label{sec:info}
-
-    Cílem projektu bylo vytvořit překladač, který umožňuje přeložení kódu ve zdrojovém jazyce IFJ26
-    do cílového jazyka IFJ26code.
-
-    \subsection{Autoři a rozdělení bodů v týmu}
-        \begin{itemize}
-            \setlength\itemsep{0em}
-            \item
-            \begin{tabbing}
-                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
-                Andrea Drahovská             \> (\texttt{xdrahoa00, 282465}) \> $25\,\%$ bodů
-            \end{tabbing}
-            \item
-            \begin{tabbing}
-                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
-                \textbf{Filip Hajdušek}      \> (\texttt{xhajduf00, 282063}) \> $25\,\%$ bodů
-            \end{tabbing}
-            \item
-            \begin{tabbing}
-                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
-                Tobiáš Mikan                 \> (\texttt{xmikant00, 282285}) \> $25\,\%$ bodů
-            \end{tabbing}
-            \item
-            \begin{tabbing}
-                MMMMMMMMMMMMM \= MMMMMMMMMMMMMM\= \kill
-                Vojtěch Wyslych              \> (\texttt{xwyslyv00, 282281}) \> $25\,\%$ bodů
-            \end{tabbing}
-        \end{itemize}
-
-    \subsection{Zvolená varianta}
-        Pro implementace tabulky symbolů byla zvolena varianta \texttt{vv-BVS}.
-
-    \subsection{Implementovaná rozšíření}
-
-        \begin{itemize}
-            \setlength{\itemsep}{-3pt}
-            \item[] \texttt{FUNEXP}
-            \item[] \texttt{BOOLTHEN}
-            \item[] \texttt{VALMEM}
-            \item[] \texttt{INTERPOLATEDS}
-            \item[] \texttt{EXTKW}
-            \item[] \texttt{PARAMLISTS}
-        \end{itemize}
-
-    \subsection{Git repozitář}
-
-        \begin{itemize}
-            \setlength{\itemsep}{-3pt}
-            \item[] \url{https://github.com/Checkster-FIT/IFJ-1-Compiler}
-        \end{itemize}
+    \setlength{\parskip}{0.45em}
 
     \newpage
 
     \section{Rozdělení práce v týmu}
+
+
+    Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje
+    Až na drobné výjimky byl plán dodržen a odpovídá skutečnému rozdělení uvedenému níže.
 
         \subsection*{Andrea Drahovská}
 
             \begin{itemize}
                 \setlength{\itemsep}{-2pt}
 
-                \item lexikální analyzátor
+                \item \textbf{lexikální analyzátor}
                 \begin{itemize}
                     \vspace{-6pt}
                     \item[-] návrh konečného automatu
@@ -139,7 +116,7 @@
                 \item dokumentace
                 \item Makefile, GoogleTest a další pomocné nástroje
 
-                \item syntaktický analyzátor
+                \item \textbf{syntaktický analyzátor}
                     \begin{itemize}
                         \vspace{-6pt}
                         \item[-] návrh LL gramatiky a z ní vycházející LL tabulky
@@ -162,14 +139,14 @@
             \begin{itemize}
                 \setlength{\itemsep}{-2pt}
 
-                \item lexikální analyzátor
+                \item \textbf{lexikální analyzátor}
                 \begin{itemize}
                     \vspace{-6pt}
                     \item[-] návrh konečného automatu
                     \vspace{-4pt}
                 \end{itemize}
 
-                \item sémantický analyzátor
+                \item \textbf{sémantický analyzátor}
                 \item implementace datových struktur zásobníku a dynamicky alokovaného řetězce
 
             \end{itemize}
@@ -179,13 +156,32 @@
             \begin{itemize}
                 \setlength{\itemsep}{-2pt}
 
-                \item generátor kódu
+                \item \textbf{generátor kódu}
                 \item implementace výškově vyváženého binárního vyhledávacího stromu
 
             \end{itemize}
 
     \section{Spolupráce v týmu}
-    \newpage
+
+    Pro spolupráci na projektu byl využit verzovací systém \emph{Git} se vzdáleným repozitářem na platformě
+    \href{https://github.com/checkster-fit/ifj-1-compiler}{\emph{GitHub}}. Dále byl pro jednoduchou komunikaci
+    mezi členy týmu a jednotný zdroj informací na platformě \emph{Discord} zřízen sever.
+
+    Práce na jednotlivých částech projektu byla prováděna na příslušných oddělených větvích.
+    Po dokončení ucelené části implementace byl vytvořen PR, který byl následně po čase schválen a
+    sloučen do hlavní větve.
+
+    Pro testování projektu byla zvolena knihovna \emph{GoogleTest}. Pro ověření správnosti implementace
+    byly za pomoci této knihovny vytvořeny jednotkové testy pro moduly lexikální a syntakické analýzy.
+    Tyto testy až na výjimky (např. sdílené datové struktury) pracují pouze s jedním testovaným modulem.
+
+    Dále byly vytvořeny integrační testy pro ověření správnosti spolupráce více modulů.
+    První sada integračních testů ověřuje všechny stupně analýzy kódu (lexikální, syntaktická a sémantická)
+    na vzorcích zdrojového kódu. Druhá sada testů pak ověřuje správnost výstupů interpretace získaného cílového kódu.
+
+    Pro udržení jednotného formátu kódu byly využity nástroje \emph{Clang-Format} a \emph{Clang-Tidy}.
+    Pro formátování byl zvolen styl \texttt{WebKit} s menšími úpravami.
+
 
     \section{Architektura projektu}
 
@@ -243,6 +239,8 @@
 
             \captionof{figure}{Blokové schéma architektury překladače}
     \end{figure}
+
+    Návrh architektury překladače zahrnuje čtyři oddělenné moduly.
 
 
     \newpage
@@ -303,8 +301,6 @@
 
         \end{longtable}
 
-        \setcounter{table}{0}
-        \captionof{table}{LL tabulka}
     \end{center}
 
     \newpage
