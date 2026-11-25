@@ -1568,6 +1568,8 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_BLOCK_COMMENT_END_WITHOUT_LF;
                 } else if (c == '/' && context->block_comment_counter == 0 && context->lf_inside_block_comment == true) {
                     state = STATE_BLOCK_COMMENT_END_WITH_LF;
+                } else if (c == '*') {
+                    state = STATE_ANOTHER_BLOCK_COMMENT_END;
                 } else {
                     state = STATE_BLOCK_COMMENT_START;
                 }
