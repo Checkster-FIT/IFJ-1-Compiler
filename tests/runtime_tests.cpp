@@ -278,6 +278,26 @@ TEST_F(runtime, variable_initalization)
 
 // ========================================================
 
+TEST_F(runtime, operators)
+{
+    /* language=.ifj26 */
+    source = R"IFJ(
+        import ifj26.*
+
+        @main def main(): Unit =
+            val a = 10 - 3 - 2 + 4 * 5 / 2
+            val b = -7 / 2
+            val c = 7 / -2
+            val d = -7.0 / 2
+            val e = --5
+            print(toStr(a) + "|" + toStr(b) + "|" + toStr(c) + "|" + toStr(d) + "|" + toStr(e))
+    )IFJ";
+
+    output = "15|-3|-3|-3.50|5";
+}
+
+// ========================================================
+
 TEST_F(runtime, scope_functions)
 {
     /* language=.ifj26 */

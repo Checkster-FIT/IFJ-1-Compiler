@@ -13,6 +13,14 @@
 
 #include <string.h>
 
+void handle_flags(const int argc, char* argv[], ASTNode* ast)
+{
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--ast") == 0)
+            print_ast(ast);
+    }
+}
+
 int main(const int argc, char* argv[])
 {
 
@@ -30,6 +38,7 @@ int main(const int argc, char* argv[])
     // Syntax analysis
     const int exit_code_parser = run_parser(ast, strings, NULL);
     if (exit_code_parser != 0) {
+        handle_flags(argc, argv, ast);
         free_ast_nodes(ast);
         free_strings(strings);
         return exit_code_parser;
@@ -38,6 +47,7 @@ int main(const int argc, char* argv[])
     // Semantic analysis
     const int exit_code_semantic = run_semantic(ast);
     if (exit_code_semantic != 0) {
+        handle_flags(argc, argv, ast);
         free_ast_nodes(ast);
         free_strings(strings);
         return exit_code_semantic;
@@ -46,12 +56,7 @@ int main(const int argc, char* argv[])
     // Code generation
     generate_program(ast);
 
-    // Flags
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--ast") == 0)
-            print_ast(ast);
-    }
-
+    handle_flags(argc, argv, ast);
     free_ast_nodes(ast);
     free_strings(strings);
     return 0;
