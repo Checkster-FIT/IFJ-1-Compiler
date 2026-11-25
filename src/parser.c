@@ -1110,7 +1110,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
     static const char table[P_TERMINAL_COUNT][P_TERMINAL_COUNT] = {
         //                          [(]  [t]  [)]  [!]  [*]  [+]  [<]  [=]  [&]  [|]  [$]  [.]
         /* [(]              */ { '<', '<', '=', '<', '<', '<', '<', '<', '<', '<', '?', '<' },
-        /* [t]              */ { '?', '?', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>' },
+        /* [t]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' },
         /* [)]              */ { '?', '?', '>', '?', '>', '>', '>', '>', '>', '>', '>', '>' },
         /* [!, +u, -u]      */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<' },
         /* [*, /]           */ { '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<' },
@@ -1153,7 +1153,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
             return CORRECT;
         }
 
-         if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB) {
+         if ((!top_elem || (top_elem->group != P_EXPRESSION && top_elem->group != P_TERM)) && next_elem->group == P_ADDSUB) {
             next_elem->group = P_UNARY;
             next_elem->operation = next_elem->operation == OP_ADD ? OP_UNARY_PLUS : next_elem->operation;
             next_elem->operation = next_elem->operation == OP_SUB ? OP_UNARY_MINUS : next_elem->operation;
