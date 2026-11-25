@@ -14,6 +14,7 @@
 #include <string.h>
 
 static int builtin_label_id = 0;
+static bool current_function_is_main = false;
 
 void generate_program(ASTNode* node)
 {
@@ -89,6 +90,8 @@ void generate_function(ASTNode* node)
         func_entry->data_type == 's' ||
         func_entry->data_type == 'b'
     );
+
+    current_function_is_main = is_main;
 
     ASTNode* last = node->function.statements.last;
     bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL ||
@@ -727,8 +730,7 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             printf("POPS LF@%s_%zx\n", statement->vardef.identifier, (uintptr_t)entry_var_def);
             break;
         case AST_WHILE_DO: {
-            static int while_counter = 0;
-            while_counter += 1;
+            int while_counter = builtin_label_id++;
             printf("LABEL while_start_%d\n", while_counter);
             printf("PUSHS bool@false\n");
             generate_expression(statement->while_do.condition);
@@ -745,8 +747,12 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             } else {
                 printf("PUSHS nil@nil\n");
             }
-            printf("POPFRAME\n");
-            printf("RETURN\n");
+            if (current_function_is_main) {
+                printf("EXIT int@0\n");
+            } else {
+                printf("POPFRAME\n");
+                printf("RETURN\n");
+            }
             break;
         case AST_FUNCTION:
             printf("CREATEFRAME\n");
@@ -772,26 +778,24 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
             }
             break;
         case AST_IF: {
-            static int if_counter = 0;
-            if_counter += 1;
-            int current_if = if_counter;
+            int current_if = builtin_label_id++;
             printf("PUSHS bool@false\n");
             generate_expression(statement->if_statement.condition);
             to_bool();
             printf("JUMPIFEQS if_else_%d\n", current_if);
-            generate_statements(statement->if_statement.then_node, false);
+            generate_statements(statement->if_statement.then_node, is_last);
             printf("JUMP if_end_%d\n", current_if);
             printf("LABEL if_else_%d\n", current_if);
             if (statement->if_statement.else_node != NULL)
-                generate_statements(statement->if_statement.else_node, false);
+                generate_statements(statement->if_statement.else_node, is_last);
             printf("LABEL if_end_%d\n", current_if);
             break;
         }
         case AST_ELSE:
-            generate_statements(statement->else_statement.statements.first, false);
+            generate_statements(statement->else_statement.statements.first, is_last);
             break;
         case AST_THEN:
-            generate_statements(statement->then_statement.statements.first, false);
+            generate_statements(statement->then_statement.statements.first, is_last);
             break;
         default:
             fprintf(stderr, "generate_statements_switch: accessed wrong statement type %d\n", statement->type);
