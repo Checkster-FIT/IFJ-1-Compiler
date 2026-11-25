@@ -15,6 +15,7 @@
 
 static int builtin_label_id = 0;
 static bool current_function_is_main = false;
+static bool current_function_is_unit = false;
 
 void generate_program(ASTNode* node)
 {
@@ -91,7 +92,10 @@ void generate_function(ASTNode* node)
         func_entry->data_type == 'b'
     );
 
+    bool is_unit = (func_entry != NULL && func_entry->data_type == 'u');
+
     current_function_is_main = is_main;
+    current_function_is_unit = is_unit;
 
     ASTNode* last = node->function.statements.last;
     bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL ||
@@ -630,7 +634,7 @@ void generate_expression(ASTNode* node)
                     printf("PUSHS LF@$discard\n");
                     printf("JUMP $ord_end_%d\n", id);
                     printf("LABEL $ord_err_%d\n", id);
-                    printf("PUSHS int@-1\n");
+                    printf("PUSHS int@40\n");
                     printf("LABEL $ord_end_%d\n", id);
 
                 } else if (strcmp(node->term.identifier, "subStr") == 0) {
@@ -744,7 +748,11 @@ void generate_statements_switch(ASTNode* statement, bool is_last)
         case AST_RETURN:
             if (statement->return_st.expression != NULL) {
                 generate_expression(statement->return_st.expression);
-            } else {
+                if (current_function_is_unit && !current_function_is_main) {
+                    printf("POPS LF@$discard\n");
+                    printf("PUSHS nil@nil\n");
+                }
+            } else if (!current_function_is_main) {
                 printf("PUSHS nil@nil\n");
             }
             if (current_function_is_main) {
