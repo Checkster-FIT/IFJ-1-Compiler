@@ -249,6 +249,9 @@ typedef struct {
     int line;
     bool pending_dot;
 
+    bool inside_parentheses;
+    bool inside_param_group;
+
     AllocatedStrings* strings;
 } ScannerContext;
 

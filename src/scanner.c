@@ -70,6 +70,8 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->block_comment_counter = 0;
     scanner_context->pending_dot = false;
     scanner_context->lf_inside_block_comment = false;
+    scanner_context->inside_param_group = false;
+    scanner_context->inside_parentheses = false;
 
     scanner_context->strings = strings;
     scanner_context->line = 1;

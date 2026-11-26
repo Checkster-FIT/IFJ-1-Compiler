@@ -217,6 +217,8 @@ int parse_extension(ParserContext* parser)
     if (!accept_next(LEFT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM);
 
+    scanning_parameters(true, parser);
+
     ASTNode* group_node = ast_add_parameter_group(parser->ast, AST_TARGET_EXTENSION);
     group_node->line = get_line(parser);
     if (!parse_param(parser, NULL))
@@ -225,6 +227,8 @@ int parse_extension(ParserContext* parser)
 
     if (!accept_next(RIGHT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
+
+    scanning_parameters(false, parser);
 
     if (!accept_next(LINE_FEED, parser))
         return failed(parser, PARSER_EXT_MISSING_NEWLINE);
@@ -387,6 +391,8 @@ int parse_param_group_list(ParserContext* parser, SymtableEntry* entry)
         if (!accept_next(LEFT_BRACKET, parser))
             return FAILED;
 
+        scanning_parameters(true, parser);
+
         if (entry && entry->parameters) {
             dynamic_string_append(entry->parameters, '#');
         }
@@ -401,6 +407,9 @@ int parse_param_group_list(ParserContext* parser, SymtableEntry* entry)
 
         if (!accept_next(RIGHT_BRACKET, parser))
             return failed(parser, PARSER_INVALID_PARAM_LIST_END);
+
+        scanning_parameters(false, parser);
+
         if (!parse_param_group_list(parser, entry))
             return FAILED;
 
@@ -1047,11 +1056,15 @@ int parse_function_call_group_list(ParserContext* parser, ASTNode** term_target)
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Node");
         arg_group->line = get_line(parser);
 
+        scanning_parameters(true, parser);
+
         if (!parse_function_call_parameter_first(parser, &arg_group))
             return FAILED;
 
         if (!accept_next(RIGHT_BRACKET, parser))
             return FAILED;
+
+        scanning_parameters(false, parser);
 
         return parse_function_call_group_list(parser, term_target);
     }
@@ -1695,6 +1708,19 @@ bool accept_next_operator(const enum attribute_operation_type operation, ParserC
 
     next(parser);
     return true;
+}
+
+// =======================================================
+
+void scanning_parameters(const bool value, ParserContext* parser)
+{
+    parser->scanner.inside_param_group = value;
+    parser->scanner.inside_parentheses = value;
+}
+
+void scanning_parentheses(const bool value, ParserContext* parser)
+{
+    parser->scanner.inside_parentheses = value;
 }
 
 // =======================================================
