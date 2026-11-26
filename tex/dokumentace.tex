@@ -1,6 +1,6 @@
 \documentclass[a4paper, 11pt]{article}
 
-\usepackage[left=2.15cm,text={16.7cm, 25.8cm},top=1.95cm]{geometry}
+\usepackage[left=2cm,text={17cm, 25.8cm},top=1.95cm]{geometry}
 
 \usepackage[czech,shorthands=off]{babel}
 \usepackage[utf8]{inputenc}
@@ -196,6 +196,36 @@
 
     \section{Architektura projektu}
 
+        Návrh architektury překladače zahrnuje čtyři hlavní oddělenné moduly.
+    Jako první je spuštěn modul
+    \textbf{syntaktické analýzy} (\hyperref[module:parser]{\texttt{parser.c}}),
+    ten ale potřebuje pro svůj chod posloupnost \textbf{tokenů}. Pro tento účel využije modul
+    \textbf{lexikální analýzy} (\hyperref[module:scanner]{\texttt{scanner.c}}),
+    který po zavolání přečte část zdrojového kódu a vrátí první nalezený token.
+
+    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založeném na navržené LL gramatice.
+    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntakické kontroly \emph{precedenční analýze}.
+    Ta zpracovává výraz na základě navržené precedenční tabulky. Pokud je při precedenční analýze nalezen term
+    (proměnná, volání funkce, literál), je řízení předáno zpět rekurzivnímu sestupu. Po zpracování termu nadále
+    pokračuje precedenční analýza.
+
+    Za běhu syntakické analýzy je vytvářen
+    \textbf{abstraktní syntaktický strom} (\hyperref[module:ast]{\texttt{ast.c}}),
+    který obsahuje uzly pro
+    každý sémanticky významný prvek (např. definice funkce). Pro některé předem specifikované typy uzlů
+    jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v uzlu.
+
+    AS strom je pak předán modulu \textbf{sémantické analýzy} (\hyperref[module:semantic]{\texttt{semantic.c}}),
+    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zárověň jsou do AS stromu
+    přidány doplňující informace (např. návratová hodnota funkce) nebo
+    nové pomocné uzly (impicitní konverze ve výrazech).
+
+    Výsledný strom v této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
+    účel slouží modul \textbf{generátoru kódu} (\hyperref[module:generator]{\texttt{generator.c}}), který postupně
+    stromem prochází a vypisuje na standardní výstup výsledný kód.
+
+    \medskip \medskip
+
     \begin{figure}[ht]
         \centering
 
@@ -263,38 +293,13 @@
 
         \end{tikzpicture}
 
+         \medskip
         \captionof{figure}{Blokové schéma architektury překladače}
     \end{figure}
 
     \medskip
 
-    Návrh architektury překladače zahrnuje čtyři hlavní oddělenné moduly.
-    Jako první je spuštěn modul
-    \textbf{syntaktické analýzy} (\hyperref[module:parser]{\texttt{parser.c}}),
-    ten ale potřebuje pro svůj chod posloupnost \textbf{tokenů}. Pro tento účel využije modul
-    \textbf{lexikální analýzy} (\hyperref[module:scanner]{\texttt{scanner.c}}),
-    který po zavolání přečte část zdrojového kódu a vrátí první nalezený token.
 
-    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založeném na navržené LL gramatice.
-    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntakické kontroly \emph{precedenční analýze}.
-    Ta zpracovává výraz na základě navržené precedenční tabulky. Pokud je při precedenční analýze nalezen term
-    (proměnná, volání funkce, literál), je řízení předáno zpět rekurzivnímu sestupu. Po zpracování termu nadále
-    pokračuje precedenční analýza.
-
-    Za běhu syntakické analýzy je vytvářen
-    \textbf{abstraktní syntaktický strom} (\hyperref[module:ast]{\texttt{ast.c}}),
-    který obsahuje uzly pro
-    každý sémanticky významný prvek (např. definice funkce). Pro některé předem specifikované typy uzlů
-    jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v uzlu.
-
-    AS strom je pak předán modulu \textbf{sémantické analýzy} (\hyperref[module:semantic]{\texttt{semantic.c}}),
-    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zárověň jsou do AS stromu
-    přidány doplňující informace (např. návratová hodnota funkce) nebo
-    nové pomocné uzly (impicitní konverze ve výrazech).
-
-    Výsledný strom v této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
-    účel slouží modul \textbf{generátoru kódu} (\hyperref[module:generator]{\texttt{generator.c}}), který postupně
-    stromem prochází a vypisuje na standardní výstup výsledný kód.
 
 
 
@@ -328,7 +333,8 @@
     \setlength{\tabcolsep}{1.3pt}
 
     \begin{center}
-        \begin{longtable}{|l|*{22}{>{\centering\arraybackslash}p{0.47cm}|}}
+
+       \begin{longtable}{|l|*{21}{>{\centering\arraybackslash}p{0.49cm}|}>{\centering\arraybackslash}p{1cm}|}
             \hline
             \rotatebox{90}{\texttt{}} &
             \rotatebox{90}{\texttt{def}} &
@@ -366,7 +372,6 @@
             \endfoot
 
             \input{ll_table}
-
         \end{longtable}
 
     \end{center}

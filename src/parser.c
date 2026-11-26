@@ -686,19 +686,22 @@ int parse_statement_assignment(ParserContext* parser)
 
 int parse_statement_return(ParserContext* parser)
 {
-    // <st_return> -> return <EXPR>
+    // <st_return> -> return <return_value>
     if (!accept_next_keyword(RETURN_KW, parser))
         return FAILED;
+
 
     ASTNode* node = ast_add_return(parser->ast);
     if (node == NULL)
         return failed(parser, MEMORY_ALLOCATION_ERROR, "AST VarDef");
     node->line = get_line(parser);
 
+    // <return_value> -> 3
     node->return_st.expression = NULL;
     if (check_next(LINE_FEED, parser) || check_next(SEMICOLON, parser))
         return CORRECT;
 
+    // <return_value> -> <EXPR>
     if (!parse_expression(parser, &(node->return_st.expression)))
         return FAILED;
     node->return_st.expression->parent = node;

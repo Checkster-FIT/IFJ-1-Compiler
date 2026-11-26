@@ -167,6 +167,31 @@
     \nonterminal{:}         & \pr{type-specifier}{a}
     \nonterminal{...}       & \\ \hline
 
+\verb|type|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        &
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         &
+    \nonterminal{(}         &
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \pr{type}{a}\,-\,\pr{type}{e} \\ \hline
+
+
 \verb|param-group-list|
     \nonterminal{def}       &
     \nonterminal{extension} &
@@ -364,31 +389,31 @@
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{statement}{b}*
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
     \nonterminal{EF}        &
-    \nonterminal{va}        &
-    \nonterminal{vr}        &
-    \nonterminal{re}        &
+    \nonterminal{va}        & \pr{statement}{a}
+    \nonterminal{vr}        & \pr{statement}{a}
+    \nonterminal{re}        & \pr{statement}{c}
     \nonterminal{wh}        &
     \nonterminal{if}        &
     \nonterminal{el}        &
     \nonterminal{;}         &
-    \nonterminal{(}         &
+    \nonterminal{(}         & \pr{statement}{d}
     \nonterminal{)}         &
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{statement}{d} \\ \hline
 
 \verb|st-assign|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{st-assign}{a}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
@@ -417,8 +442,8 @@
     \nonterminal{in}        &
     \nonterminal{de}        &
     \nonterminal{EF}        &
-    \nonterminal{va}        &
-    \nonterminal{vr}        &
+    \nonterminal{va}        & \pr{st-vardef}{a}
+    \nonterminal{vr}        & \pr{st-vardef}{b}
     \nonterminal{re}        &
     \nonterminal{wh}        &
     \nonterminal{if}        &
@@ -443,7 +468,7 @@
     \nonterminal{EF}        &
     \nonterminal{va}        &
     \nonterminal{vr}        &
-    \nonterminal{re}        &
+    \nonterminal{re}        & \pr{st-return}{a}
     \nonterminal{wh}        &
     \nonterminal{if}        &
     \nonterminal{el}        &
@@ -454,6 +479,31 @@
     \nonterminal{=}         &
     \nonterminal{:}         &
     \nonterminal{...}       & \\ \hline
+
+\verb|return-value|
+    \nonterminal{def}       &
+    \nonterminal{extension} &
+    \nonterminal{@m}        &
+    \nonterminal{import}    &
+    \nonterminal{id}        &
+    \nonterminal{LF}        & \pr{return-value}{b}
+    \nonterminal{in}        &
+    \nonterminal{de}        &
+    \nonterminal{EF}        &
+    \nonterminal{va}        &
+    \nonterminal{vr}        &
+    \nonterminal{re}        &
+    \nonterminal{wh}        &
+    \nonterminal{if}        &
+    \nonterminal{el}        &
+    \nonterminal{;}         & \pr{return-value}{b}
+    \nonterminal{(}         & \pr{return-value}{a}
+    \nonterminal{)}         &
+    \nonterminal{,}         &
+    \nonterminal{=}         &
+    \nonterminal{:}         &
+    \nonterminal{...}       & \pr{return-value}{a} \\ \hline
+
 
 \verb|construct|
     \nonterminal{def}       &
@@ -468,8 +518,8 @@
     \nonterminal{va}        &
     \nonterminal{vr}        &
     \nonterminal{re}        &
-    \nonterminal{wh}        &
-    \nonterminal{if}        &
+    \nonterminal{wh}        & \pr{construct}{a}
+    \nonterminal{if}        & \pr{construct}{b}
     \nonterminal{el}        &
     \nonterminal{;}         &
     \nonterminal{(}         &
@@ -492,7 +542,7 @@
     \nonterminal{va}        &
     \nonterminal{vr}        &
     \nonterminal{re}        &
-    \nonterminal{wh}        &
+    \nonterminal{wh}        & \pr{c-while}{a}
     \nonterminal{if}        &
     \nonterminal{el}        &
     \nonterminal{;}         &
@@ -517,7 +567,7 @@
     \nonterminal{vr}        &
     \nonterminal{re}        &
     \nonterminal{wh}        &
-    \nonterminal{if}        &
+    \nonterminal{if}        & \pr{c-if-then}{a}
     \nonterminal{el}        &
     \nonterminal{;}         &
     \nonterminal{(}         &
@@ -532,55 +582,61 @@
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{c-else}{b}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
     \nonterminal{EF}        &
-    \nonterminal{va}        &
-    \nonterminal{vr}        &
-    \nonterminal{re}        &
-    \nonterminal{wh}        &
-    \nonterminal{if}        &
-    \nonterminal{el}        &
+    \nonterminal{va}        & \pr{c-else}{b}
+    \nonterminal{vr}        & \pr{c-else}{b}
+    \nonterminal{re}        & \pr{c-else}{b}
+    \nonterminal{wh}        & \pr{c-else}{b}
+    \nonterminal{if}        & \pr{c-else}{b}
+    \nonterminal{el}        & \pr{c-else}{a}
     \nonterminal{;}         &
-    \nonterminal{(}         &
+    \nonterminal{(}         & \pr{c-else}{b}
     \nonterminal{)}         &
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{c-else}{b} \\ \hline
 
-\verb|EXPR|
+\verb|else-branch|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
-    \nonterminal{LF}        &
+    \nonterminal{id}        & \pr{else-branch}{b}
+    \nonterminal{LF}        & \pr{else-branch}{b}
     \nonterminal{in}        &
     \nonterminal{de}        &
     \nonterminal{EF}        &
-    \nonterminal{va}        &
-    \nonterminal{vr}        &
-    \nonterminal{re}        &
-    \nonterminal{wh}        &
-    \nonterminal{if}        &
+    \nonterminal{va}        & \pr{else-branch}{b}
+    \nonterminal{vr}        & \pr{else-branch}{b}
+    \nonterminal{re}        & \pr{else-branch}{b}
+    \nonterminal{wh}        & \pr{else-branch}{b}
+    \nonterminal{if}        & \pr{else-branch}{a}
     \nonterminal{el}        &
     \nonterminal{;}         &
-    \nonterminal{(}         &
+    \nonterminal{(}         & \pr{else-branch}{b}
     \nonterminal{)}         &
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{else-branch}{b} \\ \hline
+
+\verb|expression|
+    & \multicolumn{22}{c|}{
+        \centering
+        precedenční syntaktická analýza {\Large\strut}
+    } \\ \hline
 
 \verb|term|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{term}{a}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
@@ -597,14 +653,14 @@
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{term}{b}\,-\,\pr{term}{f} \\ \hline
 
 \verb|fun-call|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{fun-call}{a}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
@@ -628,8 +684,8 @@
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
-    \nonterminal{LF}        &
+    \nonterminal{id}        & \pr{fun-call-group-list}{b}
+    \nonterminal{LF}        & \pr{fun-call-group-list}{b}
     \nonterminal{in}        &
     \nonterminal{de}        &
     \nonterminal{EF}        &
@@ -639,20 +695,20 @@
     \nonterminal{wh}        &
     \nonterminal{if}        &
     \nonterminal{el}        &
-    \nonterminal{;}         &
-    \nonterminal{(}         &
+    \nonterminal{;}         & \pr{fun-call-group-list}{b}
+    \nonterminal{(}         & \pr{fun-call-group-list}{a}
     \nonterminal{)}         &
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{fun-call-group-list}{b} \\ \hline
 
 \verb|fun-call-param-first|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{fun-call-param-first}{a}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
@@ -664,12 +720,12 @@
     \nonterminal{if}        &
     \nonterminal{el}        &
     \nonterminal{;}         &
-    \nonterminal{(}         &
-    \nonterminal{)}         &
-    \nonterminal{,}         &
+    \nonterminal{(}         & \pr{fun-call-param-first}{a}
+    \nonterminal{)}         & \pr{fun-call-param-first}{b}
+    \nonterminal{,}         & \pr{fun-call-param-first}{b}
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{fun-call-param-first}{a} \\ \hline
 
 \verb|fun-call-param-list|
     \nonterminal{def}       &
@@ -689,11 +745,11 @@
     \nonterminal{el}        &
     \nonterminal{;}         &
     \nonterminal{(}         &
-    \nonterminal{)}         &
-    \nonterminal{,}         &
+    \nonterminal{)}         & \pr{fun-call-param-list}{b}
+    \nonterminal{,}         & \pr{fun-call-param-list}{a}
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       &  \\ \hline
 
 \verb|string|
     \nonterminal{def}       &
@@ -717,14 +773,14 @@
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{string}{a}\,-\,\pr{string}{d} \\ \hline
 
 \verb|i-string|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{i-string}{b}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
@@ -736,19 +792,19 @@
     \nonterminal{if}        &
     \nonterminal{el}        &
     \nonterminal{;}         &
-    \nonterminal{(}         &
+    \nonterminal{(}         & \pr{i-string}{b}
     \nonterminal{)}         &
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       & \\ \hline
+    \nonterminal{...}       & \pr{i-string}{a}\,-\,\pr{i-string}{c} \\ \hline
 
 \verb|multiline-i-string|
     \nonterminal{def}       &
     \nonterminal{extension} &
     \nonterminal{@m}        &
     \nonterminal{import}    &
-    \nonterminal{id}        &
+    \nonterminal{id}        & \pr{multiline-i-string}{b}
     \nonterminal{LF}        &
     \nonterminal{in}        &
     \nonterminal{de}        &
@@ -760,9 +816,9 @@
     \nonterminal{if}        &
     \nonterminal{el}        &
     \nonterminal{;}         &
-    \nonterminal{(}         &
+    \nonterminal{(}         & \pr{multiline-i-string}{b}
     \nonterminal{)}         &
     \nonterminal{,}         &
     \nonterminal{=}         &
     \nonterminal{:}         &
-    \nonterminal{...}       &
+    \nonterminal{...}       & \pr{multiline-i-string}{a}\,-\,\pr{multiline-i-string}{c}
