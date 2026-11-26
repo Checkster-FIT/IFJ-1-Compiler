@@ -784,7 +784,6 @@ int main_check(ASTNode* node, bool* main_found)
     return 0;
 }
 
-// TODO: kontrola rekurze u ext
 int run_semantic(ASTNode* ast)
 {
     int result = 0;
