@@ -77,6 +77,8 @@
         }
 
         \setcounter{page}{0}
+        \setcounter{table}{-1}
+
 
     \end{titlepage}
 
@@ -92,7 +94,6 @@
     \newpage
 
     \section{Rozdělení práce v týmu}
-
 
     Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje.
     Až na drobné výjimky byl plán dodržen a odpovídá skutečnému rozdělení uvedenému níže.
@@ -158,6 +159,8 @@
             \begin{itemize}
                 \setlength{\itemsep}{-2pt}
 
+                \item dokumentace
+
                 \item \textbf{lexikální analyzátor}
                 \begin{itemize}
                     \vspace{-6pt}
@@ -213,29 +216,29 @@
 
     \section{Architektura projektu}
 
-        Návrh architektury překladače zahrnuje čtyři hlavní oddělenné moduly.
+        Návrh architektury překladače zahrnuje čtyři hlavní oddělené moduly.
     Jako první je spuštěn modul
     \textbf{syntaktické analýzy} (\hyperref[module:parser]{\texttt{parser.c}}),
     ten ale potřebuje pro svůj chod posloupnost \textbf{tokenů}. Pro tento účel využije modul
     \textbf{lexikální analýzy} (\hyperref[module:scanner]{\texttt{scanner.c}}),
     který po zavolání přečte část zdrojového kódu a vrátí první nalezený token.
 
-    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založeném na navržené LL gramatice.
-    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntakické kontroly \emph{precedenční analýze}.
+    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založenou na navržené LL gramatice.
+    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntaktické kontroly \emph{precedenční analýze}.
     Ta zpracovává výraz na základě navržené precedenční tabulky. Pokud je při precedenční analýze nalezen term
     (proměnná, volání funkce, literál), je řízení předáno zpět rekurzivnímu sestupu. Po zpracování termu nadále
     pokračuje precedenční analýza.
 
-    Za běhu syntakické analýzy je vytvářen
+    Za běhu syntaktické analýzy je vytvářen
     \textbf{abstraktní syntaktický strom} (\hyperref[module:ast]{\texttt{ast.c}}),
     který obsahuje uzly pro
     každý sémanticky významný prvek (např. definice funkce). Pro některé předem specifikované typy uzlů
     jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v uzlu.
 
     AS strom je pak předán modulu \textbf{sémantické analýzy} (\hyperref[module:semantic]{\texttt{semantic.c}}),
-    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zárověň jsou do AS stromu
+    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zároveň jsou do AS stromu
     přidány doplňující informace (např. návratová hodnota funkce) nebo
-    nové pomocné uzly (impicitní konverze ve výrazech).
+    nové pomocné uzly (implicitní konverze ve výrazech).
 
     Výsledný strom v této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
     účel slouží modul \textbf{generátoru kódu} (\hyperref[module:generator]{\texttt{generator.c}}), který postupně
@@ -279,7 +282,7 @@
             \draw[arrow, bend left=20] (rd) to (pa);
             \draw[arrow, bend left=20] (pa) to (rd);
 
-            \node[box, below=3cm of parser] (semantic) {Sémantický \\ analyzátor};
+            \node[box, below=2.2cm of parser] (semantic) {Sémantický \\ analyzátor};
             \node[box] (generator) at (scanner |- semantic) {Generátor \\ kódu};
 
             \draw[arrow] (scanner) ++(0, 1.7) --
@@ -310,20 +313,20 @@
 
         \end{tikzpicture}
 
-         \medskip
+
         \captionof{figure}{Blokové schéma architektury překladače}
     \end{figure}
 
     \medskip
-
-
-
-
-
-    \newpage
-
     \section{Lexikální analýza}
+
     \subsection{Diagram konečného automatu pro lexikální analýzu}
+
+       Diagram znázorňuje konečný automat se sdíleným počátečním stavem \texttt{START}.
+    Pro větší přehlednost je rozdělen do 4 menších automatů.
+    Přechody označené \texttt{S:} a \texttt{M:} znázorňují jednořádkové, resp. víceřádkové řetězcové
+    interpolace. Symbol $\Sigma$ reprezentuje libovolný znak kromě těch,
+    pro které ze stavu vede jiná explicitní hrana. Jakýkoliv nedefinovaný přechod vede k lexikální chybě.
 
 
     \begin{figure}[!htbp]
@@ -331,27 +334,51 @@
         \includegraphics[
             width=0.95\textwidth
         ]{fsm.pdf}
-        \caption{Spektrogram vstupního signálu s~vyznačenou částí obsahující uměle vypadající signál}
     \end{figure}
+
 
     \newpage
 
     \section{Syntaktická analýza}
 
+    Základní syntaktická analýza je založená na LL gramatice a je implementována pomocí metody rekurzivního sestupu.
+    Redukční pravidla LL gramatiky jsou uvedené ve výpisu níže. Tabulka LL gramatiky rovněž.
+
+    Neterminály jsou ve výpisu psány v lomených závorkách
+    (např.~\uv{$\langle$\texttt{function-body}$\rangle$}), terminály
+    pak zpravidla velkými písmeny (např. \uv{\texttt{IDENTIFIER}})
+    nebo přímo znakem či klíčovým slovem (např. \uv{\texttt{=}} nebo \uv{\texttt{if}})
+
+    Výjimky tvoří neterminál \uv{$\langle$\texttt{expression}$\rangle$}, který značí očekávaný výraz.
+    Pro zpracování výrazu je využita metoda precedenční syntaktické analýzy využívající
+    \hyperref[sec:precedence_table]{precedenční tabulku}, která je uvedena později.
+
+    Odchylky od čisté LL gramatiky pak tvoří pravidla pro příkaz
+    (\texttt{\ref{prod:statement-b}}) a (\texttt{\ref{prod:statement-d}}),
+    u kterých nelze na základě jednoho následujícího tokenu identifikátoru určit, jestli se
+    jedná o výraz nebo přiřazení hodnoty do proměnné. Při syntaktické analýze je proto načten jeden
+    token navíc, u kterého se podle toho, jestli se jedná o operátor přiřazení, určí, jestli se jedná
+    o přiřazení či nikoliv.
+
+
     \subsection{Pravidla LL gramatiky}
+    \label{sec:ll_grammar}
     \input{ll_rules}
     \newpage
 
     \subsection{LL tabulka}
+    \label{sec:ll_table}
 
     \newcommand{\nonterminal}[1]{}
     \newcommand{\pr}[2]{\small\vspace{-0.76em}\texttt{\ref{prod:#1-#2}}}
 
     \setlength{\tabcolsep}{1.3pt}
 
-    \begin{center}
+    {
+        \setlength\LTleft{-0.51cm}
+        \setlength\LTright{0pt}
 
-       \begin{longtable}{|l|*{21}{>{\centering\arraybackslash}p{0.49cm}|}>{\centering\arraybackslash}p{1cm}|}
+       \begin{longtable}{|l|*{21}{>{\centering\arraybackslash}p{0.5cm}|}>{\centering\arraybackslash}p{1cm}|}
             \hline
             \rotatebox{90}{\texttt{}} &
             \rotatebox{90}{\texttt{def}} &
@@ -375,7 +402,7 @@
             \rotatebox{0}{\texttt{,}} &
             \rotatebox{0}{\texttt{=}} &
             \rotatebox{0}{\texttt{:}} &
-            \rotatebox{90}{\texttt{ostatní terminály\ }}
+            \rotatebox{90}{\texttt{\uv{\,ostatní}\ }}
             \\
             \hline
             \endfirsthead
@@ -389,21 +416,30 @@
             \endfoot
 
             \input{ll_table}
+
         \end{longtable}
 
-    \end{center}
+    }
+    {\footnotesize \textsuperscript{*}\,U příkazu nelze na základě
+    identifikátoru rozhodnout jestli se jedná o přířazení (\texttt{\ref{prod:statement-b}})
+    nebo výraz (\texttt{\ref{prod:statement-d}}), který má být zpracován precedenční analýzou, je zde proto porušena čistá LL gramatika.
+    }
 
     \newpage
 
+    \subsection{Precedenční syntaktická analýza}
+    \label{sec:precedence_table}
 
-    \subsection{Precedenční tabulka}
+    Precedenční syntaktická analýza slouží ke zpracování výrazů. Využívá k tomu precedenční tabulky a zásobníku.
+    Terminály jsou postupně vkládány na zásobník podle tří pravidel uvedených v tabulce. Řádek s pravidlem
+    určuje nejvyšší terminál na zásobníku, sloupec je pak určen dalším tokenem pro zpracování.
 
-    Precedenční tabulka slouží ke zpracování výrazů.
+    Při aplikování pravidla \uv{\texttt{<}} se na vrchol zásobníku nebo před výraz vrcholu na zásobníku
+    vloží tento pomocný prvek. Na vrchol zásobníku se pak vloží zpracovávaný terminál.
+    Při aplikování pravidla \uv{\texttt{=}} se pouze vloží zpracovávaný terminál na vrchol zásobníku.
 
-    \setlength{\tabcolsep}{3pt}
-    \input{precedence_table}
-
-    Pravidla pro redukci výrazů.
+    Při aplikování pravidla \uv{\texttt{>}} je aplikováno jedno z redukčních pravidel uvedených níže,
+    jehož levá strana je pak vložena na místo použítých prvků a uvozovacího znaku \uv{\texttt{<}}.
 
     \begin{multicols}{4}
         \begin{enumerate}[label=\textbf{\arabic*)}, ref=\arabic*, leftmargin=*]
@@ -431,10 +467,24 @@
             \item \label{prod:expression-s} \NT{E} $\rightarrow$ \NT{E} \ \T{\textbar\textbar} \ \NT{E}
 
         \end{enumerate}
+
     \end{multicols}
 
-    \newpage
 
+    Speciální znak \uv{\texttt{\$}} značí buď prázdný zásobník nebo token ukončující výraz.
+
+    Skupina tokenů označená pro účely precedenční analýzy \uv{\texttt{term}} má při analýze speciální význam.
+    Termy jsou zpracovány i uvnitř výrazů pomocí rekurzivního sestupu. Po jejich zpracování je řízení předáno zpět
+    precedenční analýze.
+
+    Unární operátory \uv{\texttt{+}} a \uv{\texttt{-}} značené \uv{\texttt{+x}} a \uv{\texttt{-x}} sdílejí
+    tokeny pro sčítání a odčítání. Pro správné zpracování je nutné je rozlišit na základě neterminálu či terminálu
+    na vrcholu zásobníku.
+
+    \setlength{\tabcolsep}{3pt}
+    \input{precedence_table}
+
+    \newpage
 
     \section{Moduly překladače}
 
@@ -448,7 +498,7 @@
     \subsection{\texttt{bst}}
     \label{module:bst}
     \vspace{-0.5em}
-        Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledavacího stromu}
+        Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledávacího stromu}
         a s ní spojené funkce pro vytvoření a smazání stromu, vložení uzlů a vyhledávání pomocí klíčů.
 
     \vspace{-1em}
@@ -456,14 +506,14 @@
     \label{module:debug}
     \vspace{-0.5em}
         Poskytuje ladící výpisy zahrnující například výpis načtených tokenů,
-        výpis průchodu syntakické analýzy, výpis zásobníku precedenční analýzy nebo výpis abstraktního
+        výpis průchodu syntaktické analýzy, výpis zásobníku precedenční analýzy nebo výpis abstraktního
         syntaktického stromu.
 
     \vspace{-1em}
     \subsection{\texttt{error}}
     \label{module:error}
     \vspace{-0.5em}
-        Poskytuje sjedocený způsob výpisu chybových hlášek. Každá chyba má přiřazený název,
+        Poskytuje sjednocený způsob výpisu chybových hlášek. Každá chyba má přiřazený název,
         chybovou hlášku, návratový kód a volitelně nápovědu.
 
     \vspace{-1em}
@@ -510,7 +560,7 @@
     \vspace{-0.5em}
         Modul poskytuje strukturu a funkce pro alokování a uchování alokovaných řetězců,
         které je nutné předávat mezi moduly překladače.
-        Zároveň posktuje strukturu a funkce pro vytvoření a modifikování dynamicky alokovaného řetězce.
+        Zároveň poskytuje strukturu a funkce pro vytvoření a modifikování dynamicky alokovaného řetězce.
 
     \vspace{-1em}
     \subsection{\texttt{stack}}
