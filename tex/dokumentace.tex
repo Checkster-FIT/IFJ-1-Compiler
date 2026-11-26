@@ -22,6 +22,9 @@
 
 \usepackage{enumitem}
 
+\usepackage{cite}
+\usepackage{url}
+
 \begin{document}
 
     \begin{titlepage}
@@ -195,18 +198,16 @@
     Na úvodním setkání jsme se dohodli, že budeme upřednostňovat komunikaci a řešení problémů v rámci týmu
     a jazykové modely AI budeme používat, co možná nejméně.
 
-    Této teze jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódů v modulech a ověřování korektnosti
-    implementace (kdy jsme AI poskytli blok kódu a detailní popis chtěného chování). K tomuto jsme využívali
+    Této myšlenky jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódu v modulech a ověřování korektnosti
+    implementace (poskytli jsme jí blok kódu a detailní popis chtěného chování). K tomuto jsme využívali
     modely \texttt{Claude Sonnet 5.5} a \texttt{Gemini Hydrogen}.
-    V závěru implementace překladače jsme si na základě několika vlastních testů nechali vytvořit řadu dalších runtime
-    testů modelem \texttt{Gemini Hydrogen}. Použili jsme je však pouze k hrubé představě, v jaké fázi se náš překladač
-    nachází. Důvodem bylo modelem nedokonalé pochopení námi předané testované specifikace.
+    V závěru implementace překladače jsme si na základě několika vlastních testů nechali modelem \texttt{Gemini Hydrogen}
+    vygenerovat řadu dalších runtime testů. Použili jsme je však pouze k hrubé představě, v jaké fázi se náš překladač
+    nachází, protože model nedokonale pochopil námi předanou testovanou specifikaci.
     Testy jsme se tedy inspirovali a dále již ručně psali další.
 
-    Dále jsme AI využívali k pochopení konstrukcí jazyka \texttt{C++} pro tvorbu testů. Při tvorbě dokumentace
-    na vytvoření opakujících se částí zdrojového kódu (např. stovky řádků LL tabulky, které jsme následně doplňovali).
-
-
+    Dále jsme AI využívali k pochopení konstrukcí jazyka \texttt{C++} při tvorbě testů. Při tvorbě dokumentace jsme ji
+    využili na vytvoření opakujících se částí zdrojového kódu (např. stovky řádků LL tabulky, které jsme následně doplňovali).
 
     \newpage
 
@@ -527,5 +528,9 @@
 
     \section{Zdroje}
 
+    \renewcommand{\refname}{}
+    \nocite{*}
+    \bibliography{bibliography}
+    \bibliographystyle{czplain}
 
 \end{document}
