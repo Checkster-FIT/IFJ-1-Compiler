@@ -628,5 +628,4 @@ TEST_F(scanner, block_comment_without_lf_after_err)
         {
             token(ERROR),
         });
-
 }

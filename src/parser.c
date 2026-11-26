@@ -61,7 +61,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = false; // TODO: Disable debug
+    parser->debug = false;
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
@@ -1166,7 +1166,7 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
             return CORRECT;
         }
 
-         if ((!top_elem || (top_elem->group != P_EXPRESSION && top_elem->group != P_TERM)) && next_elem->group == P_ADDSUB) {
+        if ((!top_elem || (top_elem->group != P_EXPRESSION && top_elem->group != P_TERM)) && next_elem->group == P_ADDSUB) {
             next_elem->group = P_UNARY;
             next_elem->operation = next_elem->operation == OP_ADD ? OP_UNARY_PLUS : next_elem->operation;
             next_elem->operation = next_elem->operation == OP_SUB ? OP_UNARY_MINUS : next_elem->operation;
@@ -1715,12 +1715,6 @@ bool accept_next_operator(const enum attribute_operation_type operation, ParserC
 void scanning_parameters(const bool value, ParserContext* parser)
 {
     parser->scanner.inside_param_group = value;
-    parser->scanner.inside_parentheses = value;
-}
-
-void scanning_parentheses(const bool value, ParserContext* parser)
-{
-    parser->scanner.inside_parentheses = value;
 }
 
 // =======================================================

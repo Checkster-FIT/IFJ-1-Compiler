@@ -85,12 +85,7 @@ void generate_function(ASTNode* node)
     SymtableEntry* func_entry = (func_tnode != NULL) ? (SymtableEntry*)func_tnode->value : NULL;
 
     bool is_main = (func_entry != NULL && func_entry->main);
-    bool returns_value = (func_entry != NULL) && (
-        func_entry->data_type == 'i' ||
-        func_entry->data_type == 'd' ||
-        func_entry->data_type == 's' ||
-        func_entry->data_type == 'b'
-    );
+    bool returns_value = (func_entry != NULL) && (func_entry->data_type == 'i' || func_entry->data_type == 'd' || func_entry->data_type == 's' || func_entry->data_type == 'b');
 
     bool is_unit = (func_entry != NULL && func_entry->data_type == 'u');
 
@@ -98,9 +93,7 @@ void generate_function(ASTNode* node)
     current_function_is_unit = is_unit;
 
     ASTNode* last = node->function.statements.last;
-    bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL ||
-        last->type == AST_BUILTIN_FUNCALL || last->type == AST_VAR_USE || last->type == AST_INTERPOLATED_STRING ||
-        last->type == AST_CONVERSION || last->type == AST_TERM || last->type == AST_LITERAL) && returns_value;
+    bool has_expr_ret = !is_main && last && (last->type == AST_EXPRESSION || last->type == AST_FUNCALL || last->type == AST_BUILTIN_FUNCALL || last->type == AST_VAR_USE || last->type == AST_INTERPOLATED_STRING || last->type == AST_CONVERSION || last->type == AST_TERM || last->type == AST_LITERAL) && returns_value;
 
     generate_statements(node->function.statements.first, has_expr_ret);
 

@@ -176,6 +176,4 @@ int failed(ParserContext* parser, int err, ...);
 
 void scanning_parameters(const bool value, ParserContext* parser);
 
-void scanning_parentheses(const bool value, ParserContext* parser);
-
 #endif // IFJ_1_COMPILER_PARSER_H

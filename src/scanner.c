@@ -117,13 +117,6 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
     return check_indentation(context, current_indent, false);
 }
 
-/** TODO:
- *
- * block comment can be followed by a block comment or comment
- *
- * nested interpolation - simple string x multiline string
- *
- */
 Token get_token(ScannerContext* context, FILE* stream)
 {
     State state = STATE_START;
