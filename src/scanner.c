@@ -1589,8 +1589,26 @@ Token get_token(ScannerContext* context, FILE* stream)
                 // between block comment and new line character can only be whitespace characters
                 if (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r')
                     state = STATE_BLOCK_COMMENT_END_WITH_LF;
-                else if (c == '\n') {
+                else if (c == '\n' || c == EOF) {
+                    context->lf_inside_block_comment = false;
                     state = STATE_LINE_FEED;
+                }  else if (c == '/')
+                    state = STATE_BLOCK_COMMENT_END_WITH_LF_SLASH;
+                else {
+                    token.type = ERROR;
+                    token.attribute_error = print_error(SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS, LINE,
+                        context->scanned_string->chars);
+                    return token;
+                }
+
+                break;
+
+            case STATE_BLOCK_COMMENT_END_WITH_LF_SLASH:
+                if (c == '/') {
+                    context->lf_inside_block_comment = false;
+                    state = STATE_COMMENT;
+                } else if (c == '*') {
+                    state = STATE_BLOCK_COMMENT_START;
                 } else {
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_BLOCK_COMMENT_FOLLOWED_BY_CHARS, LINE,
