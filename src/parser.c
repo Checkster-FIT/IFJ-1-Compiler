@@ -61,7 +61,7 @@ ParserContext* init_parser(ParserContext* parser, ASTNode* ast, AllocatedStrings
     parser->inside_extension = false;
 
     // Debug settings
-    parser->debug = false; // TODO: Disable debug
+    parser->debug = false;
     parser->debug_stack = (parser->debug) && true;
     parser->debug_ast_nodes = (parser->debug) && true;
     parser->debug_indent_terms = (parser->debug) && true;
@@ -217,14 +217,18 @@ int parse_extension(ParserContext* parser)
     if (!accept_next(LEFT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM);
 
+    scanning_parameters(true, parser);
+
     ASTNode* group_node = ast_add_parameter_group(parser->ast, AST_TARGET_EXTENSION);
     group_node->line = get_line(parser);
     if (!parse_param(parser, NULL))
-        return failed(parser, PARSER_MISSING_EXT_PARAM_END);
-    char ext_type = parser->last_type;
+        return parser->exit_code == 0 ? failed(parser, PARSER_MISSING_EXT_PARAM_END) : FAILED;
+    const char ext_type = parser->last_type;
 
     if (!accept_next(RIGHT_BRACKET, parser))
         return failed(parser, PARSER_MISSING_EXT_PARAM_END);
+
+    scanning_parameters(false, parser);
 
     if (!accept_next(LINE_FEED, parser))
         return failed(parser, PARSER_EXT_MISSING_NEWLINE);
@@ -387,6 +391,8 @@ int parse_param_group_list(ParserContext* parser, SymtableEntry* entry)
         if (!accept_next(LEFT_BRACKET, parser))
             return FAILED;
 
+        scanning_parameters(true, parser);
+
         if (entry && entry->parameters) {
             dynamic_string_append(entry->parameters, '#');
         }
@@ -401,6 +407,9 @@ int parse_param_group_list(ParserContext* parser, SymtableEntry* entry)
 
         if (!accept_next(RIGHT_BRACKET, parser))
             return failed(parser, PARSER_INVALID_PARAM_LIST_END);
+
+        scanning_parameters(false, parser);
+
         if (!parse_param_group_list(parser, entry))
             return FAILED;
 
@@ -1009,7 +1018,7 @@ int parse_multiline_interpolated_string(ParserContext* parser, ASTNode* target_s
     if (accept_next(MULTILINE_STRING_INTERPOLATION, parser)) {
         // Empty interpolated string that are not END can be discarded
         if (*parser->accepted.attribute_string == '\0')
-            return parse_interpolated_string(parser, target_string_node);
+            return parse_multiline_interpolated_string(parser, target_string_node);
 
         ASTNode* string = ast_new_literal((ASTLiteral) {
             .type = AST_STRING,
@@ -1050,11 +1059,15 @@ int parse_function_call_group_list(ParserContext* parser, ASTNode** term_target)
             return failed(parser, MEMORY_ALLOCATION_ERROR, "AST Node");
         arg_group->line = get_line(parser);
 
+        scanning_parameters(true, parser);
+
         if (!parse_function_call_parameter_first(parser, &arg_group))
             return FAILED;
 
         if (!accept_next(RIGHT_BRACKET, parser))
             return FAILED;
+
+        scanning_parameters(false, parser);
 
         return parse_function_call_group_list(parser, term_target);
     }
@@ -1156,17 +1169,17 @@ int parse_expression(ParserContext* parser, ASTNode** expr_target)
             return CORRECT;
         }
 
+        if ((!top_elem || (top_elem->group != P_EXPRESSION && top_elem->group != P_TERM)) && next_elem->group == P_ADDSUB) {
+            next_elem->group = P_UNARY;
+            next_elem->operation = next_elem->operation == OP_ADD ? OP_UNARY_PLUS : next_elem->operation;
+            next_elem->operation = next_elem->operation == OP_SUB ? OP_UNARY_MINUS : next_elem->operation;
+        }
+
         switch (table[last_elem.group][next_elem->group]) {
             case '<':
                 if (!stack_push_before_expression(stack, (PrecedenceElement) { .group = '<' })) {
                     free(next_elem);
                     return failed(parser, MEMORY_ALLOCATION_ERROR, "Precedence stack");
-                }
-
-                if ((!top_elem || top_elem->group != P_EXPRESSION) && next_elem->group == P_ADDSUB) {
-                    next_elem->group = P_UNARY;
-                    next_elem->operation = next_elem->operation == OP_ADD ? OP_UNARY_PLUS : next_elem->operation;
-                    next_elem->operation = next_elem->operation == OP_SUB ? OP_UNARY_MINUS : next_elem->operation;
                 }
 
                 if (push(stack, next_elem) == 1) {
@@ -1698,6 +1711,13 @@ bool accept_next_operator(const enum attribute_operation_type operation, ParserC
 
     next(parser);
     return true;
+}
+
+// =======================================================
+
+void scanning_parameters(const bool value, ParserContext* parser)
+{
+    parser->scanner.inside_param_group = value;
 }
 
 // =======================================================

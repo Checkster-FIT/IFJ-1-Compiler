@@ -194,6 +194,7 @@ typedef enum {
     STATE_ANOTHER_BLOCK_COMMENT_START,
     STATE_ANOTHER_BLOCK_COMMENT_END,
     STATE_BLOCK_COMMENT_END_WITH_LF,
+    STATE_BLOCK_COMMENT_END_WITH_LF_SLASH, // '/' after a block comment with LF
     STATE_BLOCK_COMMENT_END_WITHOUT_LF,
 
     // alphabet
@@ -216,6 +217,8 @@ typedef enum {
     STATE_STRING_INTERPOLATION_EXPRESSION,
     STATE_STRING_INTERPOLATION_ESCAPE,
     STATE_STRING_INTERPOLATION_END,
+
+    STATE_TAB,
 } State;
 
 typedef struct indent_el {
@@ -246,6 +249,9 @@ typedef struct {
     bool pending_eof;
     int line;
     bool pending_dot;
+    int inside_parentheses;
+
+    bool inside_param_group;
 
     AllocatedStrings* strings;
 } ScannerContext;

@@ -60,7 +60,8 @@ char* add_string_copy(const AllocatedStrings* strings, const char* str)
 
     char*
 
-        new = malloc(length);
+        new
+        = malloc(length);
     if (new == NULL)
         return NULL;
 

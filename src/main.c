@@ -5,13 +5,25 @@
  * @author  Filip Hajdusek (xhajduf00)
  */
 
+#include "debug.h"
 #include "generator.h"
 #include "parser.h"
 #include "semantic.h"
 #include "shared_strings.h"
 
-int main()
+#include <string.h>
+
+void handle_flags(const int argc, char* argv[], ASTNode* ast)
 {
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--ast") == 0)
+            print_ast(ast);
+    }
+}
+
+int main(const int argc, char* argv[])
+{
+
     AllocatedStrings* strings = new_strings();
     if (strings == NULL) {
         return EXIT_CODE_INTERNAL_ERROR;
@@ -26,6 +38,7 @@ int main()
     // Syntax analysis
     const int exit_code_parser = run_parser(ast, strings, NULL);
     if (exit_code_parser != 0) {
+        handle_flags(argc, argv, ast);
         free_ast_nodes(ast);
         free_strings(strings);
         return exit_code_parser;
@@ -34,6 +47,7 @@ int main()
     // Semantic analysis
     const int exit_code_semantic = run_semantic(ast);
     if (exit_code_semantic != 0) {
+        handle_flags(argc, argv, ast);
         free_ast_nodes(ast);
         free_strings(strings);
         return exit_code_semantic;
@@ -42,6 +56,7 @@ int main()
     // Code generation
     generate_program(ast);
 
+    handle_flags(argc, argv, ast);
     free_ast_nodes(ast);
     free_strings(strings);
     return 0;

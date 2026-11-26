@@ -556,3 +556,76 @@ TEST_F(scanner, double_exp_full_number)
     verify_token_sequence("1E+2",
         { token(DOUBLE, 100.0) });
 }
+// =====================================================
+// Block comments
+TEST_F(scanner, block_comment_lf_comment)
+{
+    verify_token_sequence("/* a\n b */ // x\nx",
+        {
+            token(LINE_FEED),
+            token(IDENTIFIER, "x"),
+            token(LINE_FEED),
+            token(END_OF_FILE),
+        });
+}
+
+TEST_F(scanner, block_comment_lf_block_comment)
+{
+    verify_token_sequence("/* a\n b */ /* c */\nx",
+        {
+            token(LINE_FEED),
+            token(IDENTIFIER, "x"),
+            token(LINE_FEED),
+            token(END_OF_FILE),
+        });
+}
+
+TEST_F(scanner, block_comment_lf_block_comment_line_comment)
+{
+    verify_token_sequence("/* a\n b */ /* c\n d */ // e\nx",
+        {
+            token(LINE_FEED),
+            token(IDENTIFIER, "x"),
+            token(LINE_FEED),
+            token(END_OF_FILE),
+        });
+}
+
+TEST_F(scanner, block_comment_lf_then_comment_at_eof)
+{
+    verify_token_sequence("/* a\n b */ // y",
+        {
+            token(LINE_FEED),
+            token(END_OF_FILE),
+        });
+
+    verify_token_sequence("/* a\n b */ /* c */",
+        {
+            token(LINE_FEED),
+            token(END_OF_FILE),
+        });
+
+    verify_token_sequence("/* a\n b */",
+        {
+            token(LINE_FEED),
+            token(END_OF_FILE),
+        });
+}
+
+TEST_F(scanner, block_comment_without_lf_after_err)
+{
+    verify_token_sequence("/* a\n b */ x",
+        {
+            token(ERROR),
+        });
+
+    verify_token_sequence("/* a\n b */ /* c */ x",
+        {
+            token(ERROR),
+        });
+
+    verify_token_sequence("/* a\n b */ /x",
+        {
+            token(ERROR),
+        });
+}

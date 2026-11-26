@@ -174,4 +174,6 @@ int get_line(const ParserContext* parser);
 
 int failed(ParserContext* parser, int err, ...);
 
+void scanning_parameters(const bool value, ParserContext* parser);
+
 #endif // IFJ_1_COMPILER_PARSER_H

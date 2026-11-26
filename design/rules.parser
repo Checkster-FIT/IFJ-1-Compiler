@@ -1,17 +1,16 @@
 
 <program> -> [LF] <program>
 <program> -> [INDENT] <program>
-<program> -> <header> <body> // TODO: Require newline after header?
+<program> -> <header> <body>
 <header> -> import [IDENTIFIER] . *
 
 <body> -> [LF] <body>
 <body> -> [DEDENT] <body>
+<body> -> 3
 <body> -> [EOF]
 <body> -> <function> <body>
 <body> -> <extension> <body>
 <body> -> @main [LF*] <function> <body>
-
-// Parameterless requirement for the main function will be checked in the semantic analysis
 
     // -------------------------------------------------
     <extension> -> extension ( <param> ) [LF] [INDENT] <extension_body>
@@ -44,7 +43,7 @@
     <function_body> -> [LF] [INDENT] <statement_list> [DEDENT]
     <function_body> -> <EXPR> <separator>
 
-    <statement_list> -> <statement> <separator> <statement_list> // Add ';' as a separator
+    <statement_list> -> <statement> <separator> <statement_list>
     <statement_list> -> <construct> <statement_list>
     <statement_list> -> 3
 
@@ -92,7 +91,6 @@
 
                 <fun_call_param_list> -> , <EXPR> <fun_call_param_list>
                 <fun_call_param_list> -> 3
-
 
         <string> -> [STRING]
         <string> -> [MULTILINE_STRING]

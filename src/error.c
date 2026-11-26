@@ -33,6 +33,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 2;
             error.code = 1;
             break;
+        case SCANNER_INVALID_CHARACTER:
+            error.message = "Invalid character found: '%c'";
+            error.param_count = 1;
+            error.code = 1;
+            break;
         case SCANNER_NUM_INVALID_UNDERSCORE:
             error.message = "Underscore(s) inside an integer can only be used between two numbers: '%s' is incorrect";
             error.fix = "Remove underscore(s) or put numbers around them";
@@ -90,6 +95,11 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Tab cannot be used to indentation";
             error.fix = "Replace tab with spaces";
             error.param_count = 0;
+            error.code = 1;
+            break;
+        case SCANNER_INVALID_ESCAPE_SEQUENCE:
+            error.message = "Unable to use escape sequence in string for char '%c'";
+            error.param_count = 1;
             error.code = 1;
             break;
         // Syntax errors
@@ -359,6 +369,12 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.param_count = 1;
             error.code = 3;
             break;
+        case SEMANTIC_EXTENSION_INVALID_CALL_TYPE:
+            error.message = "Cannot resolve function call '%s' on the '%s' type";
+            error.fix = "Function or variable must be defined before use with this type";
+            error.param_count = 2;
+            error.code = 6;
+            break;
         case SEMANTIC_FUNCALL_PARAMETER_MISMATCH:
             error.message = "'%s' function call does not match the defined number of parameters or group of parameters";
             error.param_count = 2;
@@ -390,7 +406,7 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
             error.message = "Unable to use return in function '%s' as it has no explicit return type";
             error.fix = "Return can only be used inside function with explicit return type";
             error.param_count = 1;
-            error.code = 10;
+            error.code = 6;
             break;
         case SEMANTIC_MAIN_WITH_PARAMETERS:
             error.message = "Function with the '@main' tag cannot accept any parameters";
@@ -444,23 +460,13 @@ ErrorMessage get_error_by_id(const enum error_enum error_id)
         case PARSER_RULE_INCOMPLETE:
             error.message = "The required parser rule for '%s' is incomplete";
             error.param_count = 1;
-            error.code = 100;
-            break;
-        case SYMTABLE_ENTRY_NOT_FOUND:
-            error.message = "The identifier '%s' was not found in the given symtable";
-            error.param_count = 1;
-            error.code = 100;
-            break;
-        case PARSER_RULE_INCORRECT_CALL:
-            error.message = "A rule was called when it does not match the next token";
-            error.param_count = 0;
-            error.code = 100;
+            error.code = 2;
             break;
         case SCANNER_NO_TRANSITION:
             error.message = "No scanner transition was found for state '%i' and character '%c'";
             error.fix = "Try adding this case in scanner.c";
             error.param_count = 2;
-            error.code = 100;
+            error.code = 1;
             break;
         default:
             error.message = "An unknown error has occurred...?";
