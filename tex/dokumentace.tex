@@ -93,7 +93,7 @@
 
     \newpage
 
-    \section{Rozdělení práce v týmu}
+    \section{Rozdělení práce v~týmu}
 
     Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje.
     Až na drobné výjimky byl plán dodržen a odpovídá skutečnému rozdělení uvedenému níže.
@@ -129,7 +129,7 @@
                 \item \textbf{syntaktický analyzátor}
                     \begin{itemize}
                         \vspace{-6pt}
-                        \item[-] návrh LL gramatiky a z ní vycházející LL tabulky
+                        \item[-] návrh LL gramatiky a z~ní vycházející LL tabulky
                         \item[-] návrh precedenční tabulky
                         \item[-] abstraktní syntaktický strom
                         \item[-] tabulka symbolů
@@ -175,7 +175,7 @@
 
 
 
-    \section{Spolupráce v týmu}
+    \section{Spolupráce v~týmu}
 
     Pro spolupráci na projektu byl využit verzovací systém \emph{Git} se vzdáleným repozitářem na platformě
     \href{https://github.com/checkster-fit/ifj-1-compiler}{\emph{GitHub}}. Dále byl pro jednoduchou komunikaci
@@ -187,29 +187,29 @@
 
     Pro testování projektu byla zvolena knihovna \emph{GoogleTest}. Pro ověření správnosti implementace
     byly za pomoci této knihovny vytvořeny jednotkové testy pro moduly lexikální a syntakické analýzy.
-    Tyto testy až na výjimky (např. sdílené datové struktury) pracují pouze s jedním testovaným modulem.
+    Tyto testy až na výjimky (např. sdílené datové struktury) pracují pouze s~jedním testovaným modulem.
 
     Dále byly vytvořeny integrační testy pro ověření správnosti spolupráce více modulů.
     První sada integračních testů ověřuje všechny stupně analýzy kódu (lexikální, syntaktická a sémantická)
     na vzorcích zdrojového kódu. Druhá sada testů pak ověřuje správnost výstupů interpretace získaného cílového kódu.
 
     Pro udržení jednotného formátu kódu byly využity nástroje \emph{Clang-Format} a \emph{Clang-Tidy}.
-    Pro formátování byl zvolen styl \texttt{WebKit} s menšími úpravami.
+    Pro formátování byl zvolen styl \texttt{WebKit} s~menšími úpravami.
 
     \section{Využití prostředků AI}
 
-    Na úvodním setkání jsme se dohodli, že budeme upřednostňovat komunikaci a řešení problémů v rámci týmu
+    Na úvodním setkání jsme se dohodli, že budeme upřednostňovat komunikaci a řešení problémů v~rámci týmu
     a jazykové modely AI budeme používat, co možná nejméně.
 
-    Této myšlenky jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódu v modulech a ověřování korektnosti
-    implementace (poskytli jsme jí blok kódu a detailní popis chtěného chování). K tomuto jsme využívali
+    Této myšlenky jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódu v~modulech a ověřování korektnosti
+    implementace (poskytli jsme jí blok kódu a detailní popis chtěného chování). K~tomuto jsme využívali
     modely \texttt{Claude Sonnet 5.5} a \texttt{Gemini Hydrogen}.
-    V závěru implementace překladače jsme si na základě několika vlastních testů nechali modelem \texttt{Gemini Hydrogen}
-    vygenerovat řadu dalších runtime testů. Použili jsme je však pouze k hrubé představě, v jaké fázi se náš překladač
+    V~závěru implementace překladače jsme si na základě několika vlastních testů nechali modelem \texttt{Gemini Hydrogen}
+    vygenerovat řadu dalších runtime testů. Použili jsme je však pouze k~hrubé představě, v~jaké fázi se náš překladač
     nachází, protože model nedokonale pochopil námi předanou testovanou specifikaci.
     Testy jsme se tedy inspirovali a dále již ručně psali další.
 
-    Dále jsme AI využívali k pochopení konstrukcí jazyka \texttt{C++} při tvorbě testů. Při tvorbě dokumentace jsme ji
+    Dále jsme AI využívali k~pochopení konstrukcí jazyka \texttt{C++} při tvorbě testů. Při tvorbě dokumentace jsme ji
     využili na vytvoření opakujících se částí zdrojového kódu (např. stovky řádků LL tabulky, které jsme následně doplňovali).
 
     \newpage
@@ -233,14 +233,14 @@
     \textbf{abstraktní syntaktický strom} (\hyperref[module:ast]{\texttt{ast.c}}),
     který obsahuje uzly pro
     každý sémanticky významný prvek (např. definice funkce). Pro některé předem specifikované typy uzlů
-    jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v uzlu.
+    jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v~uzlu.
 
     AS strom je pak předán modulu \textbf{sémantické analýzy} (\hyperref[module:semantic]{\texttt{semantic.c}}),
     která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zároveň jsou do AS stromu
     přidány doplňující informace (např. návratová hodnota funkce) nebo
     nové pomocné uzly (implicitní konverze ve výrazech).
 
-    Výsledný strom v této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
+    Výsledný strom v~této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
     účel slouží modul \textbf{generátoru kódu} (\hyperref[module:generator]{\texttt{generator.c}}), který postupně
     stromem prochází a vypisuje na standardní výstup výsledný kód.
 
@@ -290,7 +290,7 @@
             (scanner);
 
             \draw[arrow, bend right=5] (parser) to
-            node[midway, above, yshift=0.2cm] {žádosti o token}
+            node[midway, above, yshift=0.2cm] {žádosti o~token}
             (scanner);
 
             \draw[arrow, bend right=5] (scanner) to
@@ -326,7 +326,7 @@
     Pro větší přehlednost je rozdělen do 4 menších automatů.
     Přechody označené \texttt{S:} a \texttt{M:} znázorňují jednořádkové, resp. víceřádkové řetězcové
     interpolace. Symbol $\Sigma$ reprezentuje libovolný znak kromě těch,
-    pro které ze stavu vede jiná explicitní hrana. Jakýkoliv nedefinovaný přechod vede k lexikální chybě.
+    pro které ze stavu vede jiná explicitní hrana. Jakýkoliv nedefinovaný přechod vede k~lexikální chybě.
 
 
     \begin{figure}[!htbp]
@@ -344,7 +344,7 @@
     Základní syntaktická analýza je založená na LL gramatice a je implementována pomocí metody rekurzivního sestupu.
     Redukční pravidla LL gramatiky jsou uvedené ve výpisu níže. Tabulka LL gramatiky rovněž.
 
-    Neterminály jsou ve výpisu psány v lomených závorkách
+    Neterminály jsou ve výpisu psány v~lomených závorkách
     (např.~\uv{$\langle$\texttt{function-body}$\rangle$}), terminály
     pak zpravidla velkými písmeny (např. \uv{\texttt{IDENTIFIER}})
     nebo přímo znakem či klíčovým slovem (např. \uv{\texttt{=}} nebo \uv{\texttt{if}})
@@ -355,10 +355,10 @@
 
     Odchylky od čisté LL gramatiky pak tvoří pravidla pro příkaz
     (\texttt{\ref{prod:statement-b}}) a (\texttt{\ref{prod:statement-d}}),
-    u kterých nelze na základě jednoho následujícího tokenu identifikátoru určit, jestli se
-    jedná o výraz nebo přiřazení hodnoty do proměnné. Při syntaktické analýze je proto načten jeden
-    token navíc, u kterého se podle toho, jestli se jedná o operátor přiřazení, určí, jestli se jedná
-    o přiřazení či nikoliv.
+    u~kterých nelze na základě jednoho následujícího tokenu identifikátoru určit, jestli se
+    jedná o~výraz nebo přiřazení hodnoty do proměnné. Při syntaktické analýze je proto načten jeden
+    token navíc, u~kterého se podle toho, jestli se jedná o~operátor přiřazení, určí, jestli se jedná
+    o~přiřazení či nikoliv.
 
 
     \subsection{Pravidla LL gramatiky}
@@ -421,7 +421,7 @@
 
     }
     {\footnotesize \textsuperscript{*}\,U příkazu nelze na základě
-    identifikátoru rozhodnout jestli se jedná o přířazení (\texttt{\ref{prod:statement-b}})
+    identifikátoru rozhodnout jestli se jedná o~přířazení (\texttt{\ref{prod:statement-b}})
     nebo výraz (\texttt{\ref{prod:statement-d}}), který má být zpracován precedenční analýzou, je zde proto porušena čistá LL gramatika.
     }
 
@@ -430,15 +430,15 @@
     \subsection{Precedenční syntaktická analýza}
     \label{sec:precedence_table}
 
-    Precedenční syntaktická analýza slouží ke zpracování výrazů. Využívá k tomu precedenční tabulky a zásobníku.
-    Terminály jsou postupně vkládány na zásobník podle tří pravidel uvedených v tabulce. Řádek s pravidlem
+    Precedenční syntaktická analýza slouží ke zpracování výrazů. Využívá k~tomu precedenční tabulky a zásobníku.
+    Terminály jsou postupně vkládány na zásobník podle tří pravidel uvedených v~tabulce. Řádek s~pravidlem
     určuje nejvyšší terminál na zásobníku, sloupec je pak určen dalším tokenem pro zpracování.
 
     Při aplikování pravidla \uv{\texttt{<}} se na vrchol zásobníku nebo před výraz vrcholu na zásobníku
     vloží tento pomocný prvek. Na vrchol zásobníku se pak vloží zpracovávaný terminál.
     Při aplikování pravidla \uv{\texttt{=}} se pouze vloží zpracovávaný terminál na vrchol zásobníku.
 
-    Při aplikování pravidla \uv{\texttt{>}} je aplikováno jedno z redukčních pravidel uvedených níže,
+    Při aplikování pravidla \uv{\texttt{>}} je aplikováno jedno z~redukčních pravidel uvedených níže,
     jehož levá strana je pak vložena na místo použítých prvků a uvozovacího znaku \uv{\texttt{<}}.
 
     \begin{multicols}{4}
@@ -491,7 +491,7 @@
     \subsection{\texttt{ast}}
     \label{module:ast}
     \vspace{-0.5em}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené funkce vytvoření
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s~ní spojené funkce vytvoření
         a smazání stromu, funkce přidání jednotlivých uzlů nebo hledání tabulek symbolů ve stromě.
 
     \vspace{-1em}
@@ -499,7 +499,7 @@
     \label{module:bst}
     \vspace{-0.5em}
         Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledávacího stromu}
-        a s ní spojené funkce pro vytvoření a smazání stromu, vložení uzlů a vyhledávání pomocí klíčů.
+        a s~ní spojené funkce pro vytvoření a smazání stromu, vložení uzlů a vyhledávání pomocí klíčů.
 
     \vspace{-1em}
     \subsection{\texttt{debug}}
@@ -520,8 +520,8 @@
     \subsection{\texttt{generator}}
     \label{module:generator}
     \vspace{-0.5em}
-        Modul zajišťuje vytvoření a výpis cílového kódu z poskytnutého abstraktního syntaktického stromu
-        s integrovanými tabulkami symbolů.
+        Modul zajišťuje vytvoření a výpis cílového kódu z~poskytnutého abstraktního syntaktického stromu
+        s~integrovanými tabulkami symbolů.
 
     \vspace{-1em}
     \subsection{\texttt{main}}
@@ -543,7 +543,7 @@
     \label{module:scanner}
     \vspace{-0.5em}
         Modul je implementován formou \textbf{konečného automatu}, který postupně ze standardního vstupu
-        čte řetězce, které vrací ve formě tokenů o různých typech a atributech.
+        čte řetězce, které vrací ve formě tokenů o~různých typech a atributech.
 
     \vspace{-1em}
     \subsection{\texttt{semantic}}
@@ -551,7 +551,7 @@
     \vspace{-0.5em}
         Modul prochází abstraktní syntaktický strom a provádí \textbf{sémantické kontroly}
         (např. typové kontroly).
-        Zároveň jsou v AST vytvořeny doplňující uzly (implicitní typová konverze) nebo jsou uzly doplněny o nové
+        Zároveň jsou v~AST vytvořeny doplňující uzly (implicitní typová konverze) nebo jsou uzly doplněny o~nové
         informace (např. výsledný typ výrazu).
 
     \vspace{-1em}
@@ -566,14 +566,14 @@
     \subsection{\texttt{stack}}
     \label{module:stack}
     \vspace{-0.5em}
-        Poskytuje abstraktní datovou strukturu \textbf{zásobníku} s příslušnými funkcemi.
+        Poskytuje abstraktní datovou strukturu \textbf{zásobníku} s~příslušnými funkcemi.
 
     \vspace{-1em}
     \subsection{\texttt{symtable}}
     \label{module:symtable}
     \vspace{-0.5em}
         Poskytuje \textbf{tabulku symbolů} jako abstraktní datovou strukturu využívající modulu
-        \hyperref[module:bst]{\texttt{bst}}. Zároveň poskytuje strukturu záznamu v TS a operace pro jeho
+        \hyperref[module:bst]{\texttt{bst}}. Zároveň poskytuje strukturu záznamu v~TS a operace pro jeho
         přidání.
 
     \section{Zdroje}
