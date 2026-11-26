@@ -198,7 +198,7 @@
     Na úvodním setkání jsme se dohodli, že budeme upřednostňovat komunikaci a řešení problémů v rámci týmu
     a jazykové modely AI budeme používat, co možná nejméně.
 
-    Této teze jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódů v modulech a ověřování korektnosti
+    Této teze jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódu v modulech a ověřování korektnosti
     implementace (kdy jsme AI poskytli blok kódu a detailní popis chtěného chování). K tomuto jsme využívali
     modely \texttt{Claude Sonnet 5.5} a \texttt{Gemini Hydrogen}.
     V závěru implementace překladače jsme si na základě několika vlastních testů nechali vytvořit řadu dalších runtime
@@ -213,29 +213,29 @@
 
     \section{Architektura projektu}
 
-        Návrh architektury překladače zahrnuje čtyři hlavní oddělenné moduly.
+        Návrh architektury překladače zahrnuje čtyři hlavní oddělené moduly.
     Jako první je spuštěn modul
     \textbf{syntaktické analýzy} (\hyperref[module:parser]{\texttt{parser.c}}),
     ten ale potřebuje pro svůj chod posloupnost \textbf{tokenů}. Pro tento účel využije modul
     \textbf{lexikální analýzy} (\hyperref[module:scanner]{\texttt{scanner.c}}),
     který po zavolání přečte část zdrojového kódu a vrátí první nalezený token.
 
-    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založeném na navržené LL gramatice.
-    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntakické kontroly \emph{precedenční analýze}.
+    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založenou na navržené LL gramatice.
+    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntaktické kontroly \emph{precedenční analýze}.
     Ta zpracovává výraz na základě navržené precedenční tabulky. Pokud je při precedenční analýze nalezen term
     (proměnná, volání funkce, literál), je řízení předáno zpět rekurzivnímu sestupu. Po zpracování termu nadále
     pokračuje precedenční analýza.
 
-    Za běhu syntakické analýzy je vytvářen
+    Za běhu syntaktické analýzy je vytvářen
     \textbf{abstraktní syntaktický strom} (\hyperref[module:ast]{\texttt{ast.c}}),
     který obsahuje uzly pro
     každý sémanticky významný prvek (např. definice funkce). Pro některé předem specifikované typy uzlů
     jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v uzlu.
 
     AS strom je pak předán modulu \textbf{sémantické analýzy} (\hyperref[module:semantic]{\texttt{semantic.c}}),
-    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zárověň jsou do AS stromu
+    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zároveň jsou do AS stromu
     přidány doplňující informace (např. návratová hodnota funkce) nebo
-    nové pomocné uzly (impicitní konverze ve výrazech).
+    nové pomocné uzly (implicitní konverze ve výrazech).
 
     Výsledný strom v této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
     účel slouží modul \textbf{generátoru kódu} (\hyperref[module:generator]{\texttt{generator.c}}), který postupně
@@ -337,7 +337,7 @@
     Základní syntaktická analýza je založená na LL gramatice a je implementována pomocí metody rekurzivního sestupu.
     Redukční pravidla LL gramatiky jsou uvedené ve výpisu níže. Tabulka LL gramatiky rovněž.
 
-    Neterminály jsou ve výpisu psány v lomenných závorkách
+    Neterminály jsou ve výpisu psány v lomených závorkách
     (např.~\uv{$\langle$\texttt{function-body}$\rangle$}), terminály
     pak zpravidla velkými písmeny (např. \uv{\texttt{IDENTIFIER}})
     nebo přímo znakem či klíčovým slovem (např. \uv{\texttt{=}} nebo \uv{\texttt{if}})
@@ -351,7 +351,7 @@
     u kterých nelze na základě jednoho následujícího tokenu identifikátoru určit, jestli se
     jedná o výraz nebo přiřazení hodnoty do proměnné. Při syntaktické analýze je proto načten jeden
     token navíc, u kterého se podle toho, jestli se jedná o operátor přiřazení, určí, jestli se jedná
-    o přířezení či nikoliv.
+    o přiřazení či nikoliv.
 
 
     \subsection{Pravidla LL gramatiky}
@@ -425,7 +425,7 @@
 
     Precedenční syntaktická analýza slouží ke zpracování výrazů. Využívá k tomu precedenční tabulky a zásobníku.
     Terminály jsou postupně vkládány na zásobník podle tří pravidel uvedených v tabulce. Řádek s pravidlem
-    určuje nejvyšší terminál na zásobníku, sloupec je pak určen další token pro zpracování.
+    určuje nejvyšší terminál na zásobníku, sloupec je pak určen dalším tokenem pro zpracování.
 
     Při aplikování pravidla \uv{\texttt{<}} se na vrchol zásobníku nebo před výraz vrcholu na zásobníku
     vloží tento pomocný prvek. Na vrchol zásobníku se pak vloží zpracovávaný terminál.
@@ -466,11 +466,11 @@
 
     Speciální znak \uv{\texttt{\$}} značí buď prázdný zásobník nebo token ukončující výraz.
 
-    Skupina tokenů označená pro učely precedenční analýzy \uv{\texttt{term}} má při analýze speciální význam.
+    Skupina tokenů označená pro účely precedenční analýzy \uv{\texttt{term}} má při analýze speciální význam.
     Termy jsou zpracovány i uvnitř výrazů pomocí rekurzivního sestupu. Po jejich zpracování je řízení předáno zpět
     precedenční analýze.
 
-    Unární operátory \uv{\texttt{+}} a \uv{\texttt{-}} značené \uv{\texttt{+x}} a \uv{\texttt{-x}} sdílí
+    Unární operátory \uv{\texttt{+}} a \uv{\texttt{-}} značené \uv{\texttt{+x}} a \uv{\texttt{-x}} sdílejí
     tokeny pro sčítání a odčítání. Pro správné zpracování je nutné je rozlišit na základě neterminálu či terminálu
     na vrcholu zásobníku.
 
@@ -491,7 +491,7 @@
     \subsection{\texttt{bst}}
     \label{module:bst}
     \vspace{-0.5em}
-        Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledavacího stromu}
+        Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledávacího stromu}
         a s ní spojené funkce pro vytvoření a smazání stromu, vložení uzlů a vyhledávání pomocí klíčů.
 
     \vspace{-1em}
@@ -499,14 +499,14 @@
     \label{module:debug}
     \vspace{-0.5em}
         Poskytuje ladící výpisy zahrnující například výpis načtených tokenů,
-        výpis průchodu syntakické analýzy, výpis zásobníku precedenční analýzy nebo výpis abstraktního
+        výpis průchodu syntaktické analýzy, výpis zásobníku precedenční analýzy nebo výpis abstraktního
         syntaktického stromu.
 
     \vspace{-1em}
     \subsection{\texttt{error}}
     \label{module:error}
     \vspace{-0.5em}
-        Poskytuje sjedocený způsob výpisu chybových hlášek. Každá chyba má přiřazený název,
+        Poskytuje sjednocený způsob výpisu chybových hlášek. Každá chyba má přiřazený název,
         chybovou hlášku, návratový kód a volitelně nápovědu.
 
     \vspace{-1em}
@@ -553,7 +553,7 @@
     \vspace{-0.5em}
         Modul poskytuje strukturu a funkce pro alokování a uchování alokovaných řetězců,
         které je nutné předávat mezi moduly překladače.
-        Zároveň posktuje strukturu a funkce pro vytvoření a modifikování dynamicky alokovaného řetězce.
+        Zároveň poskytuje strukturu a funkce pro vytvoření a modifikování dynamicky alokovaného řetězce.
 
     \vspace{-1em}
     \subsection{\texttt{stack}}
