@@ -279,7 +279,7 @@
             \draw[arrow, bend left=20] (rd) to (pa);
             \draw[arrow, bend left=20] (pa) to (rd);
 
-            \node[box, below=3cm of parser] (semantic) {Sémantický \\ analyzátor};
+            \node[box, below=2.2cm of parser] (semantic) {Sémantický \\ analyzátor};
             \node[box] (generator) at (scanner |- semantic) {Generátor \\ kódu};
 
             \draw[arrow] (scanner) ++(0, 1.7) --
@@ -310,25 +310,29 @@
 
         \end{tikzpicture}
 
-        \medskip
+
         \captionof{figure}{Blokové schéma architektury překladače}
     \end{figure}
 
     \medskip
-
-
-    \newpage
-
     \section{Lexikální analýza}
+
     \subsection{Diagram konečného automatu pro lexikální analýzu}
+
+       Diagram znázorňuje konečný automat se sdíleným počátečním stavem \texttt{START}.
+    Pro větší přehlednost je rozdělen do 4 menších automatů.
+    Přechody označené \texttt{S:} a \texttt{M:} znázorňují jednořádkové, resp. víceřádkové řetězcové
+    interpolace. Symbol $\Sigma$ reprezentuje libovolný znak kromě těch,
+    pro které ze stavu vede jiná explicitní hrana. Jakýkoliv nedefinovaný přechod vede k lexikální chybě.
 
 
     \begin{figure}[!htbp]
         \centering
         \includegraphics[
-            width=0.94\textwidth
+            width=0.95\textwidth
         ]{fsm.pdf}
     \end{figure}
+
 
     \newpage
 
