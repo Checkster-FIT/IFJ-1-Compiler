@@ -597,3 +597,26 @@ TEST_F(runtime, new_line_in_parenthesis)
                 )
     )";
 }
+
+// ========================================================
+
+TEST_F(runtime, comment_followed_by_comment)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        @main def main(): Unit =
+            5 //
+            5 /**/ //
+            5 /*
+            */ //
+            5 /**/ /**/
+            5 /*
+            */ /**/
+            5 /*
+            */ /*
+            */
+            5+/**/5 // /**/ ahoj
+    )";
+}
