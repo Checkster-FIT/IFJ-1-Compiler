@@ -300,9 +300,6 @@
     \medskip
 
 
-
-
-
     \newpage
 
     \section{Lexikální analýza}
@@ -312,7 +309,7 @@
     \begin{figure}[!htbp]
         \centering
         \includegraphics[
-            width=0.95\textwidth
+            width=0.94\textwidth
         ]{fsm.pdf}
         \caption{Spektrogram vstupního signálu s~vyznačenou částí obsahující uměle vypadající signál}
     \end{figure}
@@ -321,11 +318,25 @@
 
     \section{Syntaktická analýza}
 
+    Základní syntaktická analýza je založená na LL gramatice a je implementována pomocí metody rekurzivního sestupu.
+    Redukční pravidla LL gramatiky jsou uvedené ve výpisu níže. Tabulka LL gramatiky rovněž.
+
+    Neterminály jsou ve výpisu psány v lomenných závorkách
+    (např.~\uv{$\langle$\texttt{function-body}$\rangle$}), terminály
+    pak zpravidla velkými písmeny (např. \uv{\texttt{IDENTIFIER}})
+    nebo přímo znakem či klíčovým slovem (např. \uv{\texttt{=}} nebo \uv{\texttt{if}})
+
+    Výjimky tvoří neterminál \uv{$\langle$\texttt{expression}$\rangle$}, který značí očekávaný výraz.
+    Pro zpracování výrazu je využita metoda precedenční syntaktické analýzy využívající
+    \hyperref[sec:precedence_table]{precedenční tabulku}, která je uvedena později.
+
     \subsection{Pravidla LL gramatiky}
+    \label{sec:ll_grammar}
     \input{ll_rules}
     \newpage
 
     \subsection{LL tabulka}
+    \label{sec:ll_table}
 
     \newcommand{\nonterminal}[1]{}
     \newcommand{\pr}[2]{\small\vspace{-0.76em}\texttt{\ref{prod:#1-#2}}}
@@ -380,6 +391,7 @@
 
 
     \subsection{Precedenční tabulka}
+    \label{sec:precedence_table}
 
     Precedenční tabulka slouží ke zpracování výrazů.
 

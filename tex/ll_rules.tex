@@ -1,4 +1,4 @@
-\newcommand{\NT}[1]{\texttt{#1}}
+\newcommand{\NT}[1]{$\langle$\texttt{#1}$\rangle$}
 \newcommand{\T}[1]{\texttt{#1}}
 
 \begin{enumerate}[label=\textbf{\arabic*)}, ref=\arabic*, leftmargin=*]
@@ -120,7 +120,7 @@
     \item \label{prod:c-while-a} \NT{c-while} $\rightarrow$ \T{while} \ \NT{expression} \ \T{do} \ \T{LF} \ \T{INDENT} \ \NT{statement-list} \ \T{DEDENT}
     \medskip
 
-    \item \label{prod:c-if-then-a} \NT{c-if-then} $\rightarrow$ \T{if} \ \NT{expression} \ \T{then} \ \T{LF*} \ \T{INDENT*} \ \NT{statement-list} \ \T{DEDENT*} \ \NT{c-else}
+    \item \label{prod:c-if-then-a} \NT{c-if-then} $\rightarrow$ \T{if} \ \NT{expression} \ \T{then} \ \T{LF} \ \T{INDENT} \ \NT{statement-list} \ \T{DEDENT} \ \NT{c-else}
     \medskip
 
 
@@ -129,7 +129,7 @@
     \medskip
 
     \item \label{prod:else-branch-a} \NT{else-branch} $\rightarrow$ \NT{c-if-then}
-    \item \label{prod:else-branch-b} \NT{else-branch} $\rightarrow$ \T{LF*} \ \T{INDENT*} \ \NT{statement-list} \ \T{DEDENT*}
+    \item \label{prod:else-branch-b} \NT{else-branch} $\rightarrow$ \T{LF} \ \T{INDENT} \ \NT{statement-list} \ \T{DEDENT}
     \medskip
 
     % -------------------------------------------------
