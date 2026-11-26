@@ -8,6 +8,8 @@
 *.log
 *.o
 *.te~
+*.*-swp
+*.toc
 *.err
 *.out
 
