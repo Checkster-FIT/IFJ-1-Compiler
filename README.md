@@ -19,16 +19,17 @@ make run
 
 ## Termíny a odevzdání
 
-> [!IMPORTANT]
 > do **19\. listopadu** 2026 *(10. týden sem., `23:59`)* - **1. pokusné odevzdání**
 
 > do **25\. listopadu** 2026 *(11. týden sem., `08:00`)* - **2. pokusné odevzdání**
 
+> [!IMPORTANT]
 > do **27\. listopadu** 2026 *(11. týden sem., `11:59`)* - **Hlavní odevzdání**
 
-> do **1\. prosince** 2026 *(12. týden sem., `11:59`)* - **Odevzdání tištěné dokumentace**
+> do **2\. prosince** 2026 *(12. týden sem., `08:00`)* - **Odevzdání tištěné dokumentace**
 
-> od **3\. prosince** 2026 *(12./13. týden sem., `??:??`)* - **Obhajoby**
+>  **8\. prosince** 2026 *(13. týden sem., `08:30`)* - **Obhajoba**
+
 
 ---
 

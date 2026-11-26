@@ -2,7 +2,7 @@
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    error.c
  * @brief   Contains error handling logic used across modules
- * @author  Filip Hajdusek (xhajduf00)
+ * @author  Filip Hajdusek (xhajduf00), Wyslych Vojtech (xwyslyv00)
  */
 
 #include "error.h"

@@ -1,0 +1,67 @@
+\newcommand{\Lt}{$<$}
+\newcommand{\Gt}{$>$}
+\newcommand{\Eq}{$=$}
+
+\begin{center}
+    \begin{longtable}{|>{\centering\arraybackslash}m{1.6cm}|*{20}{>{\centering\arraybackslash}m{0.5cm}|}}
+        \hline
+        &
+        \rotatebox{0}{\texttt{(}} &
+        \rotatebox{90}{\,\texttt{term}\ \,} &
+        \rotatebox{0}{\texttt{)}} &
+        \rotatebox{0}{\texttt{!}} &
+        \rotatebox{0}{\texttt{+x}} &
+        \rotatebox{0}{\texttt{-x}} &
+        \rotatebox{0}{\texttt{*}} &
+        \rotatebox{0}{\texttt{/}} &
+        \rotatebox{0}{\texttt{+}} &
+        \rotatebox{0}{\texttt{-}} &
+        \rotatebox{0}{\texttt{<}} &
+        \rotatebox{0}{\texttt{<=}} &
+        \rotatebox{0}{\texttt{>}} &
+        \rotatebox{0}{\texttt{>=}} &
+        \rotatebox{0}{\texttt{==}} &
+        \rotatebox{0}{\texttt{!=}} &
+        \rotatebox{0}{\texttt{\&\&}} &
+        \rotatebox{0}{\texttt{\textbar\textbar}} &
+        \rotatebox{0}{\texttt{\$}} &
+        \rotatebox{0}{\texttt{.}}
+        \\
+        \hline
+        \endfirsthead
+
+        \hline
+        & \multicolumn{20}{c|}{\textbf{Precedence table (continued)}} \\
+        \hline
+        \endhead
+
+        \hline
+        \endfoot
+
+        \endlastfoot
+
+        \texttt{(}    & \Lt & \Lt & \Eq & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     & \Lt \\ \hline
+        \texttt{term} &     &     & \Gt &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt \\ \hline
+        \texttt{)}    &     &     & \Gt &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt \\ \hline
+        \texttt{!}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{+x}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{-x}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{*}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{/}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{+}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{-}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{<}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{<=}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{>}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{>=}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{==}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{!=}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{\&\&} & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{\textbar\textbar} & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{\$}   & \Lt & \Lt &     & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     & \Lt \\ \hline
+        \texttt{.}    &     & \Lt & \Gt &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt \\ \hline
+
+    \end{longtable}
+
+    \captionof{table}{Precedenční tabulka}
+\end{center}

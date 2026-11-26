@@ -3,7 +3,7 @@
  * @file    shared_strings.c
  * @brief   Adds structure for sharing allocated strings across modules
  *          and structure for dynamically allocated string
- * @author  Filip Hajdusek (xhajduf00)
+ * @author  Filip Hajdusek (xhajduf00), Wyslych Vojtech (xwyslyv00)
  */
 
 #include "shared_strings.h"

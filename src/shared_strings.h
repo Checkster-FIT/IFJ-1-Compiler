@@ -3,7 +3,7 @@
  * @file    shared_strings.h
  * @brief   Adds structure for sharing allocated strings across modules
  *          and structure for dynamically allocated string
- * @author  Filip Hajdusek (xhajduf00)
+ * @author  Filip Hajdusek (xhajduf00), Wyslych Vojtech (xwyslyv00)
  */
 
 #ifndef IFJ_1_COMPILER_STRINGS_H

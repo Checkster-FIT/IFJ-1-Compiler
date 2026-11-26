@@ -69,8 +69,13 @@ clean:
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
-	@rm -fv $(TEX_DIR)/*.toc
+	@rm -fv $(TEX_DIR)/*.te~
 	@rm -fv $(TEX_DIR)/*.out
+	@rm -fv $(TEX_DIR)/*.bbl
+	@rm -fv $(TEX_DIR)/*.bcf
+	@rm -fv $(TEX_DIR)/*.blg
+	@rm -fv $(TEX_DIR)/*.xml
+	@rm -fv $(TEX_DIR)/*.toc
 	@rm -fv *.pdf
 	@rm -fv *.log
 	@rm -fv $(ARCHIVE_NAME).zip
@@ -224,7 +229,18 @@ database:
 
 doc:
 	cd $(TEX_DIR) && pdflatex $(DOC_NAME).tex
+	cd $(TEX_DIR) && bibtex $(DOC_NAME)
+	cd $(TEX_DIR) && pdflatex $(DOC_NAME).tex
 	mv $(TEX_DIR)/$(DOC_NAME).pdf $(DOC_NAME).pdf
+	@rm -fv $(TEX_DIR)/*.aux
+	@rm -fv $(TEX_DIR)/*.log
+	@rm -fv $(TEX_DIR)/*.te~
+	@rm -fv $(TEX_DIR)/*.out
+	@rm -fv $(TEX_DIR)/*.bbl
+	@rm -fv $(TEX_DIR)/*.bcf
+	@rm -fv $(TEX_DIR)/*.blg
+	@rm -fv $(TEX_DIR)/*.xml
+	@rm -fv $(TEX_DIR)/*.toc
 
 ok: $(ARCHIVE_NAME).zip
 	@chmod +x is_it_ok.sh

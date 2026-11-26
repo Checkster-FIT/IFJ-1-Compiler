@@ -1,12 +1,586 @@
 \documentclass[a4paper, 11pt]{article}
-\usepackage[left=2cm,text={17cm, 24cm},top=3cm]{geometry}
+
+\usepackage[left=2cm,text={17cm, 25.8cm},top=1.95cm]{geometry}
 
 \usepackage[czech,shorthands=off]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{times}
-\usepackage{multirow}
+\usepackage{lmodern}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{multicol}
+
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage{array}
+\usepackage{refcount}
+\usepackage{caption}
+
+\usepackage{enumitem}
+
+\usepackage{cite}
+\usepackage{url}
 
 \begin{document}
-    Dokumentace
+
+    \begin{titlepage}
+
+        \centering
+
+        \textsc {
+            {\Huge Vysoké učení technické v~Brně \\[0.5em]}
+            {\huge Fakulta informačních technologií}
+        }\\
+
+        \vspace{\stretch{0.382}}
+
+        {
+            \Huge Formální jazyky a překladače \\ \vspace{0.4em}
+            \huge Dokumentace k~překladači IFJ26 \\ \vspace{0.4em}
+
+            \vspace{2em}
+            \huge
+                Varianta \texttt{vv-BVS}  \\
+            \vspace{0.4em}
+            \Large
+                \texttt{FUNEXP},
+                \texttt{BOOLTHEN},
+                \texttt{VALMEM}, \\
+                \texttt{INTERPOLATEDS},
+                \texttt{EXTKW},
+                \texttt{PARAMLISTS} \\
+            \vspace{3em}
+
+        }
+
+        \vspace{\stretch{0.618}}
+        {
+            \Large
+
+            \url{https://github.com/checkster-fit/ifj-1-compiler} \\
+
+            \vspace{1em}
+
+            \begin{tabular}{l l r}
+                Andrea Drahovská & (\texttt{xdrahoa00, 282465}) & $25\,\%$ bodů \\
+                \textbf{Filip Hajdušek} & (\texttt{xhajduf00, 282063}) & $25\,\%$ bodů \\
+                Tobiáš Mikan & (\texttt{xmikant00, 282285}) & $25\,\%$ bodů \\
+                Vojtěch Wyslych & (\texttt{xwyslyv00, 282281}) & $25\,\%$ bodů \\
+            \end{tabular}
+
+            \vspace{1em}
+            \today
+        }
+
+        \setcounter{page}{0}
+        \setcounter{table}{-1}
+
+
+    \end{titlepage}
+
+    \tableofcontents
+
+    \setlength{\parindent}{0cm}
+    \setlength{\parskip}{0.45em}
+    \renewcommand{\topfraction}{0.95}
+    \renewcommand{\bottomfraction}{0.95}
+    \renewcommand{\textfraction}{0.05}
+    \renewcommand{\floatpagefraction}{0.8}
+
+    \newpage
+
+    \section{Rozdělení práce v~týmu}
+
+    Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje.
+    Až na drobné výjimky byl plán dodržen a odpovídá skutečnému rozdělení uvedenému níže.
+
+        \vspace{-0.8em}
+        \subsection*{Andrea Drahovská}
+        \vspace{-0.5em}
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item \textbf{lexikální analyzátor}
+                \begin{itemize}
+                    \vspace{-6pt}
+                    \item[-] návrh konečného automatu
+                    \item[-] diagram konečného automatu
+                    \vspace{-4pt}
+                \end{itemize}
+
+                \item jednotkové testy pro lexikální analyzátor
+
+            \end{itemize}
+
+        \vspace{-1.4em}
+        \subsection*{Filip Hajdušek}
+        \vspace{-0.5em}
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item vedení týmu
+                \item dokumentace
+                \item Makefile, GoogleTest a další pomocné nástroje
+
+                \item \textbf{syntaktický analyzátor}
+                    \begin{itemize}
+                        \vspace{-6pt}
+                        \item[-] návrh LL gramatiky a z~ní vycházející LL tabulky
+                        \item[-] návrh precedenční tabulky
+                        \item[-] abstraktní syntaktický strom
+                        \item[-] tabulka symbolů
+                        \vspace{-4pt}
+                    \end{itemize}
+
+                \item jednotkové testy pro syntaktický analyzátor
+                \item integrační testy analýzy a interpretace cílového kódu
+                \item moduly pro zpracování chyb a ladící výpisy
+
+            \end{itemize}
+
+        \vspace{-1.4em}
+        \subsection*{Tobiáš Mikan}
+        \vspace{-0.5em}
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item \textbf{generátor kódu}
+                \item implementace výškově vyváženého binárního vyhledávacího stromu
+
+            \end{itemize}
+
+        \vspace{-1.4em}
+        \subsection*{Vojtěch Wyslych}
+        \vspace{-0.5em}
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item dokumentace
+
+                \item \textbf{lexikální analyzátor}
+                \begin{itemize}
+                    \vspace{-6pt}
+                    \item[-] návrh konečného automatu
+                    \vspace{-4pt}
+                \end{itemize}
+
+                \item \textbf{sémantický analyzátor}
+                \item implementace datových struktur zásobníku a dynamicky alokovaného řetězce
+
+            \end{itemize}
+
+
+
+    \section{Spolupráce v~týmu}
+
+    Pro spolupráci na projektu byl využit verzovací systém \emph{Git} se vzdáleným repozitářem na platformě
+    \href{https://github.com/checkster-fit/ifj-1-compiler}{\emph{GitHub}}. Dále byl pro jednoduchou komunikaci
+    mezi členy týmu a jednotný zdroj informací na platformě \emph{Discord} zřízen sever.
+
+    Práce na jednotlivých částech projektu byla prováděna na příslušných oddělených větvích.
+    Po dokončení ucelené části implementace byl vytvořen PR, který byl následně po čase schválen a
+    sloučen do hlavní větve.
+
+    Pro testování projektu byla zvolena knihovna \emph{GoogleTest}. Pro ověření správnosti implementace
+    byly za pomoci této knihovny vytvořeny jednotkové testy pro moduly lexikální a syntakické analýzy.
+    Tyto testy až na výjimky (např. sdílené datové struktury) pracují pouze s~jedním testovaným modulem.
+
+    Dále byly vytvořeny integrační testy pro ověření správnosti spolupráce více modulů.
+    První sada integračních testů ověřuje všechny stupně analýzy kódu (lexikální, syntaktická a sémantická)
+    na vzorcích zdrojového kódu. Druhá sada testů pak ověřuje správnost výstupů interpretace získaného cílového kódu.
+
+    Pro udržení jednotného formátu kódu byly využity nástroje \emph{Clang-Format} a \emph{Clang-Tidy}.
+    Pro formátování byl zvolen styl \texttt{WebKit} s~menšími úpravami.
+
+    \section{Využití prostředků AI}
+
+    Na úvodním setkání jsme se dohodli, že budeme upřednostňovat komunikaci a řešení problémů v~rámci týmu
+    a jazykové modely AI budeme používat, co možná nejméně.
+
+    Této myšlenky jsme se drželi a AI jsme používali na konzultaci chování jednotlivých částí kódu v~modulech a ověřování korektnosti
+    implementace (poskytli jsme jí blok kódu a detailní popis chtěného chování). K~tomuto jsme využívali
+    modely \texttt{Claude Sonnet 5.5} a \texttt{Gemini Hydrogen}.
+    V~závěru implementace překladače jsme si na základě několika vlastních testů nechali modelem \texttt{Gemini Hydrogen}
+    vygenerovat řadu dalších runtime testů. Použili jsme je však pouze k~hrubé představě, v~jaké fázi se náš překladač
+    nachází, protože model nedokonale pochopil námi předanou testovanou specifikaci.
+    Testy jsme se tedy inspirovali a dále již ručně psali další.
+
+    Dále jsme AI využívali k~pochopení konstrukcí jazyka \texttt{C++} při tvorbě testů. Při tvorbě dokumentace jsme ji
+    využili na vytvoření opakujících se částí zdrojového kódu (např. stovky řádků LL tabulky, které jsme následně doplňovali).
+
+    \newpage
+
+    \section{Architektura projektu}
+
+        Návrh architektury překladače zahrnuje čtyři hlavní oddělené moduly.
+    Jako první je spuštěn modul
+    \textbf{syntaktické analýzy} (\hyperref[module:parser]{\texttt{parser.c}}),
+    ten ale potřebuje pro svůj chod posloupnost \textbf{tokenů}. Pro tento účel využije modul
+    \textbf{lexikální analýzy} (\hyperref[module:scanner]{\texttt{scanner.c}}),
+    který po zavolání přečte část zdrojového kódu a vrátí první nalezený token.
+
+    Syntaktická analýza je pak prováděna metodou \emph{rekurzivního sestupu} založenou na navržené LL gramatice.
+    Pokud je při rekurzivním sestupu nalezen výraz je předáno řízení syntaktické kontroly \emph{precedenční analýze}.
+    Ta zpracovává výraz na základě navržené precedenční tabulky. Pokud je při precedenční analýze nalezen term
+    (proměnná, volání funkce, literál), je řízení předáno zpět rekurzivnímu sestupu. Po zpracování termu nadále
+    pokračuje precedenční analýza.
+
+    Za běhu syntaktické analýzy je vytvářen
+    \textbf{abstraktní syntaktický strom} (\hyperref[module:ast]{\texttt{ast.c}}),
+    který obsahuje uzly pro
+    každý sémanticky významný prvek (např. definice funkce). Pro některé předem specifikované typy uzlů
+    jsou vytvořeny jejich lokální tabulky symbolů, které jsou uloženy přímo v~uzlu.
+
+    AS strom je pak předán modulu \textbf{sémantické analýzy} (\hyperref[module:semantic]{\texttt{semantic.c}}),
+    která jeho průchodem ověří sémantické požadavky (např. typová kompatibilita operací). Zároveň jsou do AS stromu
+    přidány doplňující informace (např. návratová hodnota funkce) nebo
+    nové pomocné uzly (implicitní konverze ve výrazech).
+
+    Výsledný strom v~této části překladu  obsahuje vše nutné pro vygenerování cílového kódu. Pro tento
+    účel slouží modul \textbf{generátoru kódu} (\hyperref[module:generator]{\texttt{generator.c}}), který postupně
+    stromem prochází a vypisuje na standardní výstup výsledný kód.
+
+    \medskip \medskip
+
+    \begin{figure}[ht]
+        \centering
+
+        \hspace*{1.1cm}
+        \begin{tikzpicture}[
+            node distance=2cm,
+            box/.style={
+                draw,
+                rectangle,
+                minimum width=3cm,
+                minimum height=1.5cm,
+                align=center
+            },
+            arrow/.style={->, >=stealth, thick}
+        ]
+
+            \node[box] (scanner) {Lexikální \\ analyzátor};
+
+            \node[
+                draw,
+                rectangle,
+                minimum width=7.5cm,
+                minimum height=3.2cm,
+                right=4cm of scanner
+            ] (parser) {};
+
+            \node[align=center] at ([yshift=0.8cm]parser.center) {Syntaktický analyzátor};
+
+            \node[box] (rd) at ([xshift=-1.9cm, yshift=-0.5cm]parser.center)
+                {Rekurzivní \\ sestup};
+            \node[box] (pa) at ([xshift=1.9cm, yshift=-0.5cm]parser.center)
+                {Precedenční \\ analýza};
+
+            \draw[arrow, bend left=20] (rd) to (pa);
+            \draw[arrow, bend left=20] (pa) to (rd);
+
+            \node[box, below=2.2cm of parser] (semantic) {Sémantický \\ analyzátor};
+            \node[box] (generator) at (scanner |- semantic) {Generátor \\ kódu};
+
+            \draw[arrow] (scanner) ++(0, 1.7) --
+            node[midway, above, yshift=0.55cm] {zdrojový kód}
+            (scanner);
+
+            \draw[arrow, bend right=5] (parser) to
+            node[midway, above, yshift=0.2cm] {žádosti o~token}
+            (scanner);
+
+            \draw[arrow, bend right=5] (scanner) to
+            node[midway, below, yshift=-0.2cm] {tokeny}
+            (parser);
+
+            \draw[arrow] (parser) --
+            node[midway, right, xshift=0.25cm, text width=2cm, align=center]
+            {abstraktní syntaktický strom}
+            (semantic);
+
+            \draw[arrow] (semantic) --
+            node[midway, above, yshift=0.25cm, text width=4cm, align=center]
+            {sémanticky ověřený a obohacený AS strom}
+            (generator);
+
+            \draw[arrow] (generator) --
+            node[midway, below, yshift=-0.55cm] {cílový kód}
+            ++(0, -1.7);
+
+        \end{tikzpicture}
+
+
+        \captionof{figure}{Blokové schéma architektury překladače}
+    \end{figure}
+
+    \medskip
+    \section{Lexikální analýza}
+
+    \subsection{Diagram konečného automatu pro lexikální analýzu}
+
+       Diagram znázorňuje konečný automat se sdíleným počátečním stavem \texttt{START}.
+    Pro větší přehlednost je rozdělen do 4 menších automatů.
+    Přechody označené \texttt{S:} a \texttt{M:} znázorňují jednořádkové, resp. víceřádkové řetězcové
+    interpolace. Symbol $\Sigma$ reprezentuje libovolný znak kromě těch,
+    pro které ze stavu vede jiná explicitní hrana. Jakýkoliv nedefinovaný přechod vede k~lexikální chybě.
+
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[
+            width=0.95\textwidth
+        ]{fsm.pdf}
+    \end{figure}
+
+
+    \newpage
+
+    \section{Syntaktická analýza}
+
+    Základní syntaktická analýza je založená na LL gramatice a je implementována pomocí metody rekurzivního sestupu.
+    Redukční pravidla LL gramatiky jsou uvedené ve výpisu níže. Tabulka LL gramatiky rovněž.
+
+    Neterminály jsou ve výpisu psány v~lomených závorkách
+    (např.~\uv{$\langle$\texttt{function-body}$\rangle$}), terminály
+    pak zpravidla velkými písmeny (např. \uv{\texttt{IDENTIFIER}})
+    nebo přímo znakem či klíčovým slovem (např. \uv{\texttt{=}} nebo \uv{\texttt{if}})
+
+    Výjimky tvoří neterminál \uv{$\langle$\texttt{expression}$\rangle$}, který značí očekávaný výraz.
+    Pro zpracování výrazu je využita metoda precedenční syntaktické analýzy využívající
+    \hyperref[sec:precedence_table]{precedenční tabulku}, která je uvedena později.
+
+    Odchylky od čisté LL gramatiky pak tvoří pravidla pro příkaz
+    (\texttt{\ref{prod:statement-b}}) a (\texttt{\ref{prod:statement-d}}),
+    u~kterých nelze na základě jednoho následujícího tokenu identifikátoru určit, jestli se
+    jedná o~výraz nebo přiřazení hodnoty do proměnné. Při syntaktické analýze je proto načten jeden
+    token navíc, u~kterého se podle toho, jestli se jedná o~operátor přiřazení, určí, jestli se jedná
+    o~přiřazení či nikoliv.
+
+
+    \subsection{Pravidla LL gramatiky}
+    \label{sec:ll_grammar}
+    \input{ll_rules}
+    \newpage
+
+    \subsection{LL tabulka}
+    \label{sec:ll_table}
+
+    \newcommand{\nonterminal}[1]{}
+    \newcommand{\pr}[2]{\small\vspace{-0.76em}\texttt{\ref{prod:#1-#2}}}
+
+    \setlength{\tabcolsep}{1.3pt}
+
+    {
+        \setlength\LTleft{-0.51cm}
+        \setlength\LTright{0pt}
+
+       \begin{longtable}{|l|*{21}{>{\centering\arraybackslash}p{0.5cm}|}>{\centering\arraybackslash}p{1cm}|}
+            \hline
+            \rotatebox{90}{\texttt{}} &
+            \rotatebox{90}{\texttt{def}} &
+            \rotatebox{90}{\texttt{extension}} &
+            \rotatebox{90}{\texttt{@\,main}} &
+            \rotatebox{90}{\texttt{import}} &
+            \rotatebox{90}{\texttt{IDENTIFIER\ }} &
+            \rotatebox{90}{\texttt{LF}} &
+            \rotatebox{90}{\texttt{INDENT}} &
+            \rotatebox{90}{\texttt{DEDENT}} &
+            \rotatebox{90}{\texttt{EOF}} &
+            \rotatebox{90}{\texttt{val}} &
+            \rotatebox{90}{\texttt{var}} &
+            \rotatebox{90}{\texttt{return}} &
+            \rotatebox{90}{\texttt{while}} &
+            \rotatebox{90}{\texttt{if}} &
+            \rotatebox{90}{\texttt{else}} &
+            \rotatebox{0}{\texttt{;}} &
+            \rotatebox{0}{\texttt{(}} &
+            \rotatebox{0}{\texttt{)}} &
+            \rotatebox{0}{\texttt{,}} &
+            \rotatebox{0}{\texttt{=}} &
+            \rotatebox{0}{\texttt{:}} &
+            \rotatebox{90}{\texttt{\uv{\,ostatní}\ }}
+            \\
+            \hline
+            \endfirsthead
+
+            \hline
+            & \multicolumn{22}{c|}{\textbf{Terminals (continued)}} \\
+            \hline
+            \endhead
+
+            \hline
+            \endfoot
+
+            \input{ll_table}
+
+        \end{longtable}
+
+    }
+    {\footnotesize \textsuperscript{*}\,U příkazu nelze na základě
+    identifikátoru rozhodnout jestli se jedná o~přířazení (\texttt{\ref{prod:statement-b}})
+    nebo výraz (\texttt{\ref{prod:statement-d}}), který má být zpracován precedenční analýzou, je zde proto porušena čistá LL gramatika.
+    }
+
+    \newpage
+
+    \subsection{Precedenční syntaktická analýza}
+    \label{sec:precedence_table}
+
+    Precedenční syntaktická analýza slouží ke zpracování výrazů. Využívá k~tomu precedenční tabulky a zásobníku.
+    Terminály jsou postupně vkládány na zásobník podle tří pravidel uvedených v~tabulce. Řádek s~pravidlem
+    určuje nejvyšší terminál na zásobníku, sloupec je pak určen dalším tokenem pro zpracování.
+
+    Při aplikování pravidla \uv{\texttt{<}} se na vrchol zásobníku nebo před výraz vrcholu na zásobníku
+    vloží tento pomocný prvek. Na vrchol zásobníku se pak vloží zpracovávaný terminál.
+    Při aplikování pravidla \uv{\texttt{=}} se pouze vloží zpracovávaný terminál na vrchol zásobníku.
+
+    Při aplikování pravidla \uv{\texttt{>}} je aplikováno jedno z~redukčních pravidel uvedených níže,
+    jehož levá strana je pak vložena na místo použítých prvků a uvozovacího znaku \uv{\texttt{<}}.
+
+    \begin{multicols}{4}
+        \begin{enumerate}[label=\textbf{\arabic*)}, ref=\arabic*, leftmargin=*]
+
+            \setlength\itemsep{-0.125em}
+
+            \item \label{prod:expression-a} \NT{E} $\rightarrow$ \T{(} \ \T{)}
+            \item \label{prod:expression-b} \NT{E} $\rightarrow$ \T{term}
+            \item \label{prod:expression-c} \NT{E} $\rightarrow$ \T{(} \ \NT{E} \ \T{)}
+            \item \label{prod:expression-d} \NT{E} $\rightarrow$ \NT{E} \ \T{.} \ \NT{E}
+            \item \label{prod:expression-e} \NT{E} $\rightarrow$ \T{+} \ \NT{E}
+            \item \label{prod:expression-f} \NT{E} $\rightarrow$ \T{-} \ \NT{E}
+            \item \label{prod:expression-g} \NT{E} $\rightarrow$ \T{!} \ \NT{E}
+            \item \label{prod:expression-h} \NT{E} $\rightarrow$ \NT{E} \ \T{*} \ \NT{E}
+            \item \label{prod:expression-i} \NT{E} $\rightarrow$ \NT{E} \ \T{/} \ \NT{E}
+            \item \label{prod:expression-j} \NT{E} $\rightarrow$ \NT{E} \ \T{+} \ \NT{E}
+            \item \label{prod:expression-k} \NT{E} $\rightarrow$ \NT{E} \ \T{-} \ \NT{E}
+            \item \label{prod:expression-l} \NT{E} $\rightarrow$ \NT{E} \ \T{<} \ \NT{E}
+            \item \label{prod:expression-m} \NT{E} $\rightarrow$ \NT{E} \ \T{<=} \ \NT{E}
+            \item \label{prod:expression-n} \NT{E} $\rightarrow$ \NT{E} \ \T{>} \ \NT{E}
+            \item \label{prod:expression-o} \NT{E} $\rightarrow$ \NT{E} \ \T{>=} \ \NT{E}
+            \item \label{prod:expression-p} \NT{E} $\rightarrow$ \NT{E} \ \T{==} \ \NT{E}
+            \item \label{prod:expression-q} \NT{E} $\rightarrow$ \NT{E} \ \T{!=} \ \NT{E}
+            \item \label{prod:expression-r} \NT{E} $\rightarrow$ \NT{E} \ \T{\&\&} \ \NT{E}
+            \item \label{prod:expression-s} \NT{E} $\rightarrow$ \NT{E} \ \T{\textbar\textbar} \ \NT{E}
+
+        \end{enumerate}
+
+    \end{multicols}
+
+
+    Speciální znak \uv{\texttt{\$}} značí buď prázdný zásobník nebo token ukončující výraz.
+
+    Skupina tokenů označená pro účely precedenční analýzy \uv{\texttt{term}} má při analýze speciální význam.
+    Termy jsou zpracovány i uvnitř výrazů pomocí rekurzivního sestupu. Po jejich zpracování je řízení předáno zpět
+    precedenční analýze.
+
+    Unární operátory \uv{\texttt{+}} a \uv{\texttt{-}} značené \uv{\texttt{+x}} a \uv{\texttt{-x}} sdílejí
+    tokeny pro sčítání a odčítání. Pro správné zpracování je nutné je rozlišit na základě neterminálu či terminálu
+    na vrcholu zásobníku.
+
+    \setlength{\tabcolsep}{3pt}
+    \input{precedence_table}
+
+    \newpage
+
+    \section{Moduly překladače}
+
+    \subsection{\texttt{ast}}
+    \label{module:ast}
+    \vspace{-0.5em}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s~ní spojené funkce vytvoření
+        a smazání stromu, funkce přidání jednotlivých uzlů nebo hledání tabulek symbolů ve stromě.
+
+    \vspace{-1em}
+    \subsection{\texttt{bst}}
+    \label{module:bst}
+    \vspace{-0.5em}
+        Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledávacího stromu}
+        a s~ní spojené funkce pro vytvoření a smazání stromu, vložení uzlů a vyhledávání pomocí klíčů.
+
+    \vspace{-1em}
+    \subsection{\texttt{debug}}
+    \label{module:debug}
+    \vspace{-0.5em}
+        Poskytuje ladící výpisy zahrnující například výpis načtených tokenů,
+        výpis průchodu syntaktické analýzy, výpis zásobníku precedenční analýzy nebo výpis abstraktního
+        syntaktického stromu.
+
+    \vspace{-1em}
+    \subsection{\texttt{error}}
+    \label{module:error}
+    \vspace{-0.5em}
+        Poskytuje sjednocený způsob výpisu chybových hlášek. Každá chyba má přiřazený název,
+        chybovou hlášku, návratový kód a volitelně nápovědu.
+
+    \vspace{-1em}
+    \subsection{\texttt{generator}}
+    \label{module:generator}
+    \vspace{-0.5em}
+        Modul zajišťuje vytvoření a výpis cílového kódu z~poskytnutého abstraktního syntaktického stromu
+        s~integrovanými tabulkami symbolů.
+
+    \vspace{-1em}
+    \subsection{\texttt{main}}
+    \label{module:main}
+    \vspace{-0.5em}
+        Vstupní bod programu spouštějící postupně syntaktickou analýzu, sémantickou
+        analýzu a generování cílového kódu na abstraktní syntaktický strom programu.
+
+    \vspace{-1em}
+    \subsection{\texttt{parser}}
+    \label{module:parser}
+    \vspace{-0.5em}
+        Modul implementuje kontrolu pravidel LL gramatiky pomocí \textbf{metody rekurzivního sestupu}. Zároveň
+        implementuje \textbf{metodu precedenční syntaktické analýzy} pro zpracování výrazů. Při syntaktické
+        analýze je zároveň postupně vytvářen abstraktní syntaktický strom programu.
+
+    \vspace{-1em}
+    \subsection{\texttt{scanner}}
+    \label{module:scanner}
+    \vspace{-0.5em}
+        Modul je implementován formou \textbf{konečného automatu}, který postupně ze standardního vstupu
+        čte řetězce, které vrací ve formě tokenů o~různých typech a atributech.
+
+    \vspace{-1em}
+    \subsection{\texttt{semantic}}
+    \label{module:semantic}
+    \vspace{-0.5em}
+        Modul prochází abstraktní syntaktický strom a provádí \textbf{sémantické kontroly}
+        (např. typové kontroly).
+        Zároveň jsou v~AST vytvořeny doplňující uzly (implicitní typová konverze) nebo jsou uzly doplněny o~nové
+        informace (např. výsledný typ výrazu).
+
+    \vspace{-1em}
+    \subsection{\texttt{shared\_strings}}
+    \label{module:strings}
+    \vspace{-0.5em}
+        Modul poskytuje strukturu a funkce pro alokování a uchování alokovaných řetězců,
+        které je nutné předávat mezi moduly překladače.
+        Zároveň poskytuje strukturu a funkce pro vytvoření a modifikování dynamicky alokovaného řetězce.
+
+    \vspace{-1em}
+    \subsection{\texttt{stack}}
+    \label{module:stack}
+    \vspace{-0.5em}
+        Poskytuje abstraktní datovou strukturu \textbf{zásobníku} s~příslušnými funkcemi.
+
+    \vspace{-1em}
+    \subsection{\texttt{symtable}}
+    \label{module:symtable}
+    \vspace{-0.5em}
+        Poskytuje \textbf{tabulku symbolů} jako abstraktní datovou strukturu využívající modulu
+        \hyperref[module:bst]{\texttt{bst}}. Zároveň poskytuje strukturu záznamu v~TS a operace pro jeho
+        přidání.
+
+    \section{Zdroje}
+
+    \renewcommand{\refname}{}
+    \nocite{*}
+    \bibliography{bibliography}
+    \bibliographystyle{czplain}
+
 \end{document}

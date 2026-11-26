@@ -59,15 +59,20 @@
 
             <st_vardef> -> val [IDENTIFIER] <type_specifier> = <EXPR>
             <st_vardef> -> var [IDENTIFIER] <type_specifier> = <EXPR>
-            <st_return> -> return <EXPR>
-            <st_return> -> return
+            <st_return> -> return <return_value>
+            <return_value> -> 3
+            <return_value> -> <EXPR>
 
         <construct> := <c_while> <c_if_then>
 
             <c_while> -> while <EXPR> do [LF] [INDENT] <statement_list> [DEDENT]
-            <c_if_then> -> if <EXPR> then [LF*] [INDENT*] <statement_list> [DEDENT*] <else_branch>
-            <c_else> -> else <c_if_then>
-            <c_else> -> else [LF*] [INDENT*] <statement_list> [DEDENT*]
+            <c_if_then> -> if <EXPR> then [LF] [INDENT] <statement_list> [DEDENT] <c_else>
+
+            <c_else> -> else <else_branch>
+            <c_else> -> 3
+
+            <else_branch> -> <c_if_then>
+            <else_branch> -> [LF] [INDENT] <statement_list> [DEDENT]
 
     // -------------------------------------------------
 
