@@ -549,3 +549,51 @@ TEST_F(valmem, to_string)
 
     output = ".toString: 5 3.14 true () str";
 }
+
+// ========================================================
+
+TEST_F(runtime, new_line_in_parenthesis)
+{
+    /* language=.ifj26 */
+    source = R"(
+        import ifj26.*
+
+        def foo(
+            ) =
+            ()
+
+        def doo(
+            a: Int,
+            ) =
+            ()
+
+        def hoo(
+            a: Int,
+            b
+            :
+            Int,
+            ) =
+            ()
+
+        @main def main(): Unit =
+            foo(
+                )
+
+            doo(5)
+            doo(
+                (5
+                    +
+                    5),
+                )
+            doo(5
+                )
+            doo(5,
+
+                )
+
+            hoo(5,
+
+                6,
+                )
+    )";
+}
