@@ -74,6 +74,8 @@
         }
 
         \setcounter{page}{0}
+        \setcounter{table}{-1}
+
 
     \end{titlepage}
 
@@ -89,7 +91,6 @@
     \newpage
 
     \section{Rozdělení práce v týmu}
-
 
     Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje.
     Až na drobné výjimky byl plán dodržen a odpovídá skutečnému rozdělení uvedenému níže.
@@ -155,6 +156,8 @@
             \begin{itemize}
                 \setlength{\itemsep}{-2pt}
 
+                \item dokumentace
+
                 \item \textbf{lexikální analyzátor}
                 \begin{itemize}
                     \vspace{-6pt}
@@ -205,8 +208,6 @@
 
     Dále jsme AI využívali k pochopení konstrukcí jazyka \texttt{C++} pro tvorbu testů. Při tvorbě dokumentace
     na vytvoření opakujících se částí zdrojového kódu (např. stovky řádků LL tabulky, které jsme následně doplňovali).
-
-
 
     \newpage
 
@@ -309,14 +310,11 @@
 
         \end{tikzpicture}
 
-         \medskip
+        \medskip
         \captionof{figure}{Blokové schéma architektury překladače}
     \end{figure}
 
     \medskip
-
-
-
 
 
     \newpage
@@ -328,29 +326,52 @@
     \begin{figure}[!htbp]
         \centering
         \includegraphics[
-            width=0.95\textwidth
+            width=0.94\textwidth
         ]{fsm.pdf}
-        \caption{Spektrogram vstupního signálu s~vyznačenou částí obsahující uměle vypadající signál}
     \end{figure}
 
     \newpage
 
     \section{Syntaktická analýza}
 
+    Základní syntaktická analýza je založená na LL gramatice a je implementována pomocí metody rekurzivního sestupu.
+    Redukční pravidla LL gramatiky jsou uvedené ve výpisu níže. Tabulka LL gramatiky rovněž.
+
+    Neterminály jsou ve výpisu psány v lomenných závorkách
+    (např.~\uv{$\langle$\texttt{function-body}$\rangle$}), terminály
+    pak zpravidla velkými písmeny (např. \uv{\texttt{IDENTIFIER}})
+    nebo přímo znakem či klíčovým slovem (např. \uv{\texttt{=}} nebo \uv{\texttt{if}})
+
+    Výjimky tvoří neterminál \uv{$\langle$\texttt{expression}$\rangle$}, který značí očekávaný výraz.
+    Pro zpracování výrazu je využita metoda precedenční syntaktické analýzy využívající
+    \hyperref[sec:precedence_table]{precedenční tabulku}, která je uvedena později.
+
+    Odchylky od čisté LL gramatiky pak tvoří pravidla pro příkaz
+    (\texttt{\ref{prod:statement-b}}) a (\texttt{\ref{prod:statement-d}}),
+    u kterých nelze na základě jednoho následujícího tokenu identifikátoru určit, jestli se
+    jedná o výraz nebo přiřazení hodnoty do proměnné. Při syntaktické analýze je proto načten jeden
+    token navíc, u kterého se podle toho, jestli se jedná o operátor přiřazení, určí, jestli se jedná
+    o přířezení či nikoliv.
+
+
     \subsection{Pravidla LL gramatiky}
+    \label{sec:ll_grammar}
     \input{ll_rules}
     \newpage
 
     \subsection{LL tabulka}
+    \label{sec:ll_table}
 
     \newcommand{\nonterminal}[1]{}
     \newcommand{\pr}[2]{\small\vspace{-0.76em}\texttt{\ref{prod:#1-#2}}}
 
     \setlength{\tabcolsep}{1.3pt}
 
-    \begin{center}
+    {
+        \setlength\LTleft{-0.51cm}
+        \setlength\LTright{0pt}
 
-       \begin{longtable}{|l|*{21}{>{\centering\arraybackslash}p{0.49cm}|}>{\centering\arraybackslash}p{1cm}|}
+       \begin{longtable}{|l|*{21}{>{\centering\arraybackslash}p{0.5cm}|}>{\centering\arraybackslash}p{1cm}|}
             \hline
             \rotatebox{90}{\texttt{}} &
             \rotatebox{90}{\texttt{def}} &
@@ -374,7 +395,7 @@
             \rotatebox{0}{\texttt{,}} &
             \rotatebox{0}{\texttt{=}} &
             \rotatebox{0}{\texttt{:}} &
-            \rotatebox{90}{\texttt{ostatní terminály\ }}
+            \rotatebox{90}{\texttt{\uv{\,ostatní}\ }}
             \\
             \hline
             \endfirsthead
@@ -388,21 +409,30 @@
             \endfoot
 
             \input{ll_table}
+
         \end{longtable}
 
-    \end{center}
+    }
+    {\footnotesize \textsuperscript{*}\,U příkazu nelze na základě
+    identifikátoru rozhodnout jestli se jedná o přířazení (\texttt{\ref{prod:statement-b}})
+    nebo výraz (\texttt{\ref{prod:statement-d}}), který má být zpracován precedenční analýzou, je zde proto porušena čistá LL gramatika.
+    }
 
     \newpage
 
+    \subsection{Precedenční syntaktická analýza}
+    \label{sec:precedence_table}
 
-    \subsection{Precedenční tabulka}
+    Precedenční syntaktická analýza slouží ke zpracování výrazů. Využívá k tomu precedenční tabulky a zásobníku.
+    Terminály jsou postupně vkládány na zásobník podle tří pravidel uvedených v tabulce. Řádek s pravidlem
+    určuje nejvyšší terminál na zásobníku, sloupec je pak určen další token pro zpracování.
 
-    Precedenční tabulka slouží ke zpracování výrazů.
+    Při aplikování pravidla \uv{\texttt{<}} se na vrchol zásobníku nebo před výraz vrcholu na zásobníku
+    vloží tento pomocný prvek. Na vrchol zásobníku se pak vloží zpracovávaný terminál.
+    Při aplikování pravidla \uv{\texttt{=}} se pouze vloží zpracovávaný terminál na vrchol zásobníku.
 
-    \setlength{\tabcolsep}{3pt}
-    \input{precedence_table}
-
-    Pravidla pro redukci výrazů.
+    Při aplikování pravidla \uv{\texttt{>}} je aplikováno jedno z redukčních pravidel uvedených níže,
+    jehož levá strana je pak vložena na místo použítých prvků a uvozovacího znaku \uv{\texttt{<}}.
 
     \begin{multicols}{4}
         \begin{enumerate}[label=\textbf{\arabic*)}, ref=\arabic*, leftmargin=*]
@@ -430,10 +460,24 @@
             \item \label{prod:expression-s} \NT{E} $\rightarrow$ \NT{E} \ \T{\textbar\textbar} \ \NT{E}
 
         \end{enumerate}
+
     \end{multicols}
 
-    \newpage
 
+    Speciální znak \uv{\texttt{\$}} značí buď prázdný zásobník nebo token ukončující výraz.
+
+    Skupina tokenů označená pro učely precedenční analýzy \uv{\texttt{term}} má při analýze speciální význam.
+    Termy jsou zpracovány i uvnitř výrazů pomocí rekurzivního sestupu. Po jejich zpracování je řízení předáno zpět
+    precedenční analýze.
+
+    Unární operátory \uv{\texttt{+}} a \uv{\texttt{-}} značené \uv{\texttt{+x}} a \uv{\texttt{-x}} sdílí
+    tokeny pro sčítání a odčítání. Pro správné zpracování je nutné je rozlišit na základě neterminálu či terminálu
+    na vrcholu zásobníku.
+
+    \setlength{\tabcolsep}{3pt}
+    \input{precedence_table}
+
+    \newpage
 
     \section{Moduly překladače}
 
