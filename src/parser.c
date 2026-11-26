@@ -1,7 +1,7 @@
 /**
  * @project Implementation of the IFJ26 Imperative Language Compiler
  * @file    parser.c
- * @brief   The code parser module responsible for syntax and semantic analysis of IFJ26 code
+ * @brief   The code parser module responsible for syntax analysis of IFJ26 code
  * @author  Filip Hajdusek (xhajduf00)
  */
 

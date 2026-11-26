@@ -91,7 +91,7 @@
     \section{Rozdělení práce v týmu}
 
 
-    Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje
+    Rozdělení práce bylo stanoveno na osobních schůzkách týmu na začátku vývoje.
     Až na drobné výjimky byl plán dodržen a odpovídá skutečnému rozdělení uvedenému níže.
 
         \subsection*{Andrea Drahovská}
@@ -138,6 +138,16 @@
 
             \end{itemize}
 
+        \subsection*{Tobiáš Mikan}
+
+            \begin{itemize}
+                \setlength{\itemsep}{-2pt}
+
+                \item \textbf{generátor kódu}
+                \item implementace výškově vyváženého binárního vyhledávacího stromu
+
+            \end{itemize}
+
         \subsection*{Vojtěch Wyslych}
 
             \begin{itemize}
@@ -155,15 +165,7 @@
 
             \end{itemize}
 
-        \subsection*{Tobiáš Mikan}
 
-            \begin{itemize}
-                \setlength{\itemsep}{-2pt}
-
-                \item \textbf{generátor kódu}
-                \item implementace výškově vyváženého binárního vyhledávacího stromu
-
-            \end{itemize}
 
     \section{Spolupráce v týmu}
 
@@ -366,45 +368,83 @@
     \section{Moduly překladače}
 
     \subsection{\texttt{ast}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené funkce vytvoření
+        a smazání stromu, funkce přidání jednotlivých uzlů nebo hledání tabulek symbolů ve stromě.
 
+    \vspace{-1em}
     \subsection{\texttt{bst}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \label{module:bst}
+    \vspace{-0.5em}
+        Poskytuje abstraktní datovou strukturu \textbf{červeno-černého binárního vyhledavacího stromu}
+        a s ní spojené funkce pro vytvoření a smazání stromu, vložení uzlů a vyhledávání pomocí klíčů.
 
+    \vspace{-1em}
     \subsection{\texttt{debug}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Poskytuje ladící výpisy zahrnující například výpis načtených tokenů,
+        výpis průchodu syntakické analýzy, výpis zásobníku precedenční analýzy nebo výpis abstraktního
+        syntaktického stromu.
 
+    \vspace{-1em}
     \subsection{\texttt{error}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Poskytuje sjedocený způsob výpisu chybových hlášek. Každá chyba má přiřazený název,
+        chybovou hlášku, návratový kód a volitelně nápovědu.
 
+    \vspace{-1em}
     \subsection{\texttt{generator}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Modul zajišťuje vytvoření a výpis cílového kódu z poskytnutého abstraktního syntaktického stromu
+        s integrovanými tabulkami symbolů.
 
+    \vspace{-1em}
     \subsection{\texttt{main}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Vstupní bod programu spouštějící postupně syntaktickou analýzu, sémantickou
+        analýzu a generování cílového kódu na abstraktní syntaktický strom programu.
 
+    \vspace{-1em}
     \subsection{\texttt{parser}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Modul implementuje kontrolu pravidel LL gramatiky pomocí \textbf{metody rekurzivního sestupu}. Zároveň
+        implementuje \textbf{metodu precedenční syntaktické analýzy} pro zpracování výrazů. Při syntaktické
+        analýze je zároveň postupně vytvářen abstraktní syntaktický strom programu.
 
+    \vspace{-1em}
     \subsection{\texttt{scanner}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Modul je implementován formou \textbf{konečného automatu}, který postupně ze standardního vstupu
+        čte řetězce, které vrací ve formě tokenů o různých typech a atributech.
 
+    \vspace{-1em}
     \subsection{\texttt{semantic}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Modul prochází abstraktní syntaktický strom a provádí \textbf{sémantické kontroly}
+        (např. typové kontroly).
+        Zároveň jsou v AST vytvořeny doplňující uzly (implicitní typová konverze) nebo jsou uzly doplněny o nové
+        informace (např. výsledný typ výrazu).
 
+    \vspace{-1em}
     \subsection{\texttt{shared\_strings}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Modul poskytuje strukturu a funkce pro alokování a uchování alokovaných řetězců,
+        které je nutné předávat mezi moduly překladače.
+        Zároveň posktuje strukturu a funkce pro vytvoření a modifikování dynamicky alokovaného řetězce.
 
+    \vspace{-1em}
     \subsection{\texttt{stack}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
+    \vspace{-0.5em}
+        Poskytuje abstraktní datovou strukturu \textbf{zásobníku} s příslušnými funkcemi.
 
+    \vspace{-1em}
     \subsection{\texttt{symtable}}
-        Poskytuje strukturu \textbf{abstraktního syntaktického stromu} a s ní spojené metody.
-
-    \newpage
+    \vspace{-0.5em}
+        Poskytuje \textbf{tabulku symbolů} jako abstraktní datovou strukturu využívající modulu
+        \hyperref[module:bst]{\texttt{bst}}. Zároveň poskytuje strukturu záznamu v TS a operace pro její
+        přidání.
 
     \section{Využití prostředků AI}
-    \newpage
 
     \section{Zdroje}
 
