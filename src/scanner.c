@@ -71,7 +71,7 @@ int init_scanner(ScannerContext* scanner_context, AllocatedStrings* strings)
     scanner_context->pending_dot = false;
     scanner_context->lf_inside_block_comment = false;
     scanner_context->inside_param_group = false;
-    scanner_context->inside_parentheses = false;
+    scanner_context->inside_parentheses = 0;
 
     scanner_context->strings = strings;
     scanner_context->line = 1;
@@ -119,8 +119,6 @@ int check_indentation(ScannerContext* context, int current_indent, bool first_ca
 
 /** TODO:
  *
- * ignore new lines in ()
- *
  * block comment can be followed by a block comment or comment
  *
  * nested interpolation - simple string x multiline string
@@ -137,6 +135,7 @@ Token get_token(ScannerContext* context, FILE* stream)
     clear_dynamic_string(context->scanned_string);
 
     int indent_value = 0;
+    bool comma = false;
 
     // first check for pending dedent
     if (context->number_of_pending_dedents) {
@@ -579,7 +578,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                     token.type = IDENTIFIER;
 
                     str = add_string_copy(context->strings, context->scanned_string->chars);
-                    if (token.attribute_string == NULL) {
+                    if (str == NULL) {
                         token.type = ERROR;
                         token.attribute_error = print_error(MEMORY_ALLOCATION_ERROR, LINE, "identifier");
                         return token;
@@ -1346,11 +1345,14 @@ Token get_token(ScannerContext* context, FILE* stream)
 
             // BRACKETS
             case STATE_LEFT_BRACKET:
+                context->inside_parentheses += 1;
                 token.type = LEFT_BRACKET;
                 token.attribute_none = NULL;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
             case STATE_RIGHT_BRACKET:
+                if (context->inside_parentheses > 0)
+                    context->inside_parentheses -= 1;
                 token.type = RIGHT_BRACKET;
                 token.attribute_none = NULL;
 
@@ -1378,13 +1380,24 @@ Token get_token(ScannerContext* context, FILE* stream)
                 token.attribute_none = NULL;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
-            case STATE_COMMA:
 
+            case STATE_COMMA:
+                if (context->inside_param_group && context->inside_parentheses) {
+                    // e.x. (..., \n )
+                    if (c == ' ' || c == '\r' || c == '\t' || c == '\v' || c == '\f') {
+                        state = STATE_COMMA;
+                        break;
+                    }
+                    if (c == '\n') {
+                        state = STATE_LINE_FEED;
+                        comma = true;
+                        break;
+                    }
+                }
                 token.type = COMMA;
                 token.attribute_none = NULL;
 
                 RETURN_TOKEN_AND_SET_READ_BUFFER
-                break;
 
             case STATE_AT_SYMBOL:
                 if (c >= 'a' && c <= 'z')
@@ -1424,6 +1437,30 @@ Token get_token(ScannerContext* context, FILE* stream)
 
                 context->line += 1;
 
+                // check if in () and handle properly
+                if (context->inside_parentheses && !comma) {
+                    clear_dynamic_string(context->scanned_string);
+                    state = STATE_START;
+                    context->read_buffer = true;
+                    continue;
+                }
+                if (context->inside_parentheses && comma) {
+                    if (c == ' ' || c == '\r' || c == '\t' || c == '\v' || c == '\f') {
+                        context->line -= 1; // don't increase the line counter
+                        state = STATE_LINE_FEED;
+                    } else if (c == '\n') {
+                        state = STATE_LINE_FEED;
+                    } else if (c == ')')
+                        state = STATE_RIGHT_BRACKET; // ignore comma and new line and only return right bracket
+
+                    else { // ignore new line and return comma
+                        token.type = COMMA;
+                        token.attribute_none = NULL;
+                        RETURN_TOKEN_AND_SET_READ_BUFFER
+                    }
+                    continue; // don't save new line
+                }
+
                 if (c == '\n') {
                     state = STATE_LINE_FEED;
                     break;
@@ -1441,13 +1478,14 @@ Token get_token(ScannerContext* context, FILE* stream)
                     state = STATE_INDENT;
                     break;
                 }
-                if (c == 9) {
+                if (c == '\t') {
                     // tab
                     token.type = ERROR;
                     token.attribute_error = print_error(SCANNER_INVALID_INDENTATION_USING_TAB, LINE);
                     return token;
                 }
                 if (c == '\r') {
+                    context->line -= 1; // don't increase the line counter
                     state = STATE_LINE_FEED;
                     break;
                 }
@@ -1592,7 +1630,7 @@ Token get_token(ScannerContext* context, FILE* stream)
                 else if (c == '\n' || c == EOF) {
                     context->lf_inside_block_comment = false;
                     state = STATE_LINE_FEED;
-                }  else if (c == '/')
+                } else if (c == '/')
                     state = STATE_BLOCK_COMMENT_END_WITH_LF_SLASH;
                 else {
                     token.type = ERROR;

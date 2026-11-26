@@ -249,8 +249,8 @@ typedef struct {
     bool pending_eof;
     int line;
     bool pending_dot;
+    int inside_parentheses;
 
-    bool inside_parentheses;
     bool inside_param_group;
 
     AllocatedStrings* strings;
