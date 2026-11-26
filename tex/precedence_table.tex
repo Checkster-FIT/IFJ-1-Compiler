@@ -1,25 +1,37 @@
+\newcommand{\Lt}{$<$}
+\newcommand{\Gt}{$>$}
+\newcommand{\Eq}{$=$}
+
 \begin{center}
-    \begin{longtable}{|>{\centering\arraybackslash}m{2cm}|*{12}{>{\centering\arraybackslash}m{0.47cm}|}}
+    \begin{longtable}{|>{\centering\arraybackslash}m{1.6cm}|*{20}{>{\centering\arraybackslash}m{0.5cm}|}}
         \hline
         &
-        \texttt{(} &
-        \rotatebox{90}{\texttt{term}} &
-        \texttt{)} &
-        \texttt{! +x -x} &
-        \texttt{* /} &
-        \texttt{+ -} &
-        \texttt{< <= > >=} &
-        \texttt{== !=} &
-        \texttt{\&\&} &
-        \texttt{\textbar\textbar} &
-        \texttt{\$} &
-        \texttt{.}
+        \rotatebox{0}{\texttt{(}} &
+        \rotatebox{90}{\,\texttt{term}\ \,} &
+        \rotatebox{0}{\texttt{)}} &
+        \rotatebox{0}{\texttt{!}} &
+        \rotatebox{0}{\texttt{+x}} &
+        \rotatebox{0}{\texttt{-x}} &
+        \rotatebox{0}{\texttt{*}} &
+        \rotatebox{0}{\texttt{/}} &
+        \rotatebox{0}{\texttt{+}} &
+        \rotatebox{0}{\texttt{-}} &
+        \rotatebox{0}{\texttt{<}} &
+        \rotatebox{0}{\texttt{<=}} &
+        \rotatebox{0}{\texttt{>}} &
+        \rotatebox{0}{\texttt{>=}} &
+        \rotatebox{0}{\texttt{==}} &
+        \rotatebox{0}{\texttt{!=}} &
+        \rotatebox{0}{\texttt{\&\&}} &
+        \rotatebox{0}{\texttt{\textbar\textbar}} &
+        \rotatebox{0}{\texttt{\$}} &
+        \rotatebox{0}{\texttt{.}}
         \\
         \hline
         \endfirsthead
 
         \hline
-        & \multicolumn{12}{c|}{\textbf{Precedence table (continued)}} \\
+        & \multicolumn{20}{c|}{\textbf{Precedence table (continued)}} \\
         \hline
         \endhead
 
@@ -28,19 +40,26 @@
 
         \endlastfoot
 
-        \texttt{(}                & $<$ & $<$ & $=$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & $<$ \\ \hline
-        \texttt{term}                & & & $>$ & & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ \\ \hline
-        \texttt{)}                & & & $>$ & & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ \\ \hline
-        \texttt{! +x -x}        & $<$ & $<$ & $>$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{* /}             & $<$ & $<$ & $>$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{+ -}             & $<$ & $<$ & $>$ & $<$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{< <= >,>=}     & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & & $>$ & $>$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{== !=}           & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & $<$ & & $>$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{\&\&}             & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & $<$ & $<$ & $>$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{\textbar\textbar}  & $<$ & $<$ & $>$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $>$ & $>$ & $<$ \\ \hline
-        \texttt{\$}               & $<$ & $<$ & & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & $<$ \\ \hline
-        \texttt{.}                & & $<$ & $>$ & & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ \\ \hline
+        \texttt{(}    & \Lt & \Lt & \Eq & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     & \Lt \\ \hline
+        \texttt{term} &     &     & \Gt &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt \\ \hline
+        \texttt{)}    &     &     & \Gt &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt \\ \hline
+        \texttt{!}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{+x}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{-x}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{*}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{/}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{+}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{-}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{<}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{<=}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{>}    & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{>=}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{==}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{!=}   & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     &     & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{\&\&} & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{\textbar\textbar} & \Lt & \Lt & \Gt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Gt & \Gt & \Lt \\ \hline
+        \texttt{\$}   & \Lt & \Lt &     & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt & \Lt &     & \Lt \\ \hline
+        \texttt{.}    &     & \Lt & \Gt &     &     &     & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt & \Gt \\ \hline
 
     \end{longtable}
-
 \end{center}

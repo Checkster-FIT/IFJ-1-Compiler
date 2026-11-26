@@ -81,6 +81,10 @@
 
     \setlength{\parindent}{0cm}
     \setlength{\parskip}{0.45em}
+    \renewcommand{\topfraction}{0.95}
+    \renewcommand{\bottomfraction}{0.95}
+    \renewcommand{\textfraction}{0.05}
+    \renewcommand{\floatpagefraction}{0.8}
 
     \newpage
 
@@ -245,14 +249,27 @@
 
     \newpage
 
-    \section{Diagram konečného automatu pro lexikální analýzu}
+    \section{Lexikální analýza}
+    \subsection{Diagram konečného automatu pro lexikální analýzu}
+
+
+    \begin{figure}[!htbp]
+        \centering
+        \includegraphics[
+            width=0.95\textwidth
+        ]{fsm.pdf}
+        \caption{Spektrogram vstupního signálu s~vyznačenou částí obsahující uměle vypadající signál}
+    \end{figure}
+
     \newpage
 
-    \section{Pravidla LL gramatiky}
+    \section{Syntaktická analýza}
+
+    \subsection{Pravidla LL gramatiky}
     \input{ll_rules}
     \newpage
 
-    \section{LL tabulka}
+    \subsection{LL tabulka}
 
     \newcommand{\nonterminal}[1]{}
     \newcommand{\pr}[2]{\small\vspace{-0.76em}\texttt{\ref{prod:#1-#2}}}
@@ -306,7 +323,7 @@
     \newpage
 
 
-    \section{Precedenční tabulka}
+    \subsection{Precedenční tabulka}
 
     Precedenční tabulka slouží ke zpracování výrazů.
 
