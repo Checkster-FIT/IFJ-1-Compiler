@@ -69,6 +69,8 @@ clean:
 	@rm -fv $(ARCHIVE_NAME)
 	@rm -fv $(TEX_DIR)/*.aux
 	@rm -fv $(TEX_DIR)/*.log
+	@rm -fv $(TEX_DIR)/*.toc
+	@rm -fv $(TEX_DIR)/*.out
 	@rm -fv *.pdf
 	@rm -fv *.log
 	@rm -fv $(ARCHIVE_NAME).zip
